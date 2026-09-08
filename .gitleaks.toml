@@ -1,0 +1,40 @@
+# gitleaks configuration for the console.
+#
+# The console holds no secrets in the tree: it is a static SPA that talks to the in-account engine
+# over a same-origin service binding, and break-glass key material is generated in the browser and
+# never committed.
+#
+# Exemptions below are scoped by path AND by rule, never by a bare key-shape regex: gitleaks ORs a
+# block's paths and regexes together, so an unscoped regex for a key shape would blind the scan repo-wide.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Path- and rule-scoped exemptions, each a reviewed false positive."
+# targetRules pins every exemption below to the two rules the tree actually trips, so a DIFFERENT
+# rule firing on these same paths is still reported. Without it these paths would be exempt from
+# every rule, including any custom one added later.
+targetRules = ["slack-webhook-url", "generic-api-key"]
+paths = [
+  # Local scratch that a filesystem walk sees but git does not track: checked-out worktrees and the
+  # stryker mutation sandbox. CI scans history, where these never appear; this keeps a local
+  # `gitleaks dir` run honest too.
+  '''^\.worktrees/''',
+  '''^\.stryker-tmp/''',
+  # The Slack webhook field's own `placeholder` attribute, at
+  # src/screens/notifications/channels.ts:275. It is the documented example URL a customer sees in
+  # the empty field, carried in the field catalogue with placeholder_status "done".
+  '''^src/screens/notifications/channels\.ts$''',
+
+  # The built bundle and its code-split chunks, which contain that same placeholder string. 80 of the
+  # 86 findings were this one string, once per chunk per commit. Build output, not source.
+  '''^public/app\.js$''',
+  '''^public/chunk-[A-Z0-9]+\.js$''',
+
+  # Test fixtures. keydecap-vector.json is the ENGINE-AUTHORED capsule vector the console's decap is
+  # proven against, and the other two seed obviously synthetic values to exercise notification
+  # rendering and the custody round trip.
+  '''^test/vectors/keydecap-vector\.json$''',
+  '''^test/validate-notifications\.ts$''',
+  '''^test/validate-custody\.ts$''',
+]

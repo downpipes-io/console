@@ -1,0 +1,179 @@
+# Tag-triggered attested release artefacts for the console, the console half of the
+# dual-root release model the engine repo's release.yml documents in full. CI builds the
+# console release bundle deterministically (scripts/build-release-bundle.mjs) and attests
+# it publicly: cosign keyless signatures (Rekor-logged, identity = this workflow) plus SLSA
+# Build L3 provenance. CI holds no Cloudflare credential and no signing key.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  verify-tag:
+    name: Verify the release tag signature
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false, fetch-depth: 0 }
+      - name: Verify the tag against the signer roster committed on main
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          git rev-parse --verify --quiet origin/main >/dev/null || { echo "::error::origin/main is missing from the checkout; the roster cannot be read"; exit 1; }
+          git show origin/main:.github/allowed_signers > "${RUNNER_TEMP}/allowed_signers"
+          if ! grep -qE '^[^#[:space:]]' "${RUNNER_TEMP}/allowed_signers"; then
+            echo "::error::.github/allowed_signers on main carries no signer entries yet."
+            exit 1
+          fi
+          git -c gpg.ssh.allowedSignersFile="${RUNNER_TEMP}/allowed_signers" verify-tag "$TAG"
+      - name: Tag must equal the package version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag $TAG does not match package.json version $PKG."
+            exit 1
+          fi
+
+  build:
+    name: Deterministic bundle build
+    needs: verify-tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+      version: ${{ steps.facts.outputs.version }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: Build the console release bundle (deterministic)
+        id: facts
+        run: |
+          set -euo pipefail
+          node scripts/build-release-bundle.mjs > release-facts.json
+          cat release-facts.json
+          echo "version=$(node -p "require('./release-facts.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Generate CycloneDX SBOM (runtime deps)
+        run: bash scripts/generate-sbom.sh
+      - name: Canonical sums manifest
+        env:
+          VERSION: ${{ steps.facts.outputs.version }}
+        run: |
+          set -euo pipefail
+          sha256sum "dist/console-${VERSION}.json" release-facts.json sbom.cdx.json > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Export subject hashes for SLSA
+        id: hash
+        run: echo "hashes=$(base64 -w0 SHA256SUMS.txt)" >> "$GITHUB_OUTPUT"
+      - name: Upload the release tree
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: console-release-${{ steps.facts.outputs.version }}
+          path: |
+            dist/console-${{ steps.facts.outputs.version }}.json
+            release-facts.json
+            sbom.cdx.json
+            SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error
+
+  sign:
+    name: Cosign keyless signatures
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with: { name: "console-release-${{ needs.build.outputs.version }}" }
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+      - name: Sign every release file, then verify what was minted
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          for f in "dist/console-${VERSION}.json" SHA256SUMS.txt release-facts.json sbom.cdx.json; do
+            cosign sign-blob --yes --bundle "$(basename "$f").cosign-bundle" "$f"
+          done
+          for f in "dist/console-${VERSION}.json" SHA256SUMS.txt release-facts.json sbom.cdx.json; do
+            cosign verify-blob --bundle "$(basename "$f").cosign-bundle" \
+              --certificate-identity-regexp "^https://github.com/downpipes-io/console/\.github/workflows/release\.yml@refs/tags/v" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              "$f"
+          done
+      - name: Upload cosign bundles
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: console-cosign-${{ needs.build.outputs.version }}
+          path: "*.cosign-bundle"
+          retention-days: 90
+          if-no-files-found: error
+
+  provenance:
+    name: SLSA provenance
+    needs: build
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses]
+    with:
+      base64-subjects: ${{ needs.build.outputs.hashes }}
+      upload-assets: false
+      provenance-name: console.intoto.jsonl
+
+  release:
+    name: GitHub release
+    needs: [build, sign, provenance]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with: { name: "console-release-${{ needs.build.outputs.version }}" }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with: { name: "console-cosign-${{ needs.build.outputs.version }}" }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with: { name: "console.intoto.jsonl" }
+      - name: Create the release with the full verification set
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "console $TAG" \
+            --notes "Attested console release bundle for the update channel. Verify locally: cosign verify-blob --bundle <file>.cosign-bundle <file>; slsa-verifier verify-artifact dist/console-${VERSION}.json --provenance-path console.intoto.jsonl --source-uri github.com/downpipes-io/console." \
+            "dist/console-${VERSION}.json" release-facts.json sbom.cdx.json SHA256SUMS.txt ./*.cosign-bundle console.intoto.jsonl

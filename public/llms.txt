@@ -1,0 +1,57 @@
+# downpipes console
+
+> The in-account management console for the downpipes platform. It runs inside the
+> customer's own Cloudflare account, serves a static single-page app on a custom domain,
+> and talks only to the in-account engine admin API. There is no vendor inbound path and
+> no custody of keys or data. downpipes is a no-custody, self-hosted backup and recovery
+> system for Cloudflare data; the recover-forever path uses the MIT-licensed Go reader and
+> never depends on this console.
+
+The console is a Cloudflare Worker that serves a single-page app and proxies the engine
+admin surface same-origin over a worker-to-worker service binding. It holds no state. The
+break-glass private identity is generated in the browser and never leaves it except as a
+file the operator saves offline; the console cannot write the engine's secrets, so the
+operator runs the `wrangler secret put` commands themselves and the console polls
+`GET /admin/status` as proof they took effect.
+
+## Source
+
+- [Worker entrypoint](src/worker.ts): serves the SPA from the ASSETS binding, applies the
+  strict security headers and CSP, proxies the engine surface (`/admin/*`, `/support/*`)
+  verbatim over the ENGINE service binding, and falls back to the SPA shell for
+  client-routed deep links.
+- [SPA bootstrap](src/app.ts): boots the client router and reads `/engine-topology.json`
+  to adopt this origin as the engine URL when proxied.
+- [Engine API client](src/api.ts): the typed client for the engine admin API.
+- [Screens](src/screens): onboarding and the key ceremony, downpipe and source management,
+  run history, the restore drill and restore flow, keys, settings and the security centre.
+- [Recovery sheet](src/recovery-sheet.ts): the printable offline recovery sheet rendered
+  into a blob document with its own opaque origin.
+
+## What it does
+
+- Onboarding wizard: connect to the in-account engine, run the key ceremony, then a
+  configure step that shows the exact engine wiring and polls until the engine reports it
+  is configured.
+- Downpipe and source management: create downpipes singly or in bulk with a live cost
+  projection.
+- Run history, a restore drill, and a restore flow that dry-runs and verifies a sealed run
+  before anything is written back. Restore is on the recovery path and is never gated by
+  the licence.
+
+## Build and test
+
+- [README](README.md): overview, security model and the build commands.
+- [package.json](package.json): `npm run build` bundles the SPA, `npm run validate` runs
+  the node validators, `npm run test:vitest` runs the Workers-pool tests, `npm run
+  typecheck` runs `tsc --noEmit`.
+- The console serves no public API of its own; it is a thin client of the engine admin API.
+
+## Recovery
+
+- The recover-forever guarantee lives in the MIT Go reader (the `downpipe` tool), not this
+  console. Sealed archives carry the `downpipe/0.1.0` format identifier, which is versioned by
+  semver rather than frozen: while the major is 0, a change to a byte-level rule bumps the minor
+  and is a new format identity, so a reader accepts exactly `downpipe/0.1.x`. The identifier is
+  also a key-derivation label, so two identities derive different keys. Archives can be read
+  offline with that tool even if this console and the engine are gone.

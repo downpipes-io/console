@@ -1,0 +1,27 @@
+{
+  // Node-targeted type-check of the console's test surface. tsconfig.json includes only "src", so
+  // the validate-*.ts scripts in test/ (run via `node`, and the console's real test surface) are not
+  // type-checked by `npm run typecheck`, and the validate chain executes them under type stripping,
+  // which runs a file without checking it.
+  //
+  // This extends the main config so every strictness flag stays identical (strict,
+  // noUncheckedIndexedAccess, exactOptionalPropertyTypes), or the check would be weaker than the one
+  // src gets and would pass things src would reject. It adds the Node ambient types the scripts need
+  // (process, Buffer, node:fs and the like) on top of the DOM lib the console targets. The validators
+  // import sibling source files WITH the .ts extension, so allowImportingTsExtensions must stay on,
+  // and it is inherited.
+  //
+  // Wired in as `npm run typecheck:test`, and run from `npm run validate` so the chain type-checks the
+  // files it is about to execute.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "test"],
+  // test/vitest is INCLUDED: vitest does not type-check unless `typecheck` is enabled in its config, and
+  // it is not, so `vitest run` executes those files without checking them. It imports its
+  // describe/it/expect from vitest explicitly rather than relying on injected globals, so the Node type
+  // context suits it and it checks clean here.
+  "exclude": []
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "test/validate-*.ts",
+    "test/**/*.test.ts",
+    "test/cov/**",
+    "test/property/*.ts",
+    "scripts/*.mjs"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "scripts/**/*.mjs"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "tags": [
+    "-knipignore"
+  ],
+  "ignoreBinaries": [
+    "go"
+  ],
+  "ignoreDependencies": [
+    "@stryker-mutator/command-runner"
+  ]
+}

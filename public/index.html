@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>downpipes console</title>
+    <!--
+      The single sanctioned inline script. It runs before first paint to set the theme so
+      there is no flash of the wrong skin. Obsidian (dark) is the default skin when no
+      preference is stored. The three-way control is System / Light / Dark, persisted to
+      localStorage under "dp-theme"; "system" defers to prefers-color-scheme (no
+      data-theme attribute is written, so the media query in tokens.css applies).
+      Wrapped in a try/catch so a blocked localStorage never breaks the load. In production
+      this is allowed by a CSP hash or nonce; it loads nothing.
+    -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem("dp-theme");
+          // Unset -> Obsidian (dark) is the default skin.
+          if (pref !== "light" && pref !== "dark" && pref !== "system") pref = "dark";
+          var root = document.documentElement;
+          if (pref === "light" || pref === "dark") {
+            root.setAttribute("data-theme", pref);
+          } else {
+            // "system": follow prefers-color-scheme; leave the attribute unset.
+            root.removeAttribute("data-theme");
+          }
+        } catch (e) {
+          // localStorage blocked: fall back to the default skin (dark).
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+        // The accessibility preferences (lib/a11y-prefs.ts) applied before first
+        // paint so there is no flash of the un-preferred rendering. Same contract
+        // as the theme: a stored value writes the attribute; unset/system leaves
+        // the OS media queries to rule. Values are validated against the same
+        // allow-lists the module uses; anything else is ignored.
+        try {
+          var root2 = document.documentElement;
+          var attrs = {
+            "dp-a11y-motion": ["data-motion", ["reduced", "full"]],
+            "dp-a11y-contrast": ["data-contrast", ["more"]],
+            "dp-a11y-underlines": ["data-underlines", ["always"]],
+            "dp-a11y-targets": ["data-targets", ["large"]],
+            "dp-a11y-focusRing": ["data-focus", ["always"]],
+            "dp-a11y-statusPalette": ["data-status-palette", ["cvd"]]
+          };
+          for (var key in attrs) {
+            var v = localStorage.getItem(key);
+            if (v !== null && attrs[key][1].indexOf(v) !== -1) root2.setAttribute(attrs[key][0], v);
+          }
+          // data-motion resolves "system"/unset to the EFFECTIVE motion (matches applyA11yPrefs), so the
+          // opt-in [data-motion="full"] animations (canary, map flow, refetch shimmer) are correct from the
+          // first paint and never flicker static-then-animate. The OS reduced-motion query decides full vs
+          // reduced; "reduced"/"full" already set above are left as-is.
+          if (!root2.hasAttribute("data-motion")) {
+            var osReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            root2.setAttribute("data-motion", osReduced ? "reduced" : "full");
+          }
+          var ts = localStorage.getItem("dp-a11y-textSize");
+          if (ts === "112.5" || ts === "125" || ts === "150") root2.style.setProperty("font-size", ts + "%");
+        } catch (e2) {
+          // Blocked storage: defaults (System) apply.
+        }
+        // This is the one inline script the CSP sanctions (by hash). A blocked inline script and an
+        // injected inline script both report blockedURI "inline" under script-src, so the browser's own
+        // report cannot tell a broken deploy from an attack. This attribute is written only by this script
+        // actually running, so its absence on an inline violation means the sanctioned pre-paint script was
+        // blocked (for example a stale hash), and its presence means the pre-paint ran and the blocked
+        // payload is something else. Set outside the try blocks above, so a blocked localStorage still
+        // marks the run.
+        document.documentElement.setAttribute("data-prepaint", "ran");
+      })();
+    </script>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/tokens.css" />
+  </head>
+  <body>
+    <!--
+      The app mounts the shell here. Before the bundle loads, a minimal in-account
+      message renders (no vendor inbound; the break-glass key is generated in this
+      browser and stays with the operator).
+    -->
+    <div id="app">
+      <noscript>This console needs JavaScript. It runs entirely in your account and sends nothing to the vendor.</noscript>
+    </div>
+    <!-- app.js is the bundle of src/app.ts produced at deploy time. -->
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

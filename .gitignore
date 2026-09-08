@@ -1,0 +1,44 @@
+node_modules/
+dist/
+.wrangler/
+*.log
+.dev.vars
+coverage/
+.nyc_output/
+.stryker-tmp/
+
+# The release workflow's build step writes these at the repo root via shell redirection
+# (`node scripts/build-release-bundle.mjs > release-facts.json`), which creates the file
+# before the script's own git-dirty guard runs; leaving them untracked keeps that guard
+# from refusing its own output. Never committed (per-release, derived), same treatment dist/
+# already gets.
+/release-facts.json
+/SHA256SUMS.txt
+
+# public/app.js is the committed deploy artefact (gated by test/validate-bundle.ts); do NOT ignore it.
+
+# The narration renderer's local-only workstation setup (scripts/render-narration.py's own SETUP block):
+# a python venv holding kokoro-onnx, and the 350 MB model pair it is pointed at with --model. Neither
+# ships; the rendered MP3s under public/narration are what the course serves.
+.venv*/
+.narration-model/
+
+
+# --- Private key material; never commit. Fixtures under test/vectors/ are exempt. ---
+*.key
+!test/vectors/**/*.key
+*.pem
+*.p12
+*.pfx
+*-private.b64
+*-private.key
+release-signer.key
+recovery-kit/
+
+# Local visual-probe scratch (carousel/ceremony screenshots; not part of CI)
+/test/_carousel-probe.mjs
+/test/_layout-probe.mjs
+
+# Ignore a node_modules SYMLINK as well as a node_modules directory: the rule above ends in "/",
+# which git matches against directories only, so a symlinked node_modules needs this separate line.
+node_modules

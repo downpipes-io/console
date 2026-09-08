@@ -1,0 +1,21 @@
+{
+  "//": "Coverage gate for the console's screen layer. It is a separate config rather than a lower aggregate on the main gate, so folding it in cannot drag the 90 per cent floor the rest of src already holds.",
+  "//thresholds": "Ratchet, not a target: floors sit at the current measured baseline so the gate blocks a regression. Raise these as coverage improves; never lower them.",
+  "include": [
+    "src/screens/**/*.ts"
+  ],
+  "exclude": [
+    "src/screens/**/*-types.ts"
+  ],
+  "all": true,
+  "reporter": [
+    "text-summary",
+    "json-summary"
+  ],
+  "reports-dir": "coverage/c8-screens",
+  "check-coverage": true,
+  "lines": 70,
+  "statements": 70,
+  "functions": 60,
+  "branches": 76
+}
