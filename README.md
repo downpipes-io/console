@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-<h1 align="center">downpipes/console</h1>
+<h1 align="center">downpipes-io/console</h1>
 
 <p align="center">The in-account console for downpipes. Every action in the browser; nothing for customers to run in a terminal after deploy.</p>
 
