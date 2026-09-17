@@ -55,7 +55,6 @@ import {
 // keeps the public import surface of screens/passkey.ts byte-identical.
 export {
   webauthnSupported,
-  readWebAuthnGlobals,
   creationOptionsFromBegin,
   requestOptionsFromBegin,
   attestationCredentialToWire,
@@ -63,11 +62,12 @@ export {
   reasonMessage,
   passkeyErrorMessage,
   recoveryTransportMessage,
-  type WebAuthnGlobals,
   type AttestationCredentialLike,
   type AssertionCredentialLike,
-  type PasskeyReason,
 } from "./passkey/ceremony.ts";
+// WebAuthnGlobals and PasskeyReason were re-exported here too, but nothing imports them through
+// this barrel path (callers use ./passkey/ceremony.ts directly), so knip's dead-export sweep
+// removed them.
 export {
   runLogin,
   runStepUp,

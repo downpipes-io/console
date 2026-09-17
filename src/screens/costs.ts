@@ -46,8 +46,9 @@ import { CostView } from "./costs/view.ts";
 // Re-exports: the cost-model validator imports the observed-seed derivation and its result
 // type from this module, so the split keeps its import working unchanged.
 export { summariseHistory, costBySourceType } from "./costs/seed.ts";
-export type { SourceTypeCostRow } from "./costs/seed.ts";
-export type { HistoryLoad } from "./costs/helpers.ts";
+// SourceTypeCostRow (from ./costs/seed.ts) and HistoryLoad (from ./costs/helpers.ts) were
+// re-exported here too, but nothing imports them through this barrel path (callers use those
+// leaves directly), so knip's dead-export sweep removed them.
 
 // ---------------------------------------------------------------------------
 // The descriptor

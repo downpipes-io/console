@@ -14,9 +14,11 @@
 export { roleRank, hasRole } from "./lib/identity.ts";
 export type { Role, AuthMethod } from "./lib/identity.ts";
 // Re-export the custom-role model so callers that read the engine's custom-role CRUD + assignment from
-// api.ts get the same types (CustomRole/CustomRoleProposal/Capability/Presentation/SurfaceMode) without
-// a second import; the single source of truth still lives in lib/identity.ts (the engine mirror).
-export type { Capability, CustomRole, CustomRoleProposal, Presentation, SurfaceMode } from "./lib/identity.ts";
+// api.ts get the same type (CustomRole) without a second import; the single source of truth still lives
+// in lib/identity.ts (the engine mirror). Capability/CustomRoleProposal/Presentation/SurfaceMode were
+// re-exported here too, but nothing imports them through this barrel path (they are imported directly
+// from lib/identity.ts), so knip's dead-export sweep removed them; import them from lib/identity.ts.
+export type { CustomRole } from "./lib/identity.ts";
 
 // The wire/mirror types + the runtime guards, and the EngineClient itself, re-exported verbatim so the
 // barrel's surface is unchanged.

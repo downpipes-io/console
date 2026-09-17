@@ -1154,6 +1154,8 @@ function renderRequestPanel(engine: EngineClient, plan: RestorePlan, req: Restor
 }
 
 // The receipt (IA screen 5, trust-closing) and its applied-result classifier now live in
-// receipt.ts. restoreOutcome / RestoreOutcome / RestoreOutcomeKind are re-exported here so test
-// and screen importers of this module are unchanged.
-export { type RestoreOutcome, type RestoreOutcomeKind, restoreOutcome } from "./receipt.ts";
+// receipt.ts. restoreOutcome is re-exported here so test and screen importers of this module are
+// unchanged. RestoreOutcome / RestoreOutcomeKind were re-exported here too, but nothing imports
+// them through this barrel path (callers use ./receipt.ts directly), so knip's dead-export sweep
+// removed them.
+export { restoreOutcome } from "./receipt.ts";

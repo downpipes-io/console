@@ -25,8 +25,10 @@ export interface ResourceUsage {
   kvWrites: number;
 }
 
-// ZERO_USAGE is the additive identity, used to seed sums and to fill omitted fields.
-export const ZERO_USAGE: Readonly<ResourceUsage> = {
+// ZERO_USAGE is the additive identity, used by usageWithDefaults below to fill omitted fields.
+// Not exported: nothing outside this file imports it, so knip's dead-export sweep dropped the
+// `export` keyword; it stays module-private.
+const ZERO_USAGE: Readonly<ResourceUsage> = {
   workerRequests: 0,
   workerCpuMs: 0,
   doRequests: 0,
@@ -43,16 +45,16 @@ export const ZERO_USAGE: Readonly<ResourceUsage> = {
 // non-negative number. Total: a partial (even empty) object yields a complete, valid usage.
 export function usageWithDefaults(partial: Partial<ResourceUsage>): ResourceUsage {
   return {
-    workerRequests: nonNeg(partial.workerRequests ?? 0),
-    workerCpuMs: nonNeg(partial.workerCpuMs ?? 0),
-    doRequests: nonNeg(partial.doRequests ?? 0),
-    doDurationGbS: nonNeg(partial.doDurationGbS ?? 0),
-    d1RowsRead: nonNeg(partial.d1RowsRead ?? 0),
-    d1RowsWritten: nonNeg(partial.d1RowsWritten ?? 0),
-    r2ClassA: nonNeg(partial.r2ClassA ?? 0),
-    r2ClassB: nonNeg(partial.r2ClassB ?? 0),
-    kvReads: nonNeg(partial.kvReads ?? 0),
-    kvWrites: nonNeg(partial.kvWrites ?? 0),
+    workerRequests: nonNeg(partial.workerRequests ?? ZERO_USAGE.workerRequests),
+    workerCpuMs: nonNeg(partial.workerCpuMs ?? ZERO_USAGE.workerCpuMs),
+    doRequests: nonNeg(partial.doRequests ?? ZERO_USAGE.doRequests),
+    doDurationGbS: nonNeg(partial.doDurationGbS ?? ZERO_USAGE.doDurationGbS),
+    d1RowsRead: nonNeg(partial.d1RowsRead ?? ZERO_USAGE.d1RowsRead),
+    d1RowsWritten: nonNeg(partial.d1RowsWritten ?? ZERO_USAGE.d1RowsWritten),
+    r2ClassA: nonNeg(partial.r2ClassA ?? ZERO_USAGE.r2ClassA),
+    r2ClassB: nonNeg(partial.r2ClassB ?? ZERO_USAGE.r2ClassB),
+    kvReads: nonNeg(partial.kvReads ?? ZERO_USAGE.kvReads),
+    kvWrites: nonNeg(partial.kvWrites ?? ZERO_USAGE.kvWrites),
   };
 }
 

@@ -61,8 +61,10 @@ import { renderMap, screenActions, MAP_ROUTE, type Screen } from "./map/view.ts"
 // future caller that keys off the coordinator keeps a stable surface; they are otherwise
 // screen-internal. These all live in the pure, DOM-free leaf so the validator runs them in
 // Node without a DOM.
-export { mapDownpipesToFlows, classifyFreshness, cadenceSecondsOf, downpipeIdOf } from "./map/data.ts";
-export type { CoreFreshness, FreshnessInput } from "./map/data.ts";
+export { mapDownpipesToFlows, classifyFreshness, cadenceSecondsOf } from "./map/data.ts";
+// FreshnessInput was re-exported here too, but nothing imports it through this barrel path
+// (callers use ./map/data.ts directly), so knip's dead-export sweep removed it.
+export type { CoreFreshness } from "./map/data.ts";
 
 export const mapScreen: Screen = {
   route: MAP_ROUTE,

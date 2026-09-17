@@ -41,10 +41,11 @@ import { mountFullOverview } from "./overview/mount.ts";
 
 // Re-exports: external callers import these from this module, so the split keeps their
 // imports working unchanged. The view-mode / freshness / cost-model validators read the
-// fleet + cost derivations and the executive/technical builders; the OverviewData /
-// FleetSummary / Settled types are the parameter types those builders take.
+// fleet + cost derivations and the executive/technical builders; the OverviewData / Settled types
+// are the parameter types those builders take. FleetSummary was re-exported here too, but nothing
+// imports it through this barrel path (callers use ./overview/shared.ts directly), so knip's
+// dead-export sweep removed it.
 export type {
-  FleetSummary,
   OverviewData,
   Settled,
 } from "./overview/shared.ts";
@@ -53,18 +54,20 @@ export { buildOverview } from "./overview/build.ts";
 // The Cloudflare-coverage hero's pure per-surface status function (exhaustively unit-tested) + its types.
 // Re-exported so the surface-coverage validator imports them here (the barrel), like the other builders.
 // The renderer (buildSurfaceCoverageGrid) is imported directly by build.ts / executive.ts, so it is not
-// re-exported here.
+// re-exported here. DiscoveryFailure was re-exported here too, but nothing imports it through this
+// barrel path (callers use ./overview/surface-coverage.ts directly), so knip's dead-export sweep
+// removed it.
 export {
   surfaceCoverage,
   discoveryFailureClass,
   discoveryFailureNote,
-  type DiscoveryFailure,
   type SurfaceType,
   type SurfaceState,
   type SurfaceCoverage,
 } from "./overview/surface-coverage.ts";
+// ExecVerdict was re-exported here too, but nothing imports it through this barrel path (callers
+// use ./overview/executive.ts directly), so knip's dead-export sweep removed it.
 export {
-  type ExecVerdict,
   type ExecAnswer,
   executiveAnswers,
   buildExecutiveOverview,

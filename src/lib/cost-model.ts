@@ -44,7 +44,6 @@
 
 export {
   BYTES_PER_GB,
-  CADENCE_RUNS_PER_MONTH,
   CADENCE_SECONDS,
   cadenceSecondsToRunsPerMonth,
   cadenceToRunsPerMonth,
@@ -76,20 +75,22 @@ export {
   storedBytesRetained,
   storedSize,
 } from "./cost-model-estimate.ts";
+// MonthlyCostOptions/ProjectionPoint/ProjectOptions/Regime were re-exported here too, but nothing
+// imports them through this barrel path (callers use cost-model-estimate.ts directly), so knip's
+// dead-export sweep removed them.
 export type {
   CostBreakdown,
-  MonthlyCostOptions,
   Projection,
-  ProjectionPoint,
-  ProjectOptions,
-  Regime,
   RegimeProjection,
 } from "./cost-model-estimate.ts";
 
 // --- The derived views (cost-model-views.ts) ----------------------------------
 
 export { costOfRetention, drillCostOnce, perRunCost, restoreCostOnce, sensitivity } from "./cost-model-views.ts";
-export type { DrillCostOptions, RestoreCostOptions, SensitivityAxis, SensitivityOptions, SensitivityPoint } from "./cost-model-views.ts";
+// DrillCostOptions/RestoreCostOptions/SensitivityAxis/SensitivityOptions were re-exported here too,
+// but nothing imports them through this barrel path (callers use cost-model-views.ts directly), so
+// knip's dead-export sweep removed them.
+export type { SensitivityPoint } from "./cost-model-views.ts";
 
 // --- The Cloudflare-platform and capacity ledger (cost-model-platform.ts) ------
 // The "cost to RUN the backup" (Workers/DO/D1/KV/R2 operations in the customer's own account),
@@ -101,41 +102,32 @@ export {
   addUsage,
   applySafetyMargin,
   capacity,
-  CF_API_RATE_LIMIT_PER_SECOND,
+  /** @knipignore Cost-model API constant for the optional Cloudflare-source-of-truth path; part of the module surface. */
   CF_INCLUDED,
   CF_RATES,
   clampMargin,
   estimateRunUsage,
+  /** @knipignore Cost-model API helper (byte to GB display); part of the module surface. */
   gbMonth,
-  PER_INVOCATION_SUBREQUEST_BUDGET,
   PER_RUN_OVERHEAD,
   platformCost,
-  profileFor,
   recurringEstimate,
   replicationCost,
   rollupStorage,
   SAFETY_MARGIN_DEFAULT,
-  SAFETY_MARGIN_MAX,
   SAFETY_MARGIN_SLIDER_MAX,
   SAFETY_MARGIN_SLIDER_STEP,
   scaleUsage,
-  SOURCE_COST_PROFILES,
   usageFromOpCounts,
   usageWithDefaults,
   WORKERS_PAID_BASE_USD,
-  ZERO_USAGE,
 } from "./cost-model-platform.ts";
+// Archetype/CloudflareRates/PlatformBreakdown/PlatformCostOptions/RecurringEstimateOptions/
+// ResourceUsage/RunObservation/SourceCostProfile/SourceType were re-exported here too, but nothing
+// imports them through this barrel path (callers use cost-model-platform.ts directly), so knip's
+// dead-export sweep removed them.
 export type {
-  Archetype,
   CapacityEstimate,
-  CloudflareRates,
   OpCountsLike,
-  PlatformBreakdown,
-  PlatformCostOptions,
   RecurringEstimate,
-  RecurringEstimateOptions,
-  ResourceUsage,
-  RunObservation,
-  SourceCostProfile,
-  SourceType,
 } from "./cost-model-platform.ts";

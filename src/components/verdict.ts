@@ -28,7 +28,7 @@ import {
   ICON_CHECK,
   ICON_X_CIRCLE,
 } from "../lib/icons.ts";
-import { accessChip, type AccessVerdict } from "./trust-chips.ts";
+import type { AccessVerdict } from "./trust-chips.ts";
 
 // The three honest tones a verdict surface can carry. "trust" is the verified teal
 // family (distinct from action and from ok-status); "warn" is the cautious amber;
@@ -286,8 +286,4 @@ export function verdictSurface(opts: {
   return card;
 }
 
-// A small re-export so a screen that wants the compact chip and the panel imports both
-// from one trust surface module, while the chip's honest verdict logic stays single-
-// sourced in trust-chips.ts (no duplication of this security-critical mapping).
-export { accessChip };
 export type { AccessVerdict };

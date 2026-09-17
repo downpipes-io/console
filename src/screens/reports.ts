@@ -72,13 +72,14 @@ import {
 // Re-export the pure helpers and value types so existing importers and the validator
 // (test/validate-reports.ts imports these from this module) are unchanged after the
 // move into sibling modules.
+// SignatureState and RtoLine were re-exported here too, but nothing imports them through this
+// barrel path (callers use ./reports-helpers.ts directly), so knip's dead-export sweep removed
+// them.
 export {
   signatureState,
   periodPhrase,
   humanSeconds,
   rtoEstimateLine,
-  type SignatureState,
-  type RtoLine,
 } from "./reports-helpers.ts";
 
 // ---------------------------------------------------------------------------

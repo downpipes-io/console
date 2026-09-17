@@ -35,8 +35,8 @@
 //   - dom-shim-document.ts  installDomShim + the localStorage helpers
 //   - dom-shim-bridges.ts   qs / qsa / textOf / classesOf / keydown / focus + flush helpers
 
-export type { ShimEvent, ShimEventInit, MemoryStorage } from "./dom-shim-types.ts";
-export { ShimNode, ShimElement } from "./dom-shim-core.ts";
+export type { ShimEvent } from "./dom-shim-types.ts";
+export { ShimNode } from "./dom-shim-core.ts";
 export {
   clipboardWrites,
   resetClipboard,
@@ -46,7 +46,6 @@ export {
 export {
   installBlockedStorage,
   installDomShim,
-  makeMemoryStorage,
   restoreMemoryStorage,
 } from "./dom-shim-document.ts";
 export {

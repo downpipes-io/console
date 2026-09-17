@@ -163,7 +163,6 @@ export {
   channelReasonClassFor,
   clampInt,
   clampNonNegInt,
-  classifyChannelReason,
   currentScreen,
   errorClassForError,
   faultClassForError,

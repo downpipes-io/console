@@ -33,7 +33,9 @@ import { UPDATES_HEADING_ID } from "./licence/shared.ts";
 // fault, not the benign "unstamped build" absence), re-exported for the same validator. It lives beside its
 // only consumer (the provenance card) so the shared leaf stays inside the max-lines budget.
 export { ARTEFACT_STAMP_MALFORMED_LINE, artefactStampMalformed } from "./licence/provenance.ts";
-export type { ComponentRow, RecordedSettleOutcome, UpdateControlState } from "./licence/shared.ts";
+// ComponentRow/RecordedSettleOutcome/UpdateControlState were re-exported here too, but nothing
+// imports them through this barrel path (callers use ./licence/shared.ts directly), so knip's
+// dead-export sweep removed them.
 // Re-exports: the commercial-model validator (test/validate-licence.ts) imports the safe-apply state
 // machine, the release-metadata helpers and the update gate capability BY NAME from this module. They live
 // in the ./licence/shared.ts leaf (all pure + DOM-free, so importing them in Node never touches a DOM);

@@ -12,7 +12,7 @@
 // from within a drawer). Motion is a short fade/scale gated on reduced motion by
 // the global rule in tokens.css. No framework, no dependency; just the DOM.
 
-import { clear, h, svgIcon } from "../lib/dom.ts";
+import { h, svgIcon } from "../lib/dom.ts";
 import { ICON_ALERT } from "../lib/icons.ts";
 
 // A mounted overlay handle. close() tears it down and restores focus; the el is the
@@ -361,9 +361,6 @@ function severityChip(severity: "warn" | "danger"): HTMLElement {
   chip.appendChild(svgIcon(ICON_ALERT, { size: 16 }));
   return chip;
 }
-
-// clearNode is a re-export of the dom.ts clear helper for callers that rebuild a dialog body in place.
-export { clear as clearNode };
 
 // isOverlayOpen reports whether ANY overlay is currently mounted (modal, drawer, confirm,
 // wizard step, or the command palette: every one of them is built via dialogSurface and
