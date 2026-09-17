@@ -36,7 +36,7 @@ Every server-supplied string is HTML-escaped before it reaches the DOM, the stri
 
 ## Architecture
 
-A deliberately boring, auditable shape: one static Worker serving one esbuild bundle (no UI framework: vanilla TypeScript plus the pinned @noble crypto libraries; canvas-rendered visualisations; 1.2 MiB / 358 KiB gzipped), plus the engine's admin API as the single data source. The committed`public/app.js` is the built artefact the worker serves, and the validate chain includes a determinism guard proving the committed bundle byte-matches a clean rebuild.
+A deliberately boring, auditable shape: one static Worker serving one esbuild bundle (no UI framework: vanilla TypeScript plus the pinned @noble crypto libraries; canvas-rendered visualisations; 1.2 MiB / 358 KiB gzipped), plus the engine's admin API as the single data source. The committed `public/app.js` is the built artefact the worker serves, and the validate chain includes a determinism guard proving the committed bundle byte-matches a clean rebuild.
 
 ```bash
 npm install

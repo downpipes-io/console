@@ -1,4 +1,5 @@
-/*   downpipes console: production design system (tokens + base primitives + shell)
+/* =============================================================================
+   downpipes console: production design system (tokens + base primitives + shell)
    Single source of truth for the bespoke, zero-dependency design system, served
    same-origin as one <link> (no CDN, no web font, no @import of anything remote).
 
@@ -22,10 +23,13 @@
 
    House rules honoured: Australian English in comments, no AI attribution,
    precise wording. Contrast targets: WCAG 2.2 AA (4.5:1 body text, 3:1 large
-   text / UI component boundaries and focus indicator) in BOTH themes.*/
+   text / UI component boundaries and focus indicator) in BOTH themes.
+   ========================================================================== */
 
-/*   1. Raw palette ramps (the only place raw colours live). Never reference these
-   directly from a component; reference the semantic tokens in section 2.*/
+/* -----------------------------------------------------------------------------
+   1. Raw palette ramps (the only place raw colours live). Never reference these
+   directly from a component; reference the semantic tokens in section 2.
+   -------------------------------------------------------------------------- */
 :root {
   /* Cool neutral ramp */
   --n-0:   #ffffff;
@@ -83,8 +87,10 @@
   --info-100:#dcecfd;  --info-200:#aecff7;  --info-500:#1763c4;  --info-600:#1250a0;
   --info-150d:#132a45;  --info-300d:#74acf0;
 
-  /*     Scales that are theme-independent (spacing, type, radius, motion, z-index).
-     Defined once here; never overridden per theme.*/
+  /* ---------------------------------------------------------------------------
+     Scales that are theme-independent (spacing, type, radius, motion, z-index).
+     Defined once here; never overridden per theme.
+     ------------------------------------------------------------------------ */
 
   /* Spacing: 4px base, geometric-ish ramp. Every margin/padding/gap uses these. */
   --space-1:  4px;
@@ -167,7 +173,9 @@
   --z-tooltip: 600;
 }
 
-/* 2. Semantic tokens: LIGHT (the light companion). Components reference only these. */
+/* -----------------------------------------------------------------------------
+   2. Semantic tokens: LIGHT (the light companion). Components reference only these.
+   -------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
@@ -280,10 +288,12 @@
   --hatch: rgba(0, 0, 0, 0.42);
 }
 
-/*   3. Semantic tokens: DARK (Obsidian, the default skin). Applied via
+/* -----------------------------------------------------------------------------
+   3. Semantic tokens: DARK (Obsidian, the default skin). Applied via
    prefers-color-scheme (the System setting) and the explicit override. Dark is
    NOT an inversion: accents desaturate, surfaces step up in lightness for
-   elevation, shadows soften, text is near-white.*/
+   elevation, shadows soften, text is near-white.
+   -------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
@@ -437,7 +447,9 @@
 /* Light override also wins, for an OS-dark user who forces light. */
 :root[data-theme="light"] { color-scheme: light; }
 
-/* 4. Base + reset (minimal, opinionated). Self-contained; no normalize dep. */
+/* =============================================================================
+   4. Base + reset (minimal, opinionated). Self-contained; no normalize dep.
+   ========================================================================== */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
 /* The HTML `hidden` attribute must win over a display utility. The browser's
@@ -526,8 +538,10 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
   border-radius: var(--radius-sm);
 }
 
-/*   5. Base primitives. Enough to build the shell and screens directly. Each is a
-   thin, token-driven class.*/
+/* =============================================================================
+   5. Base primitives. Enough to build the shell and screens directly. Each is a
+   thin, token-driven class.
+   ========================================================================== */
 
 /* ---- Button --------------------------------------------------------------- */
 .btn {
@@ -952,9 +966,11 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
 }
 .hr { border: none; border-top: 1px solid var(--border-subtle); margin: var(--space-5) 0; }
 
-/*   6. App shell. A CSS grid
+/* =============================================================================
+   6. App shell. A CSS grid
    of three zones: nav rail, context bar, main. The rail collapses to an icon
-   strip on narrow viewports and on demand; on Compact it becomes a slide-over.*/
+   strip on narrow viewports and on demand; on Compact it becomes a slide-over.
+   ========================================================================== */
 
 .shell {
   display: grid;
@@ -1184,8 +1200,10 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
   background: var(--backdrop); z-index: var(--z-drawer);
 }
 
-/*   7. Responsive shell. Container
-   queries are preferred for components; viewport media queries drive the shell.*/
+/* =============================================================================
+   7. Responsive shell. Container
+   queries are preferred for components; viewport media queries drive the shell.
+   ========================================================================== */
 
 /* Medium and below: the rail can collapse to an icon strip; show the toggle. */
 @media (max-width: 1023px) {
@@ -1266,7 +1284,9 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
   .main { padding-left: var(--space-8); padding-right: var(--space-8); }
 }
 
-/* 8. Motion + animation keyframes (all gated on reduced-motion below). */
+/* =============================================================================
+   8. Motion + animation keyframes (all gated on reduced-motion below).
+   ========================================================================== */
 @keyframes dp-spin { to { transform: rotate(360deg); } }
 @keyframes dp-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes dp-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -1328,9 +1348,11 @@ body.dp-tour-panel .ob-page { padding-bottom: var(--dp-tour-panel-h, 0px); }
   animation: dp-shimmer 1.4s ease-in-out infinite;
 }
 
-/*   9. prefers-reduced-motion: HARD gate. Disable non-essential motion; keep
+/* =============================================================================
+   9. prefers-reduced-motion: HARD gate. Disable non-essential motion; keep
    information visible (skeletons fall back to a static tint, spinners freeze
-   into a static ring, transitions collapse to instant). Never hide info.*/
+   into a static ring, transitions collapse to instant). Never hide info.
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -1345,9 +1367,11 @@ body.dp-tour-panel .ob-page { padding-bottom: var(--dp-tour-panel-h, 0px); }
   .btn__spinner { animation: none; opacity: 0.6; }
 }
 
-/*   9.5 Higher-order components: the primitives the screens
+/* =============================================================================
+   9.5 Higher-order components: the primitives the screens
    compose. Built only from the semantic tokens above. Overlays (dialog, drawer,
-   toast) are the only shadowed surfaces; flat surfaces use border + lightness.*/
+   toast) are the only shadowed surfaces; flat surfaces use border + lightness.
+   ========================================================================== */
 
 /* ---- Overlay engine: backdrop + dialog (modal) + drawer ------------------- */
 .overlay {
@@ -1961,11 +1985,13 @@ button.cal-day--available:hover { filter: brightness(0.96); }
 .conn-row__copy { flex: none; }
 .stat__value-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 
-/*   9.6 Shared components: the reusable, Obsidian-led
+/* =============================================================================
+   9.6 Shared components: the reusable, Obsidian-led
    components the screens consume. Built only from the semantic tokens above, so
    each themes for free in Obsidian and the light companion. Contrast is a gate
    (WCAG 2.2 AA): status is hue + shape + label, focus rings clear 3:1, control
-   boundaries use --control-border.*/
+   boundaries use --control-border.
+   ========================================================================== */
 
 /* ---- Stat tile additions (label/value/secondary + status line + spark) ----- */
 .stat__value { font-size: var(--text-2xl); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: var(--tracking-tight); }
@@ -2169,13 +2195,15 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .dt-bulkbar__actions { margin-left: 0; width: 100%; }
 }
 
-/*   9b. Sources + downpipes screen (screen 2): the source-type pills, the
+/* =============================================================================
+   9b. Sources + downpipes screen (screen 2): the source-type pills, the
    create/edit drawer's segmented source-type control + Secrets repeater, the
    schedule preset picker, the live KV cost projection with its bill-shock warn
    state, the destination clarity block, the freshness/next-run cues, and the
    bulk partial-success summary. All composed from the semantic token layer so
    they theme for free in Obsidian (dark default) and the light companion;
-   status is hue + shape + label, never colour alone.*/
+   status is hue + shape + label, never colour alone.
+   ========================================================================== */
 
 /* Source-type pill: a small, uppercase, hue-coded chip carrying a glyph + the
    type word (KV / R2 / Secrets / D1), so the source layer reads at a glance.
@@ -2349,14 +2377,16 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .secrets-repeater__del { grid-column: 1 / -1; justify-self: start; }
 }
 
-/*   9.7 Restore-flow screen. The elevated
+/* =============================================================================
+   9.7 Restore-flow screen. The elevated
    composites the restore hero and run context need beyond the shared components
    layer: the two-column workspace, the rich run-detail facts, the restore-flow
    stepper, the two-distinct target-choice cards, the dry-run review hero (impact
    banner + figure grid + resolved-destinations + integrity line), and the receipt
    (clean + honest-partial). Built ONLY from the semantic tokens above, so each
    themes for free in Obsidian and the light companion; status is hue + shape +
-   label; focus rings clear 3:1; the layout reflows to 320px.*/
+   label; focus rings clear 3:1; the layout reflows to 320px.
+   ========================================================================== */
 
 /* The two-column workspace: run context (left) + the restore flow (right). The
    flow is the primary column, so it leads on a single column at narrow widths. */
@@ -2652,14 +2682,16 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .restore-steps { gap: var(--space-1); }
 }
 
-/*   9.9 Onboarding wizard + key ceremony (screens/onboarding-ceremony.ts; IA
+/* =============================================================================
+   9.9 Onboarding wizard + key ceremony (screens/onboarding-ceremony.ts; IA
    screen 10). The full-bleed first-run chrome: a slim top bar (brand + the
    persistent no-custody line + the live theme control), a step rail, and the
    centred content column. Built only from the semantic tokens, so it themes for
    free (Obsidian default + light companion). Status is hue + SHAPE + label;
    focus-visible is the global ring; reflows to a single column on Compact and to
    320px. The wizard runs WITHOUT the app shell (the one shell exception), so this
-   composition supplies its own page chrome.*/
+   composition supplies its own page chrome.
+   ========================================================================== */
 .ob-page { min-height: 100vh; display: flex; flex-direction: column; }
 .ob-skip { position: absolute; left: var(--space-2); top: -48px; z-index: var(--z-tooltip); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); box-shadow: var(--shadow); transition: top var(--dur) var(--ease-out); }
 .ob-skip:focus-visible { top: var(--space-2); }
@@ -2816,9 +2848,11 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .ob-theme__label { display: none; }
 }
 
-/*   10. Print: the recovery sheet and audit/drill exports print clean. Force a
+/* =============================================================================
+   10. Print: the recovery sheet and audit/drill exports print clean. Force a
    light, ink-frugal palette regardless of theme. Self-contained so the sheet
-   prints without the app stylesheet. The shell chrome is not printed.*/
+   prints without the app stylesheet. The shell chrome is not printed.
+   ========================================================================== */
 @media print {
   :root, :root[data-theme="dark"] {
     color-scheme: light;
@@ -2852,10 +2886,12 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.85em; color: #333333; }
 }
 
-/*   11. Missing structural classes.
+/* =============================================================================
+   11. Missing structural classes.
    The three confirmed-missing groups (switch, stack/stack-sm, async-region)
    plus one further gap (confirm-body) found by a completeness sweep.
-   All built only from the semantic token layer so both themes apply for free.*/
+   All built only from the semantic token layer so both themes apply for free.
+   ========================================================================== */
 
 /* ---- Enable / disable switch (A) ------------------------------------------
    Markup: <span class="switch">
@@ -2874,7 +2910,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
        Dark:  --a-400d (#84a4ff) on --n-850 (#1a1e25), 5.55:1. PASS.
      Thumb fill: --surface (white / near-black), visually distinct shape.
    Shape redundancy: the thumb position (left vs right) distinguishes the
-   checked state independent of colour, satisfying WCAG 1.4.1 and 1.4.11.*/
+   checked state independent of colour, satisfying WCAG 1.4.1 and 1.4.11.
+   -------------------------------------------------------------------------- */
 .switch {
   position: relative;
   display: inline-flex;
@@ -2929,7 +2966,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 /* ---- Vertical-rhythm utilities (B) ----------------------------------------
    Used as the sole layout class on the primary step regions of the restore
    hero flow. .stack-sm is the tighter sibling. No specificity fights: these
-   are additive gap utilities only.*/
+   are additive gap utilities only.
+   -------------------------------------------------------------------------- */
 /* minmax(0, 1fr), never the implicit `auto` column a plain single-column grid gets. A single-column grid with no
    template declares one IMPLICIT track sized `auto`, and an auto track's floor is the widest min-content
    among its items. A stack holding a <pre> (white-space:pre, so its min-content is the longest line), a
@@ -2955,7 +2993,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    faint rounded TRACK plus a COMET -
    a rounded indigo-to-teal segment that glides end to end on an eased
    ping-pong, so there is no restart pop and the motion reads as deliberate.
-   Reduced-motion users get a static 2px accent strip (no animation).*/
+   Reduced-motion users get a static 2px accent strip (no animation).
+   -------------------------------------------------------------------------- */
 .async-region { position: relative; }
 
 .async-region.is-refetching::before {
@@ -2998,10 +3037,12 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    The wrapper div inside a confirm dialog that holds the impact sentence, any
    extra nodes, and the typed-confirmation field. Needs a vertical stack layout
    so each child flows top-to-bottom with consistent gap; no inline style
-   covers this element.*/
+   covers this element.
+   -------------------------------------------------------------------------- */
 .confirm-body { display: flex; flex-direction: column; gap: var(--space-3); }
 
-/*   12. Topology map + cost calculator (the /map and /costs centrepieces).
+/* =============================================================================
+   12. Topology map + cost calculator (the /map and /costs centrepieces).
    Built only from the semantic + trust token layer above, so both Obsidian
    (dark default) and the light companion apply with no per-theme overrides.
    Class hooks are taken verbatim from components/topology.ts and
@@ -3016,7 +3057,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
      stale    -> warn   (amber: --warn / --warn-bg / --warn-border)
      failed   -> danger (--danger / --danger-bg / --danger-border)
      disabled -> neutral (--neutral / --neutral-bg / --neutral-fg)
-     unknown  -> neutral (--neutral ...; shape, not hue, separates it from disabled)*/
+     unknown  -> neutral (--neutral ...; shape, not hue, separates it from disabled)
+   ========================================================================== */
 
 /* ---- Topology: the component root + the screen chrome around it ------------ */
 .topo { display: block; }
@@ -3356,7 +3398,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 
 @keyframes dp-topo-ambient { to { stroke-dashoffset: -46; } }
 
-/*   Live-flow (/map, WebGL view): the GPU-accelerated, opt-in spectacle over the
+/* =============================================================================
+   Live-flow (/map, WebGL view): the GPU-accelerated, opt-in spectacle over the
    same data as the SVG topology (ENTERPRISE-UX-BLUEPRINT 8.2). The canvas is a
    pure visual enhancement: it sits in the same recessed instrument panel as the
    SVG figure (the faint trust wash radiates from the engine hub at the centre
@@ -3366,7 +3409,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    no responsive intrinsic box; unstyled it renders at the 300x150 default,
    which is exactly what the view shipped as before this layer existed), and
    the GL controller multiplies the CSS box by devicePixelRatio for a crisp
-   raster.*/
+   raster.
+   ========================================================================== */
 .live-flow { display: block; }
 .live-flow__figure {
   margin: 0;
@@ -3546,14 +3590,16 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 .ob-flow-embed .live-flow__canvas { height: 132px; }
 .ob-flow-embed .live-flow__figure { padding: var(--space-3); }
 
-/*   Aurora backdrop: the OPT-IN depth skin. A faint three-hue wash (indigo accent, teal, violet)
+/* =============================================================================
+   Aurora backdrop: the OPT-IN depth skin. A faint three-hue wash (indigo accent, teal, violet)
    in huge blurred blobs drifting very slowly behind the app canvas. Hidden
    unless the operator sets data-aurora="on" (the Settings toggle via
    lib/aurora-pref.ts). Purely decorative: aria-hidden, pointer-events none,
    carries no information, never prints, and the drift sits behind the global
    prefers-reduced-motion gate above (the wash then holds as a static tint).
    The hues are the aurora direction's own values, theme-tuned (stronger in
-   the dark themes where the near-black canvas absorbs them).*/
+   the dark themes where the near-black canvas absorbs them).
+   ========================================================================== */
 :root {
   --aurora-1: rgba(59, 102, 240, 0.10);  /* indigo */
   --aurora-2: rgba(15, 157, 142, 0.08);  /* teal */
@@ -3614,13 +3660,15 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .aurora-field { display: none !important; }
 }
 
-/*   Cost calculator (/costs): inputs grid, pricing, results (stat tiles + the
+/* =============================================================================
+   Cost calculator (/costs): inputs grid, pricing, results (stat tiles + the
    projection table + the sparkline area), the assumptions panel and the mode
    toggle. Stat tiles, the projection/sensitivity data-tables and the sparklines
    are existing components with their own CSS (.stat*, .stat-grid, .dp-table*,
    .spark*); this layer is the screen's layout + the bespoke mode toggle, on the
    same tokens, so both themes apply for free. Every figure is an estimate;
-   nothing here implies a quote.*/
+   nothing here implies a quote.
+   ========================================================================== */
 
 /* The two-column inputs / pricing grid (collapses to one column when narrow;
    the screen sets the grid inline, this is the responsive collapse + a floor so
@@ -3861,12 +3909,14 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 .cost-assumptions__list li { color: var(--text); }
 
-/*   13. Overview screen layout (.ov-grid and related). The two-column
+/* =============================================================================
+   13. Overview screen layout (.ov-grid and related). The two-column
    lower region must collapse to a single column under the wide breakpoint so
    the fleet table and the side column stack on medium and compact (WCAG 1.4.10
    Reflow). Built only from the semantic token layer; both Obsidian (dark) and
    the light companion apply for free. This stylesheet is the only source of
-   these rules.*/
+   these rules.
+   ========================================================================== */
 
 /* The composite two-column layout for the overview body: wider fleet column on
    the left, narrower side column (recovery posture card, embedded maps) on the
@@ -3941,7 +3991,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 .ov-recovery .stat-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: var(--space-3); }
 @media (max-width: 480px) { .ov-recovery .stat-grid { grid-template-columns: 1fr; } }
 
-/*   14. Command palette (.cmdp and related). This stylesheet is the single
+/* =============================================================================
+   14. Command palette (.cmdp and related). This stylesheet is the single
    authoritative source for the palette rules; command-palette.ts's
    ensureStyles() is a no-op marker kept only so isolated test environments
    without the stylesheet do not re-check on every open (it injects no CSS).
@@ -3950,7 +4001,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    WCAG: the active row's 2px leading accent bar clears 3:1 against the surface
    (the tinted background alone does not, and is reinforcement only); the focus
    ring is the shared --ring; state is conveyed by the bar + tint AND
-   aria-selected, not colour alone.*/
+   aria-selected, not colour alone.
+   ========================================================================== */
 
 /* The palette anchors near the top (not centred) and sits ABOVE modals on the
    z-ladder (--z-palette > --z-modal), since it can be summoned from anywhere
@@ -4095,12 +4147,14 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .cmdp { width: calc(100vw - var(--space-4)); margin-top: 8vh; max-height: 80vh; }
 }
 
-/*   15. Calm foundation.
+/* =============================================================================
+   15. Calm foundation.
    The calm-density rules: a section is a heading + whitespace on the canvas;
    boxes are reserved for interactive or elevated objects; rhythm comes from
    space, not borders; informational notices are quiet lines, with the reserved
    tints kept for action-needed-now. These primitives carry the per-screen
-   diets.*/
+   diets.
+   ========================================================================== */
 
 /* Screen rhythm: the scaffold stacks a screen's major blocks with section-scale
    gaps, so groups form without boxes. The page-header's own margin is zeroed
@@ -4163,10 +4217,12 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 .ob-theme__btn:active:not([aria-pressed="true"]),
 .theme-option:active:not(.theme-option--active) { background: var(--surface-active); }
 
-/*   16. Forced colors (Windows High Contrast / Contrast Themes). The
+/* =============================================================================
+   16. Forced colors (Windows High Contrast / Contrast Themes). The
    system palette replaces ours, so any state carried by a background fill
    alone vanishes. Repairs: real borders so shapes survive, Highlight outlines
-   where a fill carried state, system keywords throughout (no brand colours).*/
+   where a fill carried state, system keywords throughout (no brand colours).
+   ========================================================================== */
 @media (forced-colors: active) {
   /* The switch is background-only and would otherwise disappear entirely. */
   .switch .track { border: 1px solid ButtonText; }
@@ -4196,11 +4252,13 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .skeleton { background: Canvas; border: 1px solid GrayText; }
 }
 
-/*   17. Increased contrast (prefers-contrast: more). Raises secondary
+/* =============================================================================
+   17. Increased contrast (prefers-contrast: more). Raises secondary
    text toward the primary tone, hairlines to the control-boundary tone, and
    thickens the focus ring: the practical AAA 1.4.6 tier without changing the
    default skin. The in-app setting (data-contrast="more") mirrors
-   these exact overrides.*/
+   these exact overrides.
+   ========================================================================== */
 @media (prefers-contrast: more) {
   :root {
     --text-muted: var(--n-700);     /* ~10:1 on the light canvas */
@@ -4235,11 +4293,13 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .input, .textarea, .select, .cmdp__input, .import-list { font-size: 1rem; }
 }
 
-/*   18. In-app accessibility settings (audit §8). Attribute twins of the
+/* =============================================================================
+   18. In-app accessibility settings (audit §8). Attribute twins of the
    OS-preference gates above: Settings > Accessibility writes these attributes
    via lib/a11y-prefs.ts; "System"/default removes the attribute so the media
    queries (or base styles) rule: the settings augment the user agent, never
-   compete with it (the GDS rule).*/
+   compete with it (the GDS rule).
+   ========================================================================== */
 
 /* Motion (twin of the prefers-reduced-motion gate, section 9). */
 :root[data-motion="reduced"] *,
@@ -4339,11 +4399,13 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   --danger: var(--warn-300d); --danger-bg: var(--warn-150d); --danger-fg: var(--warn-300d); --danger-border: #5a440f; --danger-solid-fg: var(--n-950);
 }
 
-/*   19. GUIDED SETUP (the setup-first IA: the strip, the locked rail, the checklist)
+/* =============================================================================
+   19. GUIDED SETUP (the setup-first IA: the strip, the locked rail, the checklist)
    The strip is chrome, not a banner: one quiet line + step pips between the
    context bar and the main region, surface-toned (no tint), hidden with the
    chrome on full-bleed routes. Locked rail items dim but stay visible and
-   clickable (the route gate explains and redirects); the lock is never a trap.*/
+   clickable (the route gate explains and redirects); the lock is never a trap.
+   ========================================================================== */
 .setup-strip {
   grid-area: setup;   /* seat the strip in its own .shell row (under the header), not a trailing implicit row */
   display: flex; align-items: center; gap: var(--space-3);
@@ -4468,12 +4530,14 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .ob-ceremony__aside { max-width: none; }
 }
 
-/*   Ceremony ENTRY (pre-generation): the premium, type-led realisation. Scoped to
+/* =============================================================================
+   Ceremony ENTRY (pre-generation): the premium, type-led realisation. Scoped to
    the wizard so none of this leaks to the rest of the app. The entry gets a touch
    more width so the key-distribution panel breathes, while the prose inside it
    stays on a readable measure. The re-run notice is demoted from a saturated amber
    slab to a quiet left-rule note (one calm warning, never a box), and the wizard's
-   primary CTA gains a whisper of depth.*/
+   primary CTA gains a whisper of depth.
+   ========================================================================== */
 .ob-content:has(.ob-ceremony-entry) { max-width: 920px; }
 .ob-body:has(.ob-ceremony-entry) { max-width: none; }
 .ob-ceremony-entry > p, .ob-ceremony-entry > .field__hint { max-width: 68ch; }
@@ -4500,7 +4564,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .ob-page .btn--primary { transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
 }
 
-/*   Event-driven "aliveness" motion. Every effect is finite
+/* =============================================================================
+   Event-driven "aliveness" motion. Every effect is finite
    and purposeful (it explains a real change: a navigation, a forged key, a fresh
    poll, a confirmation, the palette opening); none is ambient and nothing loops,
    so the §1 / §4.7 / §7a calm contract holds, with one deliberate exception, the
@@ -4508,7 +4573,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    like the opt-in Aurora wash. The imperative effects (the downpipe charge in
    shell/app-shell.ts, the ambient field in components/ambient-field.ts) gate on
    motionOK() in JS, the single predicate, so only the CSS-driven flourishes below
-   carry the reduced-motion twins.*/
+   carry the reduced-motion twins.
+   ========================================================================== */
 
 /* The downpipe charge: static paint only; the motion is the Web Animations API in
    chargeRailMark() (which also pulses the mark's scale). A blue (accent) fill slightly
@@ -4621,7 +4687,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 
 
-/*   Canary feature illustration: a yellow canary in a hairline wire cage.
+/* ===========================================================================
+   Canary feature illustration: a yellow canary in a hairline wire cage.
 
    Drops into the calm enterprise console. Conventions mirror the topology SVG
    (tokens.css section 9/10): ALL motion is OFF by default and only switches ON
@@ -4633,6 +4700,7 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    The root <svg> carries exactly one state class:
      .canary--alive | .canary--dead | .canary--ailing | .canary--pending
 
+   ---------------------------------------------------------------------------
    ILLUSTRATION COLOUR vs STATUS COLOUR
      The bird is canary yellow because that is illustration colour, not a status
      signal (the marker shape + glyph + label carry status). BUT when the check
@@ -4640,6 +4708,7 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
      the picture never looks cheerfully alive while the check is failing. This
      is a dimming of the same hue, not a re-colouring into a status palette.
 
+   ---------------------------------------------------------------------------
    TUNING KNOBS (operability)
      Every animation's duration lives in a single named --dp-canary-*-dur var on
      .canary below, and is referenced from the :root[data-motion="full"] rule -
@@ -4650,6 +4719,7 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
      so sway / breath / hop / blink / chirp never resync into a visible lockstep
      loop. Documented pivot anchors (transform-origin) sit beside each rule.
 
+   ---------------------------------------------------------------------------
    INTEGRATION / MULTI-INSTANCE SAFETY
      This component intentionally uses NO url(#id) gradient / clip / filter / use
      references - the dome "glass" sheen is a static low-opacity overlay PATH, so
@@ -4658,7 +4728,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
      canary in a single document, suffix BOTH ids per instance (e.g. -1, -2) and
      update each aria-labelledby to match. The same rule applies to ANY future
      gradient/clip/filter you add: give it a per-instance-suffixed id and a
-     matching url() reference, or instances will share (and fight over) one def.*/
+     matching url() reference, or instances will share (and fight over) one def.
+   ======================================================================== */
 
 .canary {
   /* illustration palette --------------------------------------------------- */
@@ -4713,8 +4784,10 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   stroke: var(--danger-border, #f3b7b4);
 }
 
-/*   STATUS MARKER (top-left badge): one SHAPE per state, glyph inside.
-   circle=alive, square=dead, triangle=ailing, hollow ring=pending.*/
+/* ===========================================================================
+   STATUS MARKER (top-left badge): one SHAPE per state, glyph inside.
+   circle=alive, square=dead, triangle=ailing, hollow ring=pending.
+   ======================================================================== */
 .canary-status__circle,
 .canary-status__square,
 .canary-status__triangle,
@@ -4752,7 +4825,9 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 .canary--pending .canary-status__dot { display: block; fill: var(--text-muted, #5b6470); }
 
-/* THE CAGE - hairline wire */
+/* ===========================================================================
+   THE CAGE - hairline wire
+   ======================================================================== */
 .canary-cage__cord,
 .canary-cage__dome,
 .canary-cage__hoop,
@@ -4814,7 +4889,9 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 .canary-perch__cap { fill: var(--cage-ink); }
 
-/* THE BIRD - shared fills. Yellow when alive; desaturated when not. */
+/* ===========================================================================
+   THE BIRD - shared fills. Yellow when alive; desaturated when not.
+   ======================================================================== */
 .canary-bird__body,
 .canary-bird__skull,
 .canary-deadbird__body,
@@ -4973,12 +5050,14 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 .canary-feather--a { transform: translateY(56px); }
 .canary-feather--b { transform: translateY(70px); }
 
-/*   MOTION. OFF by default; ON only under :root[data-motion="full"]. Mirrors the
+/* ===========================================================================
+   MOTION. OFF by default; ON only under :root[data-motion="full"]. Mirrors the
    topology SVG gating exactly. Reduced motion = the static poses above.
 
    Amplitudes are deliberately tiny; each duration is read from the named knob
    on .canary (above) so the value lives in exactly one place. Pivot anchors
-   (transform-origin) are noted beside every rule.*/
+   (transform-origin) are noted beside every rule.
+   ======================================================================== */
 @keyframes dp-canary-breath {
   0%, 100% { transform: scaleY(1) translateY(0); }
   50%      { transform: scaleY(1.045) translateY(-0.8px); }   /* tiny */
@@ -5095,9 +5174,11 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   animation: dp-canary-feather var(--dp-canary-feather-b-dur) ease-in 1.4s infinite;
 }
 
-/*   Reduced motion: hard belt-and-braces. The global section-9 gate already
+/* ===========================================================================
+   Reduced motion: hard belt-and-braces. The global section-9 gate already
    neutralises animation-duration; here we explicitly stop the per-part
-   animations and keep every state legible from its static pose.*/
+   animations and keep every state legible from its static pose.
+   ======================================================================== */
 @media (prefers-reduced-motion: reduce) {
   .canary-cage__body,
   .canary-bird,
@@ -5122,11 +5203,13 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 :root[data-motion="reduced"] .canary-feather { animation: none; }
 :root[data-motion="reduced"] .canary--alive .canary-bird__lid { display: none; }
 
-/*   Canary: the in-flight (flapping) pose + the dead-canary skeleton.
+/* ===========================================================================
+   Canary: the in-flight (flapping) pose + the dead-canary skeleton.
    The canary has a flying state (flaps until it lands or dies)
    and a skeleton for death. Motion is gated exactly like the rest of the canary
    art: OFF by default, ON under :root[data-motion="full"], with a legible static
-   pose for reduced motion. Status is still carried by shape + colour + label.*/
+   pose for reduced motion. Status is still carried by shape + colour + label.
+   ======================================================================== */
 
 /* ---- IN FLIGHT: the cage falls away and the bird flies free, bobbing + flapping --- */
 .canary--flying .canary-bird { display: block; }
@@ -5207,10 +5290,12 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 :root[data-motion="reduced"] .canary--dead .canary-skeleton { animation: none; }
 
 
-/*   Canary singing: music notes that LEAVE the beak and float away.
+/* ===========================================================================
+   Canary singing: music notes that LEAVE the beak and float away.
    The notes pop out at the beak (bird faces left) and drift up-and-left, away
    from the bird, fading as they go. Staggered so the song reads as continuous.
-   Motion gated as usual; reduced motion holds a couple of static notes.*/
+   Motion gated as usual; reduced motion holds a couple of static notes.
+   ======================================================================== */
 .canary-note { opacity: 0.92; }
 .canary-note__head { fill: var(--ok, #1f9d57); }
 .canary-note__stem { fill: none; stroke: var(--ok, #1f9d57); stroke-width: 1.5px; stroke-linecap: round; }
@@ -5231,10 +5316,12 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 :root[data-motion="reduced"] .canary-note { animation: none; }
 
 
-/*   Face the canary to the RIGHT: one horizontal mirror about the viewBox centre,
+/* ===========================================================================
+   Face the canary to the RIGHT: one horizontal mirror about the viewBox centre,
    applied to the cage (which holds the bird, dead-bird, skeleton, feathers and
    perch), the song notes and the sleep marks, so the bird looks, flies, sings and
-   sleeps facing right. The status marker and background plate are NOT mirrored.*/
+   sleeps facing right. The status marker and background plate are NOT mirrored.
+   ======================================================================== */
 .canary-cage,
 .canary-chirp,
 .canary-sleep {
@@ -5243,13 +5330,15 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 
 
-/*   Canary CONNECTED TRANSITIONS. The screen keeps ONE figure mounted and only
+/* ===========================================================================
+   Canary CONNECTED TRANSITIONS. The screen keeps ONE figure mounted and only
    re-sets its state class, so the bird can animate BETWEEN poses instead of a
    hard cut. Take-off and landing glide the bird up/down while the cage fades
    out/in; death drops the bird and cross-fades it into the skeleton. The dead
    cage is aligned with the alive cage (no tilt). Motion gated as usual: the
    transitions run only under data-motion=full; reduced motion stays instant.
-   These rules sit last so they win the cascade over the earlier display swaps.*/
+   These rules sit last so they win the cascade over the earlier display swaps.
+   ======================================================================== */
 
 /* Align the dead cage with the alive cage (drop the wonky tilt). */
 .canary--dead .canary-cage__body { transform: none; }
@@ -5311,7 +5400,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 :root[data-motion="full"] .canary-sleep { transition: opacity 0.45s ease; }
 
 
-/*   Canary STORM FLOURISH. Under the Storm rain backdrop (Settings > Rain), the
+/* ===========================================================================
+   Canary STORM FLOURISH. Under the Storm rain backdrop (Settings > Rain), the
    singing bird raises a little umbrella and pulls on gumboots. Shown ONLY in the alive pose AND only
    when the figure carries data-rain="storm" - the canary screen reflects the
    rain-pref onto the svg as an attribute (not a class), so the pose class can
@@ -5320,7 +5410,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    and the teal/white is illustration colour that carries NO status meaning -
    status stays on the marker shape + glyph + label, exactly as before. These
    rules sit last so the display reveal wins the cascade over .canary-bird's
-   default hide. Reduced motion needs no special-case: the rain gear is static.*/
+   default hide. Reduced motion needs no special-case: the rain gear is static.
+   ======================================================================== */
 .canary-umbrella,
 .canary-gumboots { display: none; }
 .canary--alive[data-rain="storm"] .canary-umbrella,
@@ -5374,12 +5465,14 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   opacity: 0.45;
 }
 
-/*   Onboarding carousel (screen 10). The first-run wizard renders as a rotating
+/* ============================================================================
+   Onboarding carousel (screen 10). The first-run wizard renders as a rotating
    card deck rather than a side-railed single step: bite-size cards grouped into
    five chapters, with a 3D deal-off-left transition, a chapter progress rail,
    and forward movement GATED on the action steps. Bound to the tokens above;
    reuses .ob-page / .ob-top / .btn / .card / .ob-spinner from elsewhere in this
-   sheet. Class prefix cx- keeps it self-contained.*/
+   sheet. Class prefix cx- keeps it self-contained.
+   ============================================================================ */
 
 /* chapter progress rail */
 .cx-rail { padding: var(--space-5) clamp(var(--space-4), 4vw, var(--space-8)) var(--space-3); max-width: 920px; width: 100%; margin: 0 auto; }
@@ -5530,14 +5623,16 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   .cx-back { align-self: center; margin-top: var(--space-1); }
 }
 
-/*   20. Mobile responsive hardening. Overflow guards and
+/* =============================================================================
+   20. Mobile responsive hardening. Overflow guards and
    small-viewport refinements from a full device-width audit (320/375/768px) of
    every console screen and the public tour. Appended last so these overrides win
    at equal specificity. Class-based only (the strict CSP forbids inline styles +
    <style>); the tour overlay's own responsive tweaks live in its CSSOM
    (src/lib/demo/tour/*). Root causes, not per-screen patches: long tokens wrap,
    the layout chain can shrink, tables + code + the topology map scroll inside
-   their frame instead of widening the page, and the context bar reflows.*/
+   their frame instead of widening the page, and the context bar reflows.
+   ========================================================================== */
 
 /* ---- Global overflow guards ------------------------------------------------ */
 /* Long unbroken tokens (hashes, emails, IDs, URLs, dp-names) must wrap rather
@@ -5845,7 +5940,8 @@ body.dp-demo-banner .main { padding-bottom: 72px; }
   [data-dp="licence.button.lic"] { white-space: normal; height: auto; min-height: var(--control-h-sm); padding-top: var(--space-1); padding-bottom: var(--space-1); text-align: center; }
 }
 
-/*   §21 Identity-provider grid (screens/idp-connections)
+/* ============================================================================
+   §21 Identity-provider grid (screens/idp-connections)
    The provider catalogue as a grid of logo tiles: one tile per provider, ordered
    by popularity. A "live" tile (an enabled connection) runs a teal/accent
    particle around its border via a registered angle property and lifts on a
@@ -5854,7 +5950,8 @@ body.dp-demo-banner .main { padding-bottom: 72px; }
    Click an available tile to open its add wizard, a configured/live one to
    manage it. The orbit + chip pulse stop under reduced motion (a static ring
    remains so "live" still reads) and the ring degrades to a solid border under
-   forced colours.*/
+   forced colours.
+   ========================================================================== */
 
 /* The animatable border angle for the orbiting particle. Registering it as an
    <angle> is what lets a keyframe interpolate the conic-gradient sweep. */
@@ -6021,7 +6118,8 @@ body.dp-demo-banner .main { padding-bottom: 72px; }
   .idp-tile[data-selected="true"] { outline: 2px solid Highlight; }
 }
 
-/*   §22 Cloudflare-coverage grid (screens/overview/surface-coverage)
+/* ============================================================================
+   §22 Cloudflare-coverage grid (screens/overview/surface-coverage)
    The Overview hero: the nine Cloudflare surfaces from the public adverts as a
    3x3 grid, each tile coloured by where that surface sits in the backup journey.
    covered (ok / green) = a downpipe backs it up; added (warn / amber) = added as
@@ -6029,7 +6127,8 @@ body.dp-demo-banner .main { padding-bottom: 72px; }
    added, deliberately quiet not red (an unused surface is not a fault). The
    actionable tiles are buttons that navigate; unavailable/unknown are static.
    Colour is never the only signal: every tile has a status dot AND a text label.
-   All colours are semantic tokens, so light and dark both clear the contrast gate.*/
+   All colours are semantic tokens, so light and dark both clear the contrast gate.
+   ============================================================================ */
 .ov-coverage { margin-bottom: var(--space-6); }
 .ov-coverage__head {
   display: flex; align-items: baseline; justify-content: space-between;
@@ -6121,10 +6220,12 @@ button.surf[data-state="unadded"]:hover { border-color: var(--border-strong); bo
   .surf:focus-visible { outline: 2px solid Highlight; }
 }
 
-/*   §23 Enterprise visual-quality overrides
+/* ============================================================================
+   §23 Enterprise visual-quality overrides
    Fixes from the console-wide visual review. Deliberate overrides live here, after every base section,
    each addressing a specific case, so the overrides read as one block and the base
-   sections above stay untouched.*/
+   sections above stay untouched.
+   ============================================================================ */
 
 /* Approval inboxes: a long cue value (an approver email) wraps inside its
    grid cell instead of colliding with the neighbouring column. */
@@ -6333,11 +6434,13 @@ input[type="file"]::file-selector-button:hover { background: var(--surface-hover
   :root:not([data-theme="dark"]) .badge--danger { border-color: color-mix(in srgb, var(--danger) 45%, var(--surface)); }
 }
 
-/*   Integrations screen. The tile grid REUSES .idp-grid / .idp-tile (and their
+/* -----------------------------------------------------------------------------
+   Integrations screen. The tile grid REUSES .idp-grid / .idp-tile (and their
    data-state orbit), so the SIEM/monitoring catalogue reads as one family with
    the IdP provider grid. Only the additions live here: the corner status chip,
    the "Auto-parses" tag, the category section heads, and the connected strip.
-   Every colour is a semantic token, so both themes work with no extra rules.*/
+   Every colour is a semantic token, so both themes work with no extra rules.
+   -------------------------------------------------------------------------- */
 .integration-sections { display: grid; gap: var(--space-7); }
 .integration-grp { display: grid; gap: var(--space-4); }
 .integration-grp-head { display: flex; align-items: baseline; gap: var(--space-3); }
