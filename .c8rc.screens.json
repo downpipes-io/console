@@ -1,0 +1,21 @@
+{
+  "//": "Coverage gate for the console's SCREEN layer, folded into the gate on 26 July 2026. src/screens/ is 257 files and about 65 per cent of the console, and it had NO coverage floor at all, which is why so many screen-layer findings were invisible: the product-facing layer was the one region nothing measured. It is a separate config rather than a lower aggregate on the main gate, so folding it in cannot drag the 90 per cent floor the rest of src already holds.",
+  "//thresholds": "RATCHET, NOT THE TARGET. Measured on 26 July 2026 over the full validator suite: 71.49 statements, 71.49 lines, 61.43 functions, 77.26 branches. The floors sit just under that so the gate blocks a regression from today. The config comment this replaces claimed src/screens was at 39 per cent lines and 32 per cent functions; that was written before a lot of screen validators landed and was badly stale, which is its own argument for measuring rather than believing a comment. RAISE these as Phase 5's validators land; never lower them.",
+  "include": [
+    "src/screens/**/*.ts"
+  ],
+  "exclude": [
+    "src/screens/**/*-types.ts"
+  ],
+  "all": true,
+  "reporter": [
+    "text-summary",
+    "json-summary"
+  ],
+  "reports-dir": "coverage/c8-screens",
+  "check-coverage": true,
+  "lines": 70,
+  "statements": 70,
+  "functions": 60,
+  "branches": 76
+}

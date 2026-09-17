@@ -1,0 +1,56 @@
+# OpenSSF Scorecard. Runs weekly and on pushes to main, scores the repository's
+# supply-chain and security posture, and uploads the result as SARIF so it appears
+# in the Security tab and feeds the README badge. Advisory: this workflow does not
+# block merge and is not in the ci-success needs list.
+name: Scorecard
+
+on:
+  branch_protection_rule:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, so the score tracks drift in the repo's posture over time.
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    # OSSF Scorecard scores PUBLIC supply chains. On a private repo its action cannot even check the
+    # code out ("Repository not found"), because the container's token does not reach it, and it had
+    # failed every single run since it was added. A workflow that is permanently red is worse than no
+    # workflow: it teaches the reader that red here means nothing, which is exactly what you do not want
+    # them to learn about a security job.
+    #
+    # So it SKIPS while the repo is private rather than failing, and starts running by itself if the repo
+    # is ever made public. No token, no secret and no settings change is needed either way. Giving it a
+    # PAT with repo scope is the other route, and that is a deliberate act rather than a default.
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      # Required for uploading SARIF to the Security tab.
+      security-events: write
+      # Required for the publish step to attach the result to the public dashboard.
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - name: Run analysis
+        uses: ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75731b0186 # v2.4.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Publish the result so the public dashboard and README badge resolve.
+          publish_results: true
+      - name: Upload SARIF to the Security tab
+        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v3.30.0
+        with:
+          sarif_file: results.sarif
+          category: scorecard

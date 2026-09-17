@@ -1,0 +1,38 @@
+# The console deploys into the CUSTOMER's own Cloudflare account and is reached on a
+# custom domain only (no *.workers.dev). It serves a static SPA and proxies nothing to
+# the vendor; the SPA calls the in-account engine admin API directly.
+name = "downpipe-console"
+main = "src/worker.ts"
+compatibility_date = "2026-06-01"
+workers_dev = false
+
+# Upload source maps so production stack traces map back to TypeScript.
+upload_source_maps = true
+
+# The console serves a static SPA and proxies same-origin to the engine; it does no heavy
+# compute, so cap CPU low to bound a runaway path.
+limits = { cpu_ms = 50 }
+
+# The permanent custom domain (no *.workers.dev).
+route = { pattern = "console.downpipes.io", custom_domain = true }
+
+# Workers Logs and per-request metrics, so console requests are observable without an
+# external sink.
+[observability]
+enabled = true
+
+# The one topology: the console reaches the engine over a worker-to-worker service
+# binding and proxies /admin/* and /support/* same-origin. The engine needs NO public
+# hostname at all (its cron and Durable Objects run without one), the public surface
+# is THIS one domain, and the CSP connect-src is 'self'.
+[[services]]
+binding = "ENGINE"
+service = "downpipe-engine"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+# Run the Worker before serving any asset so every response (including /, app.js and tokens.css)
+# carries the strict security headers from worker.ts. Without this the edge serves matched assets
+# directly and the SPA entry document ships with no Content-Security-Policy.
+run_worker_first = true

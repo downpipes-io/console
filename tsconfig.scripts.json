@@ -1,0 +1,58 @@
+{
+  // Node-targeted check of the 31 gate scripts under scripts/. Until this file existed NOTHING read them:
+  // tsconfig.json includes only "src", tsconfig.test.json includes "src" and "test", and both scan for .ts
+  // while every gate here is hand-written .mjs. Proven with `npx tsc -p tsconfig.test.json --noEmit
+  // --listFiles` rather than inferred: 484 files under src/, 203 under test/, and exactly ONE under
+  // scripts/ (hook-lib.d.mts, pulled in as the types for hook-lib.mjs by a test that imports it). The 31
+  // implementations were read by no compiler at all, and scripts/typecheck-coverage-gate.mjs could not see
+  // the hole because its own scan was limited to .ts under src/ and test/.
+  //
+  // That matters more here than in most directories, because these files ARE the gates. A type error in a
+  // gate is a gate that throws instead of reporting, or worse compares two things that were never the same
+  // shape and reports a pass. The check turned up 26 real diagnostics on first run, all of them fixed with
+  // comment-only JSDoc casts so no gate's runtime behaviour moved.
+  //
+  // TWO FLAGS ARE RELAXED relative to src, and that is a REPORTED residual rather than a fix:
+  //   noImplicitAny: false            569 of the 626 diagnostics a fully strict run reports are the
+  //                                   implicit-any family (334 TS7006, 156 TS7005, 32 TS7053, 17 TS7034,
+  //                                   12 TS7022, 9 TS7023, 4 TS7019, 5 assorted). Closing it means
+  //                                   annotating every parameter of 31 hand-written scanners, which is a
+  //                                   change set of its own and touches nothing this check is here for.
+  //   noUncheckedIndexedAccess: false a further 31 diagnostics, almost all `m[1]` on a regex match the
+  //                                   script has already tested for truthiness. Turning it on invites
+  //                                   `?? ""` fallbacks, and a fallback on a match a gate relies on is how
+  //                                   a gate stops finding things. Left off deliberately.
+  // Everything else strict is inherited, including strictNullChecks and exactOptionalPropertyTypes, so the
+  // remaining classes (a property that does not exist, an unknown in a catch, an operand of the wrong type)
+  // do fail this check.
+  //
+  // Wired in as `npm run typecheck:scripts` and run from `npm run typecheck`, which is a CI step, so the
+  // coverage is applied rather than merely declared. scripts/typecheck-coverage-gate.mjs enforces that both
+  // halves stay true.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": true,
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["scripts"],
+  // Every .mjs with a sibling .d.mts needs naming EXPLICITLY. `include: ["scripts"]` matches the
+  // implementation, but TypeScript then prefers the declaration file and never reads it, so a gate library
+  // sits behind its own .d.mts and is checked by nothing while looking covered. Found by
+  // scripts/typecheck-coverage-gate.mjs comparing tsc's --listFiles output against the files on disk, which
+  // is the only way that shape is visible.
+  //
+  // The list is exactly the .mjs files that have a .d.mts beside them, and the gate is what keeps it that
+  // way: ledger-verdicts, verdict-record and workspace-root landed on main after this config was first
+  // written and the gate named all three on the next run rather than letting them pass unchecked, and
+  // outside-write-decl is the fourth: it was split out so that importing the outside-write parser would no
+  // longer run the gate and exit the test process, which is a good change, and it arrived with a .d.mts
+  // beside it and so landed in exactly the blind spot this list exists to close. source-text is the sixth,
+  // and it arrived the same way: it had no .d.mts until test/validate-sealed-export-unseal.ts imported
+  // blankComments, and the declaration that made tsconfig.test.json able to check that import is exactly
+  // what would have hidden the implementation from this one. The gate named it on the next run.
+  "files": ["scripts/hook-lib.mjs", "scripts/ledger-verdicts.mjs", "scripts/outside-write-decl.mjs", "scripts/source-text.mjs", "scripts/verdict-record.mjs", "scripts/workspace-root.mjs"]
+}

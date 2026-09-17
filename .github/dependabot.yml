@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule: { interval: weekly }
+    groups:
+      # One grouped PR for routine npm bumps keeps the review queue small; security
+      # updates still open on their own so they are not held back behind the group.
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      npm-security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
+      github-actions-security-updates:
+        applies-to: security-updates
+        patterns: ["*"]

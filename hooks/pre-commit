@@ -1,0 +1,60 @@
+#!/bin/sh
+# Repo-tracked hook, wired up via `git config core.hooksPath hooks` (see package.json's "prepare" script,
+# which sets that automatically on `npm install`/`npm ci`). 1) block private key material; 2) keep the SPA
+# bundle in lockstep, but only on a platform whose esbuild output actually matches CI's.
+
+# 1) Never commit private-key/secret files (test fixtures under test/vectors/ exempt).
+keyfiles="$(git diff --cached --name-only --diff-filter=AM \
+  | grep -iE '\.key$|\.pem$|\.p12$|\.pfx$|(^|/)recovery-kit/|(^|/)id_(rsa|ed25519)$|-private\.|private.*\.b64$' \
+  | grep -ivE '(^|/)test/vectors/' || true)"
+if [ -n "$keyfiles" ]; then
+  echo "pre-commit hook: REFUSING to commit private-key/secret file(s):" >&2
+  printf '    %s\n' $keyfiles >&2
+  exit 1
+fi
+for f in $(git diff --cached --name-only --diff-filter=AM | grep -ivE '(^|/)test/vectors/' || true); do
+  if git show ":$f" 2>/dev/null | grep -Eq 'BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY'; then
+    echo "pre-commit hook: PEM private-key block in staged file: $f" >&2
+    exit 1
+  fi
+done
+
+# 2) bundle lockstep (keep the committed public/ bundle in step with source).
+#
+# THE PLATFORM REFUSAL THIS HOOK USED TO CARRY WAS BUILT ON A WRONG DIAGNOSIS, and is gone. R-24 read a red
+# CI build as "esbuild emits different bytes on macOS than on the Linux runners". Re-measured:
+# a macOS build of e4849f8 in a clean checkout reproduces CI's Linux bytes exactly, all four artefacts. The
+# real input was the WORKING DIRECTORY. `--splitting` names the shared chunk chunk-<hash>.js and esbuild
+# folds each module's cwd-relative path into that hash, while `--minify` strips those paths from the emitted
+# bytes, so the same bytes ship under a different name and the drift guard reports STALE. scripts/
+# stamp-build.mjs now chdirs to the package root and refuses a symlinked node_modules, so the build is
+# platform-independent and this hook rebuilds on any platform again.
+#
+# It stages the WHOLE emitted set, not just app.js: a source change renames chunk-<hash>.js, and staging the
+# entry alone commits an app.js importing a chunk that is not in the tree.
+#
+# THE RENAMED-AWAY CHUNK IS NOW DELETED RATHER THAN NAMED. scripts/stamp-build.mjs prunes public/ to exactly
+# the fresh output set before it writes, so the old hashed chunk is gone from the working tree by the time
+# this runs; all that is left is to stage that deletion, which the `public/*.js` glob below cannot do because
+# the file no longer exists to be globbed. Warning about it and staging only the survivors is what left a
+# commit whose bundle file set the drift guard refused.
+root="$(git rev-parse --show-toplevel)" || exit 0
+cd "$root" || exit 0
+if git diff --cached --name-only | grep -qE '^(src/|public/tokens\.css$|package(-lock)?\.json$)'; then
+  if [ -x node_modules/.bin/esbuild ]; then
+    if npm run build > /dev/null 2>&1; then
+      git add public/__build.json
+      for f in public/*.js; do git add "$f"; done
+      # Stage the deletions the prune made. Named one by one from the index rather than with a directory-wide
+      # `git add -u public`, so an unrelated edit to index.html or tokens.css is never swept into this commit.
+      for f in $(git ls-files 'public/*.js'); do
+        [ -e "$f" ] || git rm --quiet --cached -- "$f"
+      done
+    else
+      echo "pre-commit: bundle rebuild FAILED; nothing staged (run 'npm run build' to see why)" >&2
+    fi
+  else
+    echo "pre-commit: esbuild not installed; skipping bundle rebuild (run 'npm run validate' to check drift)" >&2
+  fi
+fi
+exit 0

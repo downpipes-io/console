@@ -1,0 +1,5 @@
+Contact: mailto:security@maelstrom.au
+Expires:
+Canonical: https://console.downpipes.io/.well-known/security.txt
+Preferred-Languages: en
+Policy: https://github.com/downpipes-io/console/blob/main/SECURITY.md

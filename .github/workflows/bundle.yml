@@ -1,0 +1,97 @@
+# Build the committed SPA bundle on Linux and publish it as an artefact.
+#
+# WHY THIS EXISTS, CORRECTED. This header used to say esbuild's output "is not reproducible across
+# operating systems", so a macOS build "can never pass the drift guard". THAT IS REFUTED. The variable was
+# never the operating system: `--splitting` names the shared chunk chunk-<hash>.js and esbuild folds each
+# input module's path, printed relative to the PROCESS WORKING DIRECTORY, into that hash, while `--minify`
+# strips those paths back out of the emitted bytes. Two builds therefore ship a byte-identical chunk under
+# two names, and test/validate-bundle.ts, which compares the file-name set first, reads STALE against a
+# bundle that is not stale. Re-measured at d0b9e3b on macOS: five working directories, five
+# different chunk names, chunk content sha256/16 b2e6f578c00c26b8 in every one, and app.js byte-identical
+# once the two hashed names are normalised. scripts/stamp-build.mjs now pins that input (it chdirs to the
+# package root, refuses a node_modules that resolves outside it, and refuses any bundled module the
+# metafile records outside it), so `npm run build` on any platform reproduces the committed bytes.
+#
+# This job is therefore a CONVENIENCE, not a requirement. It exists because CI's ubuntu-24.04 runner is a
+# second route to a bundle when a local checkout cannot produce one, for instance when dependencies are
+# installed somewhere stamp-build refuses to build from. Dispatch it, download the artefact, unzip it over
+# public/, and commit. scripts/build-bundle-linux.sh is the same idea with a node:22-bookworm container,
+# and needs a working local Docker daemon, which was itself the blocker.
+#
+# It is deliberately NOT wired into push or pull_request. It writes nothing to the repository and it is not
+# a gate: validate-bundle.ts remains the thing that decides whether the committed bundle is correct.
+#
+# House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+name: Bundle (Linux, artefact only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or sha to build the bundle from"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+
+      # Built into a temp directory rather than over public/, so a failed build cannot leave a half-written
+      # bundle behind, and so the artefact carries exactly what stamp-build emits and nothing that happened
+      # to be sitting in public/ already.
+      - name: Build the bundle on Linux
+        run: node scripts/stamp-build.mjs --outdir=/tmp/bundle
+
+      # State what was produced, so the log alone settles which artefact a downloaded zip corresponds to.
+      # The content-hashed names matter most: a chunk renamed without a byte changing is the failure shape
+      # stamp-build now pins against, and printing the names next to the digests makes it readable here.
+      - name: State the built artefacts and their digests
+        run: |
+          cd /tmp/bundle
+          ls -la
+          sha256sum * | tee /tmp/bundle/SHA256SUMS.txt
+
+      # Whether the committed bundle already matches. This is informational rather than gating: the run
+      # exists to PRODUCE a bundle, and it must still hand one over when the committed copy is stale, which
+      # is precisely the case it is dispatched for.
+      - name: Report whether the committed bundle already matches this build
+        continue-on-error: true
+        run: |
+          status=0
+          for f in /tmp/bundle/*; do
+            name="$(basename "$f")"
+            [ "$name" = "SHA256SUMS.txt" ] && continue
+            if [ ! -f "public/$name" ]; then
+              echo "::notice::fresh build emits $name, which is not committed"
+              status=1
+            elif ! cmp -s "$f" "public/$name"; then
+              echo "::notice::committed public/$name differs from this Linux build"
+              status=1
+            fi
+          done
+          if [ "$status" -eq 0 ]; then echo "the committed bundle already matches this Linux build"; fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: console-bundle-linux
+          path: /tmp/bundle
+          if-no-files-found: error
+          retention-days: 7

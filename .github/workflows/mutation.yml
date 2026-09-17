@@ -1,0 +1,35 @@
+# Mutation testing (StrykerJS) over the console's in-browser crypto surface (Shamir secret sharing,
+# the recipient envelope, the WebAuthn PRF path). A full mutation run is slow, so this is a SCHEDULED
+# gating job rather than a per-pull-request gate: it runs weekly and on demand, and FAILS when the
+# mutation score drops below the stryker.config.json break threshold (the project standard of 90 per
+# cent; high 95). Reaching the score is the tracked test-writing campaign. This keeps the crypto
+# mutation gate enforced without adding minutes to every pull request.
+name: Mutation
+
+on:
+  schedule:
+    - cron: "41 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  mutation:
+    name: StrykerJS (crypto, fails below break threshold)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: stryker run (fails below the break threshold)
+        run: npm run test:mutation

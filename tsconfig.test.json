@@ -1,0 +1,31 @@
+{
+  // Node-targeted type-check of the console's test surface. tsconfig.json includes only "src", so
+  // the 142 validate-*.ts scripts in test/ (run via `node`, and the console's real test surface) were
+  // never type-checked by anything: `npm run typecheck` does not see them and the validate chain
+  // EXECUTES them under type stripping, which runs a file without checking it. A type error in a test
+  // could therefore live indefinitely, and one did in the engine before it grew the equivalent config.
+  //
+  // This extends the main config so every strictness flag stays identical (strict,
+  // noUncheckedIndexedAccess, exactOptionalPropertyTypes), or the check would be weaker than the one
+  // src gets and would pass things src would reject. It adds the Node ambient types the scripts need
+  // (process, Buffer, node:fs and the like) on top of the DOM lib the console targets. The validators
+  // import sibling source files WITH the .ts extension, so allowImportingTsExtensions must stay on,
+  // and it is inherited.
+  //
+  // Wired in as `npm run typecheck:test`, and run from `npm run validate` so the chain type-checks the
+  // files it is about to execute.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "test"],
+  // test/vitest is INCLUDED. It was excluded on the reasoning that it runs in a different type
+  // environment and is type-checked by its own runner, and the second half of that was not true: vitest
+  // does not type-check unless `typecheck` is enabled in its config, and it is not, so `vitest run`
+  // executes those files without checking them. Between that exclusion and tsconfig.json's src-only
+  // include, the file was checked by nothing at all. It imports its describe/it/expect from vitest
+  // explicitly rather than relying on injected globals, so the Node type context suits it and it checks
+  // clean here.
+  "exclude": []
+}

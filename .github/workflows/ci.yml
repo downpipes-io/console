@@ -1,0 +1,618 @@
+# CI for the console (in-account management SPA). Small independently failing jobs with a
+# CI Success sentinel for branch protection. Deploys are manual; this validates the build.
+name: CI
+
+# WHY THERE IS NO "**.md" IN paths-ignore HERE, and why adding it back would be wrong.
+#
+# It was there until. It meant a push touching only markdown started NO CI RUN AT ALL, and
+# this repository has a gate that reads markdown and can fail on it.
+#
+# Measured rather than argued. test/validate-security-headers.ts:51 reads SECURITY.md and pins it against
+# the CSP the code actually ships (ASVS V3.1.1). Rewriting SECURITY.md's connect-src claim alone, with no
+# other file touched, takes that validator from exit 0 to exit 1 on two named assertions. That diff is
+# exactly the shape `paths-ignore: ["**.md"]` skips, so the doc-vs-code pin could be broken by a push that
+# CI never saw.
+#
+# The same filter was on semgrep.yml, which is worse in kind: a credential in a markdown file is a real
+# shape, and `docs` had a live-format AWS key sit in README.md through six green checks
+# because its scanners were path-filtered away from it.
+#
+# engine and downpipe already carry the fixed form. If markdown-only pushes ever need to skip a slow job,
+# skip that JOB by condition, not the whole workflow by path, so the tripwire still runs.
+#
+# LICENSE* AND .GITIGNORE ARE NO LONGER IGNORED EITHER. The protect-main ruleset requires this
+# workflow's CI Success check with no bypass actor, admins included. A push or pull request whose
+# only changed files match a paths-ignore entry starts no run, so the required check never reports,
+# and GitHub refuses to merge a check that never ran. A pull request touching only LICENSE or
+# .gitignore was therefore unmergeable by anyone. The filter is gone so every push and pull request
+# against main runs this workflow; the cost is a CI run on a licence or ignore-file change, accepted.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  # THE TWO COVERAGE JOBS RUN ON THIS SCHEDULE AND ON DISPATCH, NOT ON EVERY PUSH. Decided from
+  # the org billing ledger: this workflow billed 4,560 minutes in the first ten days of September, 1,457
+  # of them in `coverage` and `coverage-screens`, which re-run the validators `validate` already ran,
+  # under c8, on every push and every pull request synchronise. They now grade main once a day (16:00
+  # UTC is 02:00 in Sydney) and on `gh workflow run CI`; a regression below the c8 floors opens the
+  # red-main issue the next morning instead of blocking the push. `validate` still runs on every push
+  # and pull request.
+  schedule:
+    - cron: "0 16 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # `true` ON MAIN AS WELL,: only the tip of a burst of pushes is graded. The red-main
+  # tripwire treats a cancelled run as no evidence either way, so a superseded run never opens or closes
+  # the red-main issue.
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: tsc --noEmit
+        run: npm run typecheck
+
+  validate:
+    name: Validators
+    # lint and typecheck are in `needs` for cost (added): they are the two cheapest jobs here and
+    # a red on either would otherwise still buy this job's full validator chain. push-dedupe skips a tree a
+    # pull request already graded (see that job).
+    needs: [lint, typecheck, push-dedupe]
+    if: needs.push-dedupe.outputs.duplicate != 'true'
+    runs-on: ubuntu-24.04
+    # 25, raised from 10, pre-emptively rather than after a failure. This job has never been
+    # cancelled, but it runs at about 8m30s against the old 10, which is 85 per cent of its ceiling, and it
+    # sits in the CI Success needs list below. It was 3m24s ten runs ago and has been stable at 8m30s since,
+    # so the headroom is already spent rather than shrinking.
+    #
+    # That is exactly where the engine's equivalent job was before it went over: it squeaked through at 8m51s
+    # once and was then CANCELLED at its ceiling on six of the next seven runs on main. A cancelled job reads
+    # as "nothing was checked" rather than as a failure, so a gate dies that way without anyone deciding to
+    # turn it off, and the occasional pass makes it look intermittent. A ceiling audit across this workspace's
+    # five ci.yml files found engine's two and this one; every other job was at 12 per cent of
+    # its ceiling or less.
+    timeout-minutes: 25
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: Run the full validator suite (includes CSP-hash + bundle-drift gates)
+        run: npm run validate
+
+  property:
+    # fast-check property tests: bounded generative properties over the schedule blackout-window
+    # time helpers (parseTimeToMinutes / minutesToTime): shape, and roundtrip both ways. Additive
+    # to the deterministic validators; small and fast by design. Mirrors engine's test/property/.
+    name: Property tests (fast-check)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: schedule time-helper property vectors
+        run: npm run test:property
+
+  coverage:
+    # Real, gating coverage (P0). The bespoke node validators (npm run validate) are the console's
+    # actual test surface; c8 instruments them and enforces the .c8rc.json thresholds (90 per cent on
+    # every dimension) over the NON-SCREEN region, then a per-file floor over the same summary, because
+    # an aggregate hides a zero: this region reports 96.68 per cent and two files inside it sit at
+    # exactly zero. The screen layer has its own job below.
+    name: Coverage (c8 over validators, gating)
+    # SCHEDULE AND DISPATCH ONLY (see the `on:` block for the measurement), and behind
+    # `validate`: the same suite is run there uninstrumented, so a red validator is reported by the
+    # cheaper job and this one does not repeat it.
+    needs: [validate]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: c8 coverage over the validator suite (fails below the .c8rc.json thresholds)
+        run: npm run coverage
+
+  coverage-screens:
+    # src/screens/** is 255 measured files and about 65 per cent of the console, and until
+    # it had NO coverage floor at all: it was excluded from the gate outright, which is why so many
+    # screen-layer findings were invisible. The product-facing layer was the one region nothing measured.
+    #
+    # It is a SEPARATE job with its own floors rather than a lower threshold on the job above. Folding it
+    # into one aggregate would put the combined figure near 82 per cent, which would LOWER the bar for the
+    # region already holding 90. Two regions, two honest floors, each able to ratchet on its own.
+    name: Coverage (c8 over src/screens, gating at its own floors)
+    # SCHEDULE AND DISPATCH ONLY (see the `on:` block for the measurement), and behind
+    # `validate`: the same suite is run there uninstrumented, so a red validator is reported by the
+    # cheaper job and this one does not repeat it.
+    needs: [validate]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: c8 coverage over src/screens (fails below the .c8rc.screens.json thresholds)
+        run: npm run coverage:screens
+
+  build:
+    name: Bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: Bundle the SPA
+        run: npx esbuild src/app.ts --bundle --format=esm --platform=browser --outfile=public/app.js
+      - name: wrangler bundle (dry-run, no upload)
+        run: npx wrangler deploy --dry-run --outdir=dist
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      # The simplest possible statement of the production rule, kept as its own step rather than folded
+      # into the gate below. The gate is a strict superset of it, so the two cannot disagree in a
+      # direction that hurts: if this line fails, the gate must fail too, and if the gate is ever broken
+      # into passing, this line still blocks. That is worth five seconds on the one tree that has no
+      # acknowledgement path anywhere.
+      #
+      # THREE OUTCOMES OUT OF A COMMAND THAT HAS TWO, and this step was the one line above until the
+      # engine repository paid for it. `npm audit` exits 1 both when it finds an advisory at or above
+      # --audit-level and when it never reached the advisory endpoint at all, so the exit code alone
+      # cannot say which happened. Engine run 31266196222 logged `read ECONNRESET` against
+      # registry.npmjs.org and `npm error audit endpoint returned an error`, exited 1, and reddened main
+      # with a dependency verdict it had not formed. This repository ran the identical line, so it
+      # carried the identical defect; what follows is a port of engine `a87f7408`, byte-identical in the
+      # step body and rewritten around it with this repository's own numbers.
+      #
+      # The transport case is separated from the finding, and NEITHER of them may exit 0. A retry
+      # survives one reset. A registry unreachable on every attempt REFUSES, non-zero and by name,
+      # because "I could not look" reported as "I looked and it was fine" is the whole failure this job
+      # exists to avoid.
+      #
+      # THE EXIT CODE HAD TO BE MADE TO DEPEND ON THE THING IT GRADES, which the bare line did not. Two
+      # ways it could reach 0 without having graded the production tree were measured rather than
+      # imagined:
+      #
+      #   A lockfile declaring no production dependencies prints "found 0 vulnerabilities" and exits 0
+      #   WITH THE REGISTRY POINTED AT A DEAD PORT. Nothing was asked and nothing was answered, and the
+      #   step read as a clean production tree. That is a short distance from here: this repository's
+      #   production tree is three direct dependencies, @noble/curves, @noble/hashes and
+      #   @noble/post-quantum. So the count is asserted non-zero first, offline, out of package.json.
+      #
+      #   Nothing in "exit 0 and a report" says the thing that answered was the advisory database. A
+      #   mirror, a proxy or a stub that answers every query clean produces the identical output. So a
+      #   KNOWN-POSITIVE CONTROL runs on the same channel before a clean verdict is believed: a fixture
+      #   tree carrying minimist 0.0.8, which has had GHSA-vh95-rmgr-6w4m against it since 2020, must
+      #   come back reported. If the endpoint calls that tree clean, this step refuses rather than
+      #   passing on a verdict from an instrument that says clean to everything. The fixture needs no
+      #   install, because `npm audit` grades the lockfile and never reads node_modules, and it is
+      #   handed this repository's own .npmrc so it is asking down the same pipe.
+      #
+      # The remaining path to 0 is an audit that ran, was answered by an endpoint proved live in the
+      # same breath, over a tree proved non-empty, and reported nothing at high or above.
+      #
+      # WHAT THIS STEP BRANCHES ON, and the mistake worth not repeating. The engine pass's first rewrite
+      # asked "does the output say vulnerabilities". npm writes "1 moderate severity vulnerability" in
+      # the SINGULAR, so a tree carrying exactly one advisory below --audit-level exits 0 with a report
+      # on screen and the step called it "no audit report" and went red. So the branch is on WHETHER NPM
+      # PRODUCED A REPORT AT ALL, matched on the stem, and the exit code is trusted only once a report
+      # exists to give it meaning. The transport words then classify only the no-report case, where a
+      # package name cannot be mistaken for a network error because there is no package list to mistake.
+      - name: npm audit (prod deps, high+)
+        run: |
+          set -uo pipefail
+          TRANSPORT='audit endpoint returned an error|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|ERR_SOCKET|socket hang up|request to .* failed'
+
+          prod=$(node -p "Object.keys(require('./package.json').dependencies||{}).length")
+          if [ "$prod" -eq 0 ]; then
+            echo "REFUSED: package.json declares no production dependencies, so a clean audit of the production tree grades nothing."
+            exit 1
+          fi
+          echo "The production tree graded here declares ${prod} direct dependency(ies)."
+
+          CONTROL="${RUNNER_TEMP:-/tmp}/audit-positive-control"
+          mkdir -p "$CONTROL"
+          if [ -f .npmrc ]; then cp .npmrc "$CONTROL/.npmrc"; fi
+          cat > "$CONTROL/package.json" <<'CONTROL_JSON'
+          { "name": "audit-positive-control", "version": "1.0.0", "private": true, "dependencies": { "minimist": "0.0.8" } }
+          CONTROL_JSON
+          cat > "$CONTROL/package-lock.json" <<'CONTROL_LOCK'
+          {
+            "name": "audit-positive-control",
+            "version": "1.0.0",
+            "lockfileVersion": 3,
+            "requires": true,
+            "packages": {
+              "": { "name": "audit-positive-control", "version": "1.0.0", "dependencies": { "minimist": "0.0.8" } },
+              "node_modules/minimist": {
+                "version": "0.0.8",
+                "resolved": "https://registry.npmjs.org/minimist/-/minimist-0.0.8.tgz",
+                "integrity": "sha512-miQKw5Hv4NS1Psg2517mV4e4dYNaO3++hjAvLOAzKqZ61rH8NS1SK+vbfBWZ5PY/Me/bEWhUwqMghEW5Fb9T7Q=="
+              }
+            }
+          }
+          CONTROL_LOCK
+
+          for attempt in 1 2 3; do
+            code=0
+            out="$(npm audit --omit=dev --audit-level=high 2>&1)" || code=$?
+            printf '%s\n' "$out"
+            if ! printf '%s' "$out" | grep -q 'vulnerabilit'; then
+              if printf '%s' "$out" | grep -qE "$TRANSPORT"; then
+                echo "attempt ${attempt} of 3: npm audit did not reach the advisory endpoint, so it graded nothing. Retrying."
+                if [ "$attempt" -lt 3 ]; then sleep 10; fi
+                continue
+              fi
+              echo "REFUSED: npm audit produced no audit report and named no transport fault, so this step cannot say what happened. npm exited ${code}."
+              exit 1
+            fi
+            if [ "$code" -ne 0 ]; then
+              echo "FOUND: npm audit reports an advisory at high or above in the production tree, and there is no acknowledgement path for that tree in any repository."
+              exit 1
+            fi
+
+            ccode=0
+            cout="$(cd "$CONTROL" && npm audit --omit=dev --audit-level=high 2>&1)" || ccode=$?
+            if [ "$ccode" -ne 0 ] && printf '%s' "$cout" | grep -qE "$TRANSPORT"; then
+              echo "attempt ${attempt} of 3: the positive control did not reach the advisory endpoint, so the clean verdict above is unconfirmed. Retrying."
+              if [ "$attempt" -lt 3 ]; then sleep 10; fi
+              continue
+            fi
+            if ! printf '%s' "$cout" | grep -q 'GHSA-vh95-rmgr-6w4m'; then
+              printf '%s\n' "$cout"
+              echo "REFUSED: the advisory endpoint did not report GHSA-vh95-rmgr-6w4m against a fixture pinned to minimist 0.0.8, which carries it."
+              echo "         Whatever answered is not grading advisories, so the clean verdict above is not evidence about the production tree."
+              exit 1
+            fi
+            echo "CONTROL: GHSA-vh95-rmgr-6w4m was reported against the fixture that carries it, so the channel that returned the verdict above is live and grading."
+            echo "CHECKED: npm audit ran and reports no advisory at high or above in the ${prod}-dependency production tree."
+            exit 0
+          done
+          echo "REFUSED: npm audit could not reach the advisory endpoint on any of 3 attempts, so this step established nothing about the production tree."
+          exit 1
+      # BOTH trees, graded separately, against.github/dependency-advisories.json. Until the
+      # step above was this repository's ONLY dependency channel, and `--omit=dev` drops the build tree,
+      # so the job was green while the build tree carried 17 advisories, 11 of them high, with no route
+      # by which any of them could be reported. Ten were fixed the same day inside ranges the tree
+      # already asked for. The gate reads its own header for the rest of the argument, including why the
+      # production tree has no acknowledgement path and the build tree does.
+      #
+      # `!cancelled()` RATHER THAN THE DEFAULT, AND THIS FILE ALREADY ARGUED FOR IT 400 LINES DOWN. The
+      # header at the harness-pin step below records the finding verbatim: "a red signal in front of a
+      # check is indistinguishable from a check that passes", written after a stale residue entry sat
+      # undetected while the step ahead of it was red from. The same shape sat here
+      # unfixed. A step's default condition is success(), so when the step above exited 1 on a transport
+      # fault this gate was SKIPPED, and the run that reported a security failure had graded neither
+      # tree. Measured, not argued: engine run 31266196222 read `skipped` on the equivalent step and
+      # `success` in each of the 38 runs around it. This is not a softening: the step's own exit code
+      # still decides the job, and the two steps now fail independently rather than the first one being
+      # able to suppress the second.
+      #
+      # The retry here reads the gate's own three-outcome contract rather than a code it does not
+      # publish: exit 2 is REFUSED, could not check, which is the transport case and worth another
+      # attempt, and exit 1 is CHECKED AND FOUND SOMETHING, which is an answer and is taken first time.
+      - name: Dependency advisories (both trees, ratcheted)
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            code=0
+            npm run audit:dependencies || code=$?
+            if [ "$code" -ne 2 ]; then exit "$code"; fi
+            echo "attempt ${attempt} of 3: the gate REFUSED (exit 2), so it checked nothing. Retrying."
+            if [ "$attempt" -lt 3 ]; then sleep 10; fi
+          done
+          echo "REFUSED: the dependency advisory gate could not check on any of 3 attempts, so this run established nothing about either tree."
+          exit 2
+
+  lint:
+    name: Lint (Biome)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      # The step name used to claim "0 infos required" while the command it ran did not enforce it:
+      # `biome lint --error-on-warnings` exits 0 on an informational diagnostic. It also ran over
+      # `src` alone while biome.json had declared src, test and scripts, so 709
+      # diagnostics in the gates and validators were linted nowhere, and biome.json's own 2 were
+      # linted nowhere either. All three are now enforced by scripts/biome-scope-gate.mjs inside
+      # `npm run lint`: it fails if the declared scope and the linted scope disagree, it lints the
+      # config as well as the declared roots, and it takes its verdict from the diagnostic count
+      # rather than from biome's exit code, so an info fails like an error.
+      - name: biome lint over the declared scope (0 errors / 0 warnings / 0 infos, enforced)
+        run: npm run lint
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    # push-dedupe skips a tree a pull request already graded; that run scanned every commit of the branch,
+    # a superset of the one squash commit that lands here.
+    needs: [push-dedupe]
+    if: needs.push-dedupe.outputs.duplicate != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false, fetch-depth: 0 }
+      # Blocking secret scan over the full history, run from the gitleaks BINARY rather than
+      # gitleaks-action. The action's v2 line requires a paid GITLEAKS_LICENSE for organisation
+      # repos and fails without one ("missing gitleaks license"), which is a licence check rather
+      # than a scan result: it told us nothing about the tree. The binary is the same scanner, is
+      # free, honours the same .gitleaks.toml, and exits non-zero on a finding, so the gate keeps
+      # its meaning and keeps blocking.
+      - name: gitleaks (binary, full history)
+        run: |
+          VERSION=8.30.0
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tgz
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1
+
+  # Code-quality job (guardrails B8-1): madge (circular deps) + knip (dead code). GATING: madge is
+  # at 0 cycles and the knip baseline is triaged to zero (the dead async-region.ts module is removed;
+  # the over-broad-export and co-located-type conventions are accepted via the knip.json
+  # ignoreExportsUsedInFile setting; built-but-unwired and test-only exports are tagged @knipignore).
+  # In the ci-success needs list below, so a new circular dependency or a new unused export fails CI.
+  quality:
+    name: Code quality (madge + knip)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: madge (circular dependencies)
+        run: npm run lint:circular
+      - name: knip (unused files / exports / deps)
+        run: npm run lint:deadcode
+
+  # The cross-repo gates. These compare this repo against the ENGINE's own source (the client-diag
+  # vocabulary and the audit-mirror types) and against the field catalogue in internal-docs, so they
+  # need siblings a single-repo checkout does not have. They live in `npm run validate:workspace`
+  # rather than in `validate`/`lint`, so those three jobs can pass on a stock runner; this job is
+  # where the cross-repo guarantee is actually enforced.
+  #
+  # It needs a token with read access to the private downpipes-io/engine and downpipes-io/internal-docs
+  # repos, as WORKSPACE_READ_TOKEN. Without it the job FAILS rather than skips, deliberately: these
+  # are drift gates, and client-diag-parity-gate.mjs states the rule they are built on, that "a gate
+  # that quietly opts out when it cannot check reads as a pass". A missing token is a configuration
+  # fault to fix, not a reason to stop checking.
+  # CROSS-REPO TOKEN PROBE, and why the job below is conditional on it.
+  #
+  # Dependabot events are handed the DEPENDABOT secret scope rather than the Actions one, so
+  # WORKSPACE_READ_TOKEN arrives EMPTY on every Dependabot pull request and "Require the cross-repo token"
+  # failed before the gate read a line. Every Dependabot pull request on this repository was therefore red
+  # for a reason no dependency bump could cause, which teaches the reader that red here means nothing. That
+  # is the last lesson a conformance gate should teach, and it makes a Dependabot pull request that is red
+  # for a REAL reason indistinguishable from the standing one.
+  #
+  # This is control-plane's construct, landed there and never propagated here. It is copied
+  # rather than re-invented so the two repositories cannot drift into two different answers.
+  #
+  # It does NOT weaken the fail-closed behaviour on a normal push. The probe reads only whether the secret
+  # is non-empty, never its value, and on any event that CAN read Actions secrets the condition is true and
+  # the gate runs exactly as before. A missing token on a normal push still fails.
+  #
+  # The probe is in the ci-success needs list in its own right, so a probe that fails is caught rather than
+  # silently skipping the gate it guards.
+  #
+  # If a Dependabot pull request ever needs the cross-repo gates to run, the fix is to add
+  # WORKSPACE_READ_TOKEN under Settings > Secrets and variables > Dependabot, not to remove this condition.
+  push-dedupe:
+    # WHY THIS EXISTS. Every change here lands as a pull request and then as a squash merge to main, and the
+    # ruleset's strict status-check policy means the branch was up to date with main when it merged, so the
+    # merge commit's TREE is byte-identical to the pull request head's tree. Measured from the org
+    # billing ledger: the merge run re-graded that identical tree for the full cost of `validate` and
+    # `secret-scan` on every merge (34 pull-request runs in ten days). The gitleaks skip is sound because the
+    # pull-request run scanned every commit of the branch, a superset of the one squash commit that lands. This job answers one question on a push to main: has
+    # a successful pull-request run of THIS workflow already graded this exact tree, with the gated jobs
+    # themselves reported success (not skipped, which is what a Dependabot pull request does to `validate`)?
+    # If so the gated jobs below skip and ci-success records the skip as documented. Anything short of that
+    # answer, including an API error, resolves to `false` and everything runs: this job can only ever save
+    # minutes, never lose a gate. A direct push to main has no pull-request run, so it always grades in full.
+    name: Same tree already graded on a pull request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      duplicate: ${{ steps.probe.outputs.duplicate }}
+    steps:
+      - name: Look for a successful pull-request run of this tree
+        id: probe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          TREE: ${{ github.event.head_commit.tree_id }}
+          REPO: ${{ github.repository }}
+          # The jobs that skip on a duplicate. Each must have concluded success in the earlier run.
+          GATED: "Validators|Secret scan (gitleaks)"
+        run: |
+          set -uo pipefail
+          echo "duplicate=false" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT" != "push" ] || [ -z "$TREE" ]; then
+            echo "not a push to main with a head tree, so nothing to deduplicate against"; exit 0
+          fi
+          runs=$(gh api "/repos/$REPO/actions/workflows/ci.yml/runs?event=pull_request&status=success&per_page=40" \
+                   -q '.workflow_runs[] | "\(.id) \(.head_sha)"' 2>/dev/null) || { echo "could not list runs; grading in full"; exit 0; }
+          IFS='|' read -r -a gated <<< "$GATED"
+          while read -r id sha; do
+            [ -n "$id" ] || continue
+            t=$(gh api "/repos/$REPO/git/commits/$sha" -q .tree.sha 2>/dev/null) || continue
+            [ "$t" = "$TREE" ] || continue
+            jobs=$(gh api --paginate "/repos/$REPO/actions/runs/$id/jobs?per_page=100" -q '.jobs[] | "\(.conclusion)\t\(.name)"' 2>/dev/null) || continue
+            ok=true
+            for g in "${gated[@]}"; do
+              printf '%s\n' "$jobs" | grep -Fxq "success	$g" || { ok=false; echo "run $id has tree $TREE but job '$g' was not a success there"; }
+            done
+            if [ "$ok" = true ]; then
+              echo "duplicate=true" >> "$GITHUB_OUTPUT"
+              echo "tree $TREE was graded by pull-request run $id (head $sha) with every gated job green: the gated jobs skip on this push"
+              echo "Same tree already graded by pull-request run $id; ${#gated[@]} gated job(s) skipped on this push." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done <<< "$runs"
+          echo "no successful pull-request run holds tree $TREE with every gated job green; grading in full"
+
+  workspace:
+    name: Cross-repo gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      # fetch-depth: 0 (full history), not the default shallow single commit: the self-caused-drift step
+      # below diffs this BRANCH against its merge base with the target, and a shallow checkout would not
+      # have that commit locally to diff against.
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { path: console, persist-credentials: false, fetch-depth: 0 }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+        working-directory: console
+      # GUARDED FROM HERE. These six gates ran as bare sequential steps, so the FIRST
+      # red hid every one after it. Measured rather than argued: in run 30846902259 the job failed at the
+      # drift gate and all four later steps show SKIPPED, which is how GATE.14 came to have never executed
+      # despite landing an hour earlier. Over the 40 most recent main runs the job went dark on 24 gate
+      # executions, and the action-catalogue gate failed on its OWN merits on 11 of the 31 runs it was
+      # allowed to run at all: red about a third of the time it reports, silenced on nearly a quarter of runs.
+      #
+      # NOT `if: always()`. The construct is internal-docs' (.github/workflows/field-catalogue.yml, 27 guarded
+      # steps), and both halves are load-bearing. `!cancelled()` must stay: that file's own header records
+      # run 30862116402, where dropping it skipped everything while the YAML still read correctly. And the
+      # gates stay conditional on the TOKEN step, because without a token the sibling checkouts never
+      # happened, so every gate below would fail for a reason that is not its own. Cascade was measured
+      # before choosing: zero for the recurring failure (no later step reads what the citation gate touches),
+      # 10 of 10 only for a missing token, which is exactly what this condition preserves.
+      - name: Cross-repo drift gates and the field catalogue
+        if: ${{ !cancelled() && steps.crossrepo-token.outcome == 'success' }}
+        run: npm run validate:workspace
+        working-directory: console
+
+  # The console Worker's own suite (test/vitest/worker.test.ts, 14 tests). It ran in NO CI job until
+  # , which mattered because worker.ts is where the SPA fallback lives: the 404-or-307
+  # rewrite that a deep link depends on, and whose own comment records that passing the redirect
+  # through once already reset the router to Overview on every deep-link refresh. That is the exact
+  # class of regression this suite exists to catch, and nothing was running it.
+  vitest:
+    name: Worker suite (vitest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with: { egress-policy: audit }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: npm ci
+      - name: vitest (the Worker's fetch handler and SPA fallback)
+        run: npm run test:vitest
+
+  ci-success:
+    name: CI Success
+    needs: [typecheck, validate, property, lint, build, security, secret-scan, quality, coverage, coverage-screens, workspace, vitest, push-dedupe]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    if: always()
+    steps:
+      - name: Check required jobs
+        # Generic by construction: reads the job's own `needs:` context at run time (toJSON(needs)),
+        # so it cannot drift out of sync with that list the way a hand-written require_success call
+        # per job name can. See workflow-transform.mjs (PUBLISH) for why this replaced a bespoke,
+        # per-repository aggregation script.
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          status=0
+          echo "required job results:"
+          for name in $(printf '%s' "$NEEDS_JSON" | jq -r 'keys[]' | sort); do
+            result=$(printf '%s' "$NEEDS_JSON" | jq -r --arg n "$name" '.[$n].result')
+            printf '  %-28s %s\n' "$name" "$result"
+            case "$result" in
+              success) ;;
+              skipped) echo "::notice::job '$name' was skipped (an event-gated job; not a cross-repo gate, none of those ship in this export)" ;;
+              *) echo "::error::required job '$name' reported '$result'"; status=1 ;;
+            esac
+          done
+          if [ "$status" -ne 0 ]; then
+            echo "::error::a required job did not pass"
+            exit 1
+          fi
+          echo "all required jobs accounted for"

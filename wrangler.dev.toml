@@ -1,0 +1,27 @@
+# DEV console deploy config: a template for a second, non-production console instance alongside your
+# real one. The ONLY public surface for this environment: dev.downpipes.io. Put a Cloudflare Access
+# application on this hostname; the engine has no route, so gating this one hostname gates everything.
+#   npx wrangler deploy -c wrangler.dev.toml
+name = "downpipe-console-dev"
+main = "src/worker.ts"
+compatibility_date = "2026-06-01"
+workers_dev = false
+upload_source_maps = true
+
+# The console serves a static SPA and proxies same-origin to the engine; cap CPU low.
+limits = { cpu_ms = 50 }
+
+route = { pattern = "dev.downpipes.io", custom_domain = true }
+
+[observability]
+enabled = true
+
+# Reach the DEV engine (and no other environment's) over the worker-to-worker service binding.
+[[services]]
+binding = "ENGINE"
+service = "downpipe-engine-dev"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true
