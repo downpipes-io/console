@@ -45,8 +45,6 @@ export { prefillFromQuery } from "./sources-downpipes/editor.ts";
 // Re-exports kept so the split preserves external callers' import paths.
 export type { RestoreTestRecencyKind } from "./sources-downpipes/helpers.ts";
 export {
-  friendlyName,
-  type RestoreTestRecency,
   restoreTestCadenceLabel,
   restoreTestReasonPhrase,
   restoreTestRecency,

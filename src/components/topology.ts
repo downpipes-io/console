@@ -52,24 +52,18 @@ import type {
 // name so a screen (and live-flow.ts) can import the shapes straight from this module,
 // exactly as before. The render handle (TopologyHandle) is declared below, beside the render
 // layer it describes, and exported directly.
+// NodeGroupSpec/ColumnSide/LayoutNode/LayoutGroup/StatusPresentation/EdgeDash/LayoutEdge/
+// StatusCounts/MarkerBox were re-exported here too, but nothing imports them through this barrel
+// path (callers use topology-types.ts directly), so knip's dead-export sweep removed them.
 export type {
   NodeKind,
   FlowEndpoint,
   FlowStatus,
   FlowRecord,
-  NodeGroupSpec,
   TopologyOptions,
-  ColumnSide,
-  LayoutNode,
-  LayoutGroup,
-  StatusPresentation,
   StatusTone,
-  EdgeDash,
   EdgeWeight,
-  LayoutEdge,
-  StatusCounts,
   TopologyModel,
-  MarkerBox,
   TopologyTableRow,
 } from "./topology-types.ts";
 // The pure model + encoding lives in topology-model.ts; re-export the public surface by name
@@ -86,7 +80,6 @@ export {
   markerBoundingBox,
   boxesIntersect,
   MARKER_BOX,
-  ARROWHEAD_MARKER_ID,
 } from "./topology-model.ts";
 // The accessible-table column set lives in topology-table.ts; re-export it by name (the
 // validator and live-flow.ts import topologyTableColumns from this module).

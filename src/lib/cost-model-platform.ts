@@ -30,10 +30,9 @@ import {
   type ResourceUsage,
   scaleUsage,
   usageWithDefaults,
-  ZERO_USAGE,
 } from "./cost-model-usage.ts";
 
-export { addUsage, type ResourceUsage, scaleUsage, usageWithDefaults, ZERO_USAGE };
+export { addUsage, type ResourceUsage, scaleUsage, usageWithDefaults };
 
 // ---------------------------------------------------------------------------
 // Cloudflare resource rates (the paid-rate table)

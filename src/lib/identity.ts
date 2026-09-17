@@ -49,5 +49,6 @@ export {
   validateCustomRole,
 } from "./identity-custom-roles.ts";
 
-export type { Persona } from "./identity-personas.ts";
+// Persona was re-exported here too, but nothing imports it through this barrel path (callers use
+// identity-personas.ts directly), so knip's dead-export sweep removed it.
 export { PERSONAS } from "./identity-personas.ts";

@@ -51,10 +51,9 @@ export {
   entityProviderEnabled,
   type EntityData,
 } from "./command-palette/entities.ts";
-export type {
-  PaletteDispatch,
-  OpenPaletteOptions,
-} from "./command-palette/shared.ts";
+// PaletteDispatch/OpenPaletteOptions were re-exported here too, but nothing imports them through
+// this barrel path (callers use command-palette/shared.ts directly), so knip's dead-export sweep
+// removed them.
 
 // ---------------------------------------------------------------------------
 // The screen descriptor (self-owned; the integrator wires route + actions).

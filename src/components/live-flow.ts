@@ -81,19 +81,10 @@ export type { FlowRecord, FlowStatus } from "./topology.ts";
 // The shared idle-ambient rule (one rule, both views): defined beside the SVG renderer,
 // re-exported here so the canvas, the validator and any screen read the same predicate.
 export { hasAmbientSheen } from "./topology.ts";
-export type {
-  RenderMode,
-  AnimationMode,
-  Column,
-  LiveNode,
-  LiveLeg,
-  LiveEdge,
-  LiveFlowModel,
-  LiveFlowOptions,
-  LiveFlowHandle,
-  Rgb,
-  LiveFlowTableSpec,
-} from "./live-flow-types.ts";
+// RenderMode/AnimationMode/Column/LiveNode/LiveLeg/LiveEdge/Rgb/LiveFlowTableSpec were re-exported
+// here too, but nothing imports them through this barrel path (callers use live-flow-types.ts
+// directly), so knip's dead-export sweep removed them.
+export type { LiveFlowModel, LiveFlowOptions, LiveFlowHandle } from "./live-flow-types.ts";
 export {
   chooseRenderMode,
   detectCanvas2d,

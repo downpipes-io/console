@@ -61,10 +61,10 @@ export {
   renderRecoveryAccess,
   retireRefuseText,
 } from "./security-centre/access.ts";
+// CoverageFinding was re-exported here too, but nothing imports it through this barrel path
+// (callers use ./security-centre/coverage.ts directly), so knip's dead-export sweep removed it.
 export {
   COVERAGE_CARDS_PER_GROUP,
-  COVERAGE_INVENTORY_TYPES,
-  type CoverageFinding,
   compareCoverageResources,
   coverageFindings,
   coverageStatement,
@@ -72,7 +72,6 @@ export {
   coverageStatusOrder,
   coverageStatusTone,
   coverageTypeLabel,
-  type PopulateInventory,
   parseInventory,
   parseInventoryGroup,
   renderCoverage,
