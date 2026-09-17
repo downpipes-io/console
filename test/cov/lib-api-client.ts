@@ -561,7 +561,7 @@ async function main(): Promise<void> {
     rec = record(JSON.stringify({ ok: true, stepUpToken: "stk" }));
     const fin = (await engine.stepUpFinish("ch1", { id: "c", rawId: "r", type: "public-key", response: {} } as never)) as { ok: boolean };
     ok("stepUpFinish parses the verified body", fin.ok === true);
-    eq((rec.calls[0]?.body as { challengeId: string }).challengeId, "ch1", "stepUpFinish sends the challengeId");
+    eq((rec.calls[0]!.body as { challengeId: string }).challengeId, "ch1", "stepUpFinish sends the challengeId");
     rec.restore();
 
     // listDownpipes maps the engine wire shape (nested restoreProven / epoch-ms stamps) to the console shape.
@@ -646,12 +646,12 @@ async function main(): Promise<void> {
     // applyUpdate body assembly: a dry run carries NO token; a live apply with allowDowngrade carries both flags.
     let rec = record(JSON.stringify({ outcome: "planned" }));
     await engine.applyUpdate({ dryRun: true });
-    ok("applyUpdate dry-run body omits the token", (rec.calls[0]?.body as { token?: string }).token === undefined);
+    ok("applyUpdate dry-run body omits the token", (rec.calls[0]!.body as { token?: string }).token === undefined);
     rec.restore();
     rec = record(JSON.stringify({ outcome: "promoted" }));
     await engine.applyUpdate({ dryRun: false, token: "tok", allowDowngrade: true });
-    ok("applyUpdate live body carries the token", (rec.calls[0]?.body as { token?: string }).token === "tok");
-    ok("applyUpdate carries allowDowngrade only when true", (rec.calls[0]?.body as { allowDowngrade?: boolean }).allowDowngrade === true);
+    ok("applyUpdate live body carries the token", (rec.calls[0]!.body as { token?: string }).token === "tok");
+    ok("applyUpdate carries allowDowngrade only when true", (rec.calls[0]!.body as { allowDowngrade?: boolean }).allowDowngrade === true);
     rec.restore();
 
     // rampUpdate: 202 queued, success, error fold.
@@ -974,22 +974,22 @@ async function main(): Promise<void> {
 
     rec = record(JSON.stringify({ ok: true }));
     await engine.addDestination({ endpoint: "https://s3", bucket: "b", region: "auto", accessKeyId: "k", secretAccessKey: "s" } as never, "label");
-    ok("addDestination omits id when adding (no id supplied)", (rec.calls[0]?.body as { id?: string }).id === undefined);
+    ok("addDestination omits id when adding (no id supplied)", (rec.calls[0]!.body as { id?: string }).id === undefined);
     rec.restore();
 
     rec = record(JSON.stringify({ id: "x" }));
     await engine.setRole("a@x", "viewer");
-    ok("setRole omits expiresAt for a non-time-boxed grant", (rec.calls[0]?.body as { expiresAt?: string }).expiresAt === undefined);
+    ok("setRole omits expiresAt for a non-time-boxed grant", (rec.calls[0]!.body as { expiresAt?: string }).expiresAt === undefined);
     rec.restore();
 
     rec = record(JSON.stringify({ id: "x" }));
     await engine.assignCustomRole("a@x", "r");
-    ok("assignCustomRole omits expiresAt for a non-time-boxed grant", (rec.calls[0]?.body as { expiresAt?: string }).expiresAt === undefined);
+    ok("assignCustomRole omits expiresAt for a non-time-boxed grant", (rec.calls[0]!.body as { expiresAt?: string }).expiresAt === undefined);
     rec.restore();
 
     rec = record(JSON.stringify({ runId: "r1" }));
     await engine.recordDrillEvidence("r1", "offline-rehearsal" as never);
-    ok("recordDrillEvidence omits note when absent", (rec.calls[0]?.body as { note?: string }).note === undefined);
+    ok("recordDrillEvidence omits note when absent", (rec.calls[0]!.body as { note?: string }).note === undefined);
     rec.restore();
 
     // resetDemoFresh's "other status" arm with an EMPTY body: the message omits the ": <txt>" suffix.
@@ -1021,11 +1021,11 @@ async function main(): Promise<void> {
   {
     let rec = record(JSON.stringify({ ok: true, conn: { id: "c1" } }));
     await engine.createIdpConnection({ presetId: "okta", vars: {}, id: "okta", clientId: "cid", secret: "s", secretMode: "do-plaintext" } as never);
-    ok("createIdpConnection sends a preset body flat (no proposal wrapper)", (rec.calls[0]?.body as { proposal?: unknown; presetId?: string }).presetId === "okta");
+    ok("createIdpConnection sends a preset body flat (no proposal wrapper)", (rec.calls[0]!.body as { proposal?: unknown; presetId?: string }).presetId === "okta");
     rec.restore();
     rec = record(JSON.stringify({ ok: true, conn: { id: "c2" } }));
     await engine.createIdpConnection({ kind: "saml", id: "saml1" } as never);
-    ok("createIdpConnection wraps a SAML proposal as { proposal }", (rec.calls[0]?.body as { proposal?: { kind?: string } }).proposal?.kind === "saml");
+    ok("createIdpConnection wraps a SAML proposal as { proposal }", (rec.calls[0]!.body as { proposal?: { kind?: string } }).proposal?.kind === "saml");
     rec.restore();
   }
 
@@ -1250,7 +1250,7 @@ async function main(): Promise<void> {
     // mintSupportCredential WITHOUT ttlSeconds omits it from the body.
     rec = record(JSON.stringify({ clientId: "c", secret: "s" }));
     await engine.mintSupportCredential("diagnostics" as never);
-    ok("mintSupportCredential omits ttlSeconds when absent", (rec.calls[0]?.body as { ttlSeconds?: number }).ttlSeconds === undefined);
+    ok("mintSupportCredential omits ttlSeconds when absent", (rec.calls[0]!.body as { ttlSeconds?: number }).ttlSeconds === undefined);
     rec.restore();
 
     // setLicence(null) clears; the success arm parses the status.
@@ -1263,7 +1263,7 @@ async function main(): Promise<void> {
     rec = record(JSON.stringify({ signerPublic: "pub" }));
     const ik = await engine.installKeys({ token: "t", signerPrivate: "s", breakGlassPublic: "b", operationalPublic: "op", operationalPrivate: "opr" });
     ok("installKeys parses the result on a 200", (ik as { signerPublic: string }).signerPublic === "pub");
-    ok("installKeys includes operationalPublic when supplied", (rec.calls[0]?.body as { operationalPublic?: string }).operationalPublic === "op");
+    ok("installKeys includes operationalPublic when supplied", (rec.calls[0]!.body as { operationalPublic?: string }).operationalPublic === "op");
     rec.restore();
 
     // changeBindings success arm resolves to status:result carrying attached/detached.
@@ -1328,7 +1328,7 @@ async function main(): Promise<void> {
     rec.restore();
     rec = record(JSON.stringify({ ok: true }));
     await engine.passkeyLoginBegin();
-    ok("passkeyLoginBegin omits email when absent", (rec.calls[0]?.body as { email?: string }).email === undefined);
+    ok("passkeyLoginBegin omits email when absent", (rec.calls[0]!.body as { email?: string }).email === undefined);
     rec.restore();
   }
 

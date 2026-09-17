@@ -2197,14 +2197,14 @@ await (async (): Promise<void> => {
     ok("clicking 'Take the tour' re-mounts the welcome (no tour auto-starts) and removes the relaunch button", document.getElementById("tour-persona-fork") !== null && document.getElementById("tour-relaunch") === null && startCount === startsBeforeRelaunch);
     // Re-mounting the welcome while a stale relaunch is up clears the relaunch (it belongs only to free-explore):
     // explore freely again to remount it, then prove a fresh welcome mount removes it.
-    document.getElementById("tour-persona-fork")?.querySelector('[aria-label="Free Explore"]') && (document.getElementById("tour-persona-fork")?.querySelector('[aria-label="Free Explore"]') as unknown as { click(): void }).click();
+    (document.getElementById("tour-persona-fork")?.querySelector('[aria-label="Free Explore"]') as unknown as { click(): void } | null | undefined)?.click();
     ok("exploring freely again re-mounts the relaunch affordance", document.getElementById("tour-relaunch") !== null);
     mountPersonaFork({ createDirector: makeSpy });
     ok("re-showing the welcome clears the relaunch affordance (it is present only while the welcome is down)", document.getElementById("tour-relaunch") === null);
     document.getElementById("tour-persona-fork")?.remove();
     // Starting the tour never leaves a relaunch behind the tour overlay (the director owns the in-tour Resume).
     const forkChoose = mountPersonaFork({ createDirector: makeSpy });
-    document.getElementById("tour-persona-fork")?.querySelector('[aria-label="Free Explore"]') && (document.getElementById("tour-persona-fork")?.querySelector('[aria-label="Free Explore"]') as unknown as { click(): void }).click(); // explore freely -> relaunch up
+    (document.getElementById("tour-persona-fork")?.querySelector('[aria-label="Free Explore"]') as unknown as { click(): void } | null | undefined)?.click(); // explore freely -> relaunch up
     void forkChoose;
     const forkChoose2 = mountPersonaFork({ createDirector: makeSpy }); // re-show clears it
     forkChoose2.choose("engineer");
