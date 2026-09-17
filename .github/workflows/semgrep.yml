@@ -45,9 +45,9 @@ jobs:
       actions: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with: { egress-policy: audit }
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
       - name: Semgrep scan (rules p/default + p/secrets)
         run: |
@@ -85,7 +85,7 @@ jobs:
       # Written as `== false` rather than `!`: on an event whose payload carries no repository object
       # the expression is null, and `== false` skips where `!null` would run.
       - name: Upload SARIF to the Security tab (only where code scanning can accept it)
-        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v3.30.0
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v3.30.0
         if: always() && github.event.repository.private == false
         with:
           sarif_file: semgrep.sarif
@@ -111,7 +111,7 @@ jobs:
 
       # The findings stay reachable without the Security tab: downloadable from the run.
       - name: Upload SARIF as an artefact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: semgrep-sarif
