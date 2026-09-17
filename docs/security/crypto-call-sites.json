@@ -1,0 +1,252 @@
+[
+  {
+    "file": "scripts/build-release-bundle.mjs",
+    "kind": "algorithm",
+    "detail": "SHA-256"
+  },
+  {
+    "file": "scripts/build-release-bundle.mjs",
+    "kind": "algorithm",
+    "detail": "SHA-384"
+  },
+  {
+    "file": "scripts/build-release-bundle.mjs",
+    "kind": "import",
+    "detail": "node:crypto"
+  },
+  {
+    "file": "scripts/build-release-bundle.mjs",
+    "kind": "subtle",
+    "detail": "digest"
+  },
+  {
+    "file": "scripts/dependency-advisory-gate.mjs",
+    "kind": "algorithm",
+    "detail": "SHA-256"
+  },
+  {
+    "file": "scripts/dependency-advisory-gate.mjs",
+    "kind": "import",
+    "detail": "node:crypto"
+  },
+  {
+    "file": "scripts/narration-gate.ts",
+    "kind": "algorithm",
+    "detail": "SHA-256"
+  },
+  {
+    "file": "scripts/narration-gate.ts",
+    "kind": "import",
+    "detail": "node:crypto"
+  },
+  {
+    "file": "scripts/verdict-record.mjs",
+    "kind": "algorithm",
+    "detail": "SHA-256"
+  },
+  {
+    "file": "scripts/verdict-record.mjs",
+    "kind": "import",
+    "detail": "node:crypto"
+  },
+  {
+    "file": "src/bytes.ts",
+    "kind": "algorithm",
+    "detail": "SHA-384"
+  },
+  {
+    "file": "src/bytes.ts",
+    "kind": "random",
+    "detail": "getRandomValues"
+  },
+  {
+    "file": "src/bytes.ts",
+    "kind": "subtle",
+    "detail": "digest"
+  },
+  {
+    "file": "src/components/confirm.ts",
+    "kind": "random",
+    "detail": "randomUUID"
+  },
+  {
+    "file": "src/components/dialog.ts",
+    "kind": "random",
+    "detail": "randomUUID"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "algorithm",
+    "detail": "Ed25519"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "algorithm",
+    "detail": "ML-DSA-87"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "algorithm",
+    "detail": "ML-KEM-1024"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "algorithm",
+    "detail": "X25519"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "import",
+    "detail": "@noble/curves/ed25519.js"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "import",
+    "detail": "@noble/post-quantum/ml-dsa.js"
+  },
+  {
+    "file": "src/keygen.ts",
+    "kind": "import",
+    "detail": "@noble/post-quantum/ml-kem.js"
+  },
+  {
+    "file": "src/lib/dom.ts",
+    "kind": "random",
+    "detail": "randomUUID"
+  },
+  {
+    "file": "src/lib/envelope.ts",
+    "kind": "algorithm",
+    "detail": "AES-GCM"
+  },
+  {
+    "file": "src/lib/envelope.ts",
+    "kind": "subtle",
+    "detail": "decrypt"
+  },
+  {
+    "file": "src/lib/envelope.ts",
+    "kind": "subtle",
+    "detail": "encrypt"
+  },
+  {
+    "file": "src/lib/envelope.ts",
+    "kind": "subtle",
+    "detail": "importKey"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "algorithm",
+    "detail": "AES-GCM"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "algorithm",
+    "detail": "HKDF"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "algorithm",
+    "detail": "ML-KEM-1024"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "algorithm",
+    "detail": "SHA-384"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "algorithm",
+    "detail": "X25519"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "import",
+    "detail": "@noble/curves/ed25519.js"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "import",
+    "detail": "@noble/post-quantum/ml-kem.js"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "subtle",
+    "detail": "decrypt"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "subtle",
+    "detail": "deriveBits"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "subtle",
+    "detail": "digest"
+  },
+  {
+    "file": "src/lib/keydecap.ts",
+    "kind": "subtle",
+    "detail": "importKey"
+  },
+  {
+    "file": "src/lib/sealed-export-unseal.ts",
+    "kind": "algorithm",
+    "detail": "Ed25519"
+  },
+  {
+    "file": "src/lib/sealed-export-unseal.ts",
+    "kind": "algorithm",
+    "detail": "ML-DSA-87"
+  },
+  {
+    "file": "src/lib/sealed-export-unseal.ts",
+    "kind": "import",
+    "detail": "@noble/curves/ed25519.js"
+  },
+  {
+    "file": "src/lib/sealed-export-unseal.ts",
+    "kind": "import",
+    "detail": "@noble/post-quantum/ml-dsa.js"
+  },
+  {
+    "file": "src/lib/shamir.ts",
+    "kind": "algorithm",
+    "detail": "SHA-256"
+  },
+  {
+    "file": "src/lib/shamir.ts",
+    "kind": "import",
+    "detail": "@noble/hashes/sha2.js"
+  },
+  {
+    "file": "src/lib/webauthn-prf.ts",
+    "kind": "algorithm",
+    "detail": "SHA-256"
+  },
+  {
+    "file": "src/lib/webauthn-prf.ts",
+    "kind": "import",
+    "detail": "@noble/hashes/hkdf.js"
+  },
+  {
+    "file": "src/lib/webauthn-prf.ts",
+    "kind": "import",
+    "detail": "@noble/hashes/sha2.js"
+  },
+  {
+    "file": "src/screens/access-security/sessions-passkeys.ts",
+    "kind": "algorithm",
+    "detail": "Ed25519"
+  },
+  {
+    "file": "src/screens/credentials/forms.ts",
+    "kind": "random",
+    "detail": "randomUUID"
+  },
+  {
+    "file": "src/screens/sources/shared.ts",
+    "kind": "random",
+    "detail": "randomUUID"
+  }
+]
