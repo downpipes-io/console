@@ -122,7 +122,7 @@ Three automated mechanisms run on every push and pull request against `main`
    not answer in full, on every run whatever the verdict.
 
    Before this gate existed the line above was the only dependency channel here.
-   `--omit=dev`drops the build tree, so the job was green while the
+   `--omit=dev` drops the build tree, so the job was green while the
    build tree carried 17 advisories, 11 of them High. Ten were closed the same day
    inside version ranges the tree already asked for.
 
