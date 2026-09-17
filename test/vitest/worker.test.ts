@@ -151,7 +151,7 @@ describe("console worker fetch entrypoint", () => {
 
   it("refuses a forwarded hop-by-hop header with a fixed 400 before routing, and serves the same request clean (ASVS V4.2.3)", async () => {
     const env = makeEnv();
-    for (const [name, value] of [["proxy-connection", "keep-alive"], ["transfer-encoding", "chunked"], ["keep-alive", "timeout=5"], ["upgrade", "h2c"], ["te", "gzip"]]) {
+    for (const [name, value] of [["proxy-connection", "keep-alive"], ["transfer-encoding", "chunked"], ["keep-alive", "timeout=5"], ["upgrade", "h2c"], ["te", "gzip"]] as const) {
       const res = await worker.fetch(new Request("https://console.downpipes.io/engine-topology.json", { headers: { [name]: value } }), env);
       expect(res.status, name).toBe(400);
       expect(await res.text()).toBe("malformed request: connection-specific header\n");

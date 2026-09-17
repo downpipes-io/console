@@ -137,7 +137,7 @@ const GUARD_REL = "test/lib/verdict-guard.ts";
 // raised, in the same way the sibling repos pin a test baseline. That is the price of a number that is
 // checked rather than printed. Raising a class's pin is a one-line edit; the --self-test fixtures below are
 // generated from the pin, so nothing else here needs to change with it.
-const POPULATION_BASELINE = { direct: 219, spawned: 25, floated: 1 };
+const POPULATION_BASELINE = { direct: 216, spawned: 25, floated: 1 };
 
 /**
  * populationProblems compares a measured per-class population against the pin, naming every class that
