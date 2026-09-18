@@ -60,6 +60,12 @@ import { createHash } from "node:crypto";
 import { keyOf, laterWins, PASSING_VERDICTS } from "./ledger-verdicts.mjs";
 
 /** The record's shape identifier. A reader that does not recognise it refuses rather than guessing. */
+/**
+ * One graded entry in the committed record: a control (`key`), scored against the file the catalogue
+ * currently files it under, at the sha the working tree's copy of that file hashes to right now.
+ * @typedef {{ key: string, verdict: string, ts: unknown, file: string, file_sha256: string, seq: number, console_sha: string }} VerdictEntry
+ */
+
 export const RECORD_SCHEMA = "downpipes/control-grain-verdicts@1";
 
 /** Where the record lives, relative to the console repo root. */
@@ -179,13 +185,15 @@ export function serialiseRecord(record) {
  * record's churn and the control counts describe coverage.
  *
  * @param {object} args
- * @param {{ schema: string, verdicts: object[] }} args.record
+ * @param {{ schema: string, verdicts: VerdictEntry[] }} args.record
  * @param {{ key: string, file: string }[]} args.catalogueRows
  * @param {(file: string) => string | null} args.treeDigest  sha256 of the working tree's `file`, or null
  */
 export function scoreRecord({ record, catalogueRows, treeDigest }) {
   const fileOf = new Map(catalogueRows.map((r) => [r.key, r.file]));
+  /** @type {Map<string, VerdictEntry>} */
   const standing = new Map();
+  /** @type {Map<string, VerdictEntry & { why: string }>} */
   const dropped = new Map(); // key -> the latest entry that was dropped for currency, by the same laterWins rule
   let staleCode = 0; // the control's own source has moved since the verdict was banked
   let movedFile = 0; // the catalogue now files this control somewhere else entirely

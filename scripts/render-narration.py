@@ -26,7 +26,7 @@
 # public/narration/*.mp3 plus public/narration/manifest.json. The manifest carries the sha256 of the text it
 # ACTUALLY spoke, which is what makes the gate meaningful: only a real render can move it.
 #
-# House rules: Australian English, precise claims, no AI attribution.
+# House rules: Australian English, precise claims.
 
 import argparse
 import hashlib

@@ -65,8 +65,13 @@ function filesCheckedBy(config) {
   // this repo's own sources. `|| true` is deliberate: --listFiles still prints its list when the project
   // has type errors, and this gate is about COVERAGE, not about whether the code currently checks clean.
   let stdout = "";
+  // Invoked as `node <the typescript-7 package's own tsc script>`, not bare `tsc` or `npx tsc`: this repo
+  // also carries a `typescript` devDependency (kept at 6.0.3 for its compiler-API consumers), and the two
+  // packages both declare a `tsc` bin, so node_modules/.bin/tsc is whichever npm linked last. The gating
+  // chain's own typecheck scripts resolve the same explicit path, for the same reason.
+  const TSC = join(ROOT, "node_modules", "typescript-7", "bin", "tsc");
   try {
-    stdout = execFileSync("npx", ["tsc", "-p", config, "--noEmit", "--listFiles"], {
+    stdout = execFileSync(process.execPath, [TSC, "-p", config, "--noEmit", "--listFiles"], {
       cwd: ROOT,
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
@@ -78,7 +83,7 @@ function filesCheckedBy(config) {
       // to compare against and did not establish that any source is outside a project. Exit 1 would report a
       // coverage gap that no run measured. The catch above already lets a project with type ERRORS through,
       // because the list still prints then; reaching here means the instrument itself did not run.
-      console.error(`CANNOT CHECK typecheck-coverage: could not read the file list for ${config}, so no source was compared against any project's load set.\n  Fix the tsc invocation or the config and re-run: npx tsc -p ${config} --noEmit --listFiles\n${String(/** @type {any} */ (err).stderr ?? err)}`);
+      console.error(`CANNOT CHECK typecheck-coverage: could not read the file list for ${config}, so no source was compared against any project's load set.\n  Fix the tsc invocation or the config and re-run: node ${TSC} -p ${config} --noEmit --listFiles\n${String(/** @type {any} */ (err).stderr ?? err)}`);
       process.exit(2);
     }
   }
@@ -115,7 +120,7 @@ for (const unit of UNITS) {
     process.exit(2);
   }
   if (checked.size < unit.floor) {
-    console.error(`CANNOT CHECK typecheck-coverage: ${unit.config} reported only ${checked.size} files, so the load set was probably not produced and nothing was compared against it.\n  Re-run it directly to see why: npx tsc -p ${unit.config} --noEmit --listFiles`);
+    console.error(`CANNOT CHECK typecheck-coverage: ${unit.config} reported only ${checked.size} files, so the load set was probably not produced and nothing was compared against it.\n  Re-run it directly to see why: node node_modules/typescript-7/bin/tsc -p ${unit.config} --noEmit --listFiles`);
     process.exit(2);
   }
 

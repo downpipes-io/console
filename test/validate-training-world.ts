@@ -13,7 +13,7 @@
 // The screen-level halves live where they always have: validate-tour.ts drives the scripted walks over
 // the real screens, and the harness's training-walk journey drives the shipped bundle in a real browser.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { installDomShim } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

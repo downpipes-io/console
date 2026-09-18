@@ -15,7 +15,7 @@
 // mapper nobody calls is exactly that failure wearing a different hat: every case here would pass while the
 // screen still showed the operator nothing.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { readFileSync } from "node:fs";
 import { ailingCauseLine } from "../src/screens/canary-copy.ts";

@@ -79,7 +79,7 @@ const ws = mkdtempSync(join(tmpdir(), "sibling-lag-statements-"));
 //
 // Faithful to the two shapes the gate parses and to its own three parse controls: STEPUP_SUBS must hold at
 // least 20 members, must contain /keys/rotate and /roles/delete, and must NOT contain
-// /sessions/terminate-others. The two real console call sites for those routes (client-keys.ts and
+// /notify/test. The two real console call sites for those routes (client-keys.ts and
 // client-rbac.ts) are what carry the current direction past the zero-numerator floor, and they are read out
 // of THIS repo, so nothing here resolves a sibling.
 const engineRepo = join(ws, "engine");

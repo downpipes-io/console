@@ -52,6 +52,7 @@ if (engineRoot === undefined) {
 // engine checkout. No fetch, so unknown freshness (no origin/main ref) is not judged either way.
 // CLIENT_DIAG_ALLOW_STALE=1 overrides.
 if (process.env.CLIENT_DIAG_ALLOW_STALE !== "1") {
+  /** @type {number | null} */
   let behind = null;
   try {
     behind = Number(execFileSync("git", ["-C", engineRoot, "rev-list", "--count", "HEAD..origin/main"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim());

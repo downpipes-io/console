@@ -122,6 +122,7 @@ function objProps(objNode) {
       continue;
     }
     if (!ts.isPropertyAssignment(p) || !p.name) continue;
+    /** @type {string | null} */
     let key = null;
     if (ts.isIdentifier(p.name)) key = p.name.text;
     else if (ts.isStringLiteral(p.name) || ts.isNoSubstitutionTemplateLiteral(p.name)) key = p.name.text;
@@ -225,6 +226,7 @@ function lastCallInHandler(fnNode) {
   const body = fnNode.body;
   if (ts.isCallExpression(body)) return body; // concise arrow body
   if (!ts.isBlock(body)) return null;
+  /** @type {import("typescript").CallExpression | null} */
   let lastCall = null;
   for (const stmt of body.statements) {
     if (ts.isExpressionStatement(stmt) && ts.isCallExpression(stmt.expression)) lastCall = stmt.expression;
@@ -324,6 +326,7 @@ function nearestVarDeclName(node) {
 // role.role tells a reader nothing role alone did not, so that case falls through to the next signal.
 function derivePurpose(node, attrs, role) {
   const rawVarName = nearestVarDeclName(node);
+  /** @type {string | null} */
   let varName = null;
   if (rawVarName) {
     varName = rawVarName;

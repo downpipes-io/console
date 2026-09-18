@@ -16,7 +16,7 @@
 // fix. The console ALREADY classified the failure (faultClassForError separates not-found from auth from
 // transport) and put it in the support pack only. This puts the same fact where the customer is.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { installDomShim, textOf, qsa } from "./dom-shim.ts";
 installDomShim();

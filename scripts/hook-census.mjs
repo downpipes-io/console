@@ -120,6 +120,7 @@ function applyWrite(targets) {
 
 const { targets, missing, hooked, redundant, duplicates } = computeHookCensus(SRC);
 
+/** @type {ReturnType<typeof applyWrite> | null} */
 let writeResult = null;
 if (WRITE) {
   writeResult = applyWrite(targets);

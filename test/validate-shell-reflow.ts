@@ -35,7 +35,7 @@
 // must be present in tokens.css, and the defective form (a bare `1fr` column on .shell, a nowrap stepper
 // with no docked-band relief) must be absent.
 //
-// House style: Australian English, no em dashes, precise claims, no AI attribution.
+// House style: Australian English, no em dashes, precise claims.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

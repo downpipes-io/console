@@ -32,7 +32,7 @@
 //
 // Run with `node test/validate-identity-gate-witness.ts`.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { flushAsync, installDomShim } from "./dom-shim.ts";
 import { makeChecks } from "./validate-checks.ts";

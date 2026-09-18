@@ -31,7 +31,7 @@
 //
 // Run with: node test/validate-r43-verdict-record.ts
 //
-// House style: Australian English, no em dashes, no rule-of-three, precise claims, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three, precise claims.
 
 import { laterWins, standingVerdicts } from "../scripts/ledger-verdicts.mjs";
 import { buildRecord, contentDigest, describeDisagreement, parseRecord, RECORD_SCHEMA, scoreRecord, serialiseRecord } from "../scripts/verdict-record.mjs";

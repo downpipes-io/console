@@ -30,7 +30,7 @@
 // Same reason as its sibling `validate-restore-reason-vocabulary.ts`: a skip reports the same green as a pass
 // on the exact question this file exists to answer, and the console has already been wrong about it once.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
 //   node test/validate-metadata-shed-vocabulary.ts
 

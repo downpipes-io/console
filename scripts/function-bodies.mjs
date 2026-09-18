@@ -14,6 +14,9 @@
 
 const CONTROL_HEADS = new Set(["if", "for", "while", "switch", "catch", "with"]);
 
+/** One scanned function body: its [start, end) offsets in `src`, its readable name, and its own text. */
+/** @typedef {{ start: number, end: number, name: string, body: string }} FunctionBody */
+
 // nameBefore reads back from an opening paren for a readable label ("openRevokeModal", "onClick", or "" for
 // an anonymous arrow). It is for the failure message only; nothing branches on it.
 function nameBefore(src, parenOpen) {
@@ -156,7 +159,12 @@ function opensFunction(src, brace) {
   return { name: nameBefore(src, open) };
 }
 
+/**
+ * @param {string} src
+ * @returns {FunctionBody[]}
+ */
 export function functionBodies(src) {
+  /** @type {FunctionBody[]} */
   const out = [];
   const stack = [];
   for (let i = 0; i < src.length; i++) {
@@ -180,8 +188,14 @@ export function functionBodies(src) {
   return out;
 }
 
-// innermostContaining returns the SMALLEST function body from `bodies` that contains `index`, or null.
+/**
+ * innermostContaining returns the SMALLEST function body from `bodies` that contains `index`, or null.
+ * @param {FunctionBody[]} bodies
+ * @param {number} index
+ * @returns {FunctionBody | null}
+ */
 export function innermostContaining(bodies, index) {
+  /** @type {FunctionBody | null} */
   let best = null;
   for (const b of bodies) {
     if (b.start > index || index >= b.end) continue;

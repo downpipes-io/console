@@ -22,7 +22,7 @@
 // account's bucket list does not describe another account. Case 1 below fails if the override is removed;
 // case 4 fails if the field is simply restored for everyone, which would undo the simplification.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { activeElement, flushAsync, installDomShim, markConnected, qs, textOf } from "./dom-shim.ts";
 import { makeEvent } from "./dom-shim-core.ts";

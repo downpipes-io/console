@@ -1,7 +1,7 @@
 // Types for verdict-record.mjs, which is plain JavaScript. Same arrangement as ledger-verdicts.d.mts and
 // workspace-root.d.mts beside it.
 //
-// House style: Australian English, no em dashes, no rule-of-three, precise claims, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three, precise claims.
 
 /** The record's shape identifier; a reader that does not recognise it refuses rather than guessing. */
 export const RECORD_SCHEMA: string;

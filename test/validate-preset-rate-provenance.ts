@@ -29,7 +29,7 @@
 // "custom" is excluded on purpose. It is all zeros by design, there is no source to check it against, and
 // dating it would make an unchecked thing look checked.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
 //   node test/validate-preset-rate-provenance.ts
 

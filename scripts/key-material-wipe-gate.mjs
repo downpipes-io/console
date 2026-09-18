@@ -82,6 +82,7 @@ export function recoveriesIn(rel, text) {
     if (!ts.isIdentifier(n.expression) || n.expression.text !== "openCapsule") continue;
     const held = ts.isAwaitExpression(n.parent) ? n.parent : n;
     const p = held.parent;
+    /** @type {string | null} */
     let name = null;
     if (p !== undefined && ts.isVariableDeclaration(p) && ts.isIdentifier(p.name)) name = p.name.text;
     else if (

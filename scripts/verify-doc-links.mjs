@@ -55,6 +55,7 @@ if (DOCS === null || !existsSync(DOCS)) {
 // longer describes it. No fetch, so unknown freshness (no origin/main ref) is not judged either way.
 // VERIFY_DOC_LINKS_ALLOW_STALE=1 overrides.
 if (process.env.VERIFY_DOC_LINKS_ALLOW_STALE !== "1") {
+  /** @type {number | null} */
   let behind = null;
   try {
     behind = Number(execFileSync("git", ["-C", /** @type {string} */ (DOCS_REPO), "rev-list", "--count", "HEAD..origin/main"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim());

@@ -25,7 +25,7 @@
 // only checked the positive case would still pass if the render always printed a fixed deadline regardless
 // of what the plan said.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { installDomShim, qs, textOf } from "./dom-shim.ts";
 installDomShim();

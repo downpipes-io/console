@@ -137,7 +137,9 @@ export function deriveGatedSet(root) {
   const gatedFns = new Set();
   for (const f of readdirSync(api).filter((x) => x.endsWith(".ts"))) {
     const lines = stripComments(readFileSync(path.join(api, f), "utf8")).split("\n");
-    let cur = null;
+    /** @type {string | null} */
+    /** @type {string | null} */
+  let cur = null;
     for (const l of lines) {
       const m = /^export async function ([A-Za-z0-9_]+)/.exec(l);
       if (m) cur = m[1];
@@ -158,7 +160,9 @@ export function deriveGatedSet(root) {
   const gatedMethods = new Set();
   {
     const lines = stripComments(readFileSync(path.join(api, "client.ts"), "utf8")).split("\n");
-    let cur = null;
+    /** @type {string | null} */
+    /** @type {string | null} */
+  let cur = null;
     for (const l of lines) {
       const m = /^\s{2}(?:async\s+)?([A-Za-z0-9_]+)\s*\(/.exec(l);
       if (m) cur = m[1];
@@ -181,10 +185,12 @@ export function deriveGatedSet(root) {
 // deriveGatedSet above answers "could this call site surface the step-up marker": gatedFetch is the only
 // thing in this console that runs the ceremony, so only a catch behind one of those can ever print
 // "<verb>: stepup-required: 401". That is the right authority for failure copy and the WRONG one for a
-// PROMISE, because gatedFetch is a strict superset of what the engine gates. terminateOtherSessions is
-// routed through it in readiness for a route the engine has deliberately kept exempt
-// ("/sessions/terminate-others is SELF-scoped only"), so a modal telling that operator to expect a passkey
-// prompt promises a sheet that will never appear. That is the same defect as the silent prompt, mirrored.
+// PROMISE, because gatedFetch is a strict superset of what the engine gates. sendTestNotification is
+// routed through it although the engine has deliberately kept "/notify/test" exempt (one fixed,
+// redaction-safe line to an already-configured channel), so a modal telling that operator to expect a
+// passkey prompt promises a sheet that will never appear. That is the same defect as the silent prompt,
+// mirrored. (/sessions/terminate-others was the example here until the engine gated it as well: a stale
+// ambient session must not be able to sign the operator's other tabs out unchallenged.)
 //
 // SO THIS READS THE ENGINE, and it reads all three of the sets the engine itself maintains rather than the
 // one that is easy to find:
@@ -207,7 +213,7 @@ const ENGINE_ROUTER = "src/admin/router-core.ts";
 const ENGINE_SPOKE = "src/admin/router.ts";
 const ENGINE_SESSION_TEST = "test/validate-session.ts";
 const SUBS_POSITIVE_CONTROLS = ["/keys/rotate", "/roles/delete"];
-const SUBS_NEGATIVE_CONTROL = "/sessions/terminate-others";
+const SUBS_NEGATIVE_CONTROL = "/notify/test";
 
 // stringLiterals yields every string / template literal with its offset, by scanning. A regex over `"..."`
 // pairs quotes naively and mis-pairs the moment two literals sit on one line: the closing quote of the first
@@ -423,6 +429,7 @@ export function deriveEngineGatedMethods(root) {
 
   const methods = new Set();
   const lines = stripComments(readFileSync(path.join(api, "client.ts"), "utf8")).split("\n");
+  /** @type {string | null} */
   let cur = null;
   for (const l of lines) {
     const m = /^\s{2}(?:async\s+)?([A-Za-z0-9_]+)\s*\(/.exec(l);

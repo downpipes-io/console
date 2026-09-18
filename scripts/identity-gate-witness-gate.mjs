@@ -174,6 +174,7 @@ for (const file of files) {
 
     // The fail-closed branch, and what it returns. The returned text is read so the
     // already-observable exemption can be derived rather than named.
+    /** @type {"if-return" | "logical" | "ternary" | null} */
     let guard = null;
     let nullBranchReturns = "";
     const findGuard = (n) => {

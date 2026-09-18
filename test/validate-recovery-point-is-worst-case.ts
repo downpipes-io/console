@@ -24,7 +24,7 @@
 // fresh cannot tell the two implementations apart, and a suite made of those cases would have passed
 // against the defect this file exists to catch.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
 //   node test/validate-recovery-point-is-worst-case.ts
 

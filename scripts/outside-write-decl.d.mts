@@ -1,7 +1,7 @@
 // Types for outside-write-decl.mjs, which is plain JavaScript. Same arrangement as workspace-root.d.mts
 // beside it.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 /** What one file says, and does, about writing outside this checkout. */
 export interface WritePosture {

@@ -61,6 +61,7 @@ if (engineRoot === undefined) {
 // against a stale engine checkout. No fetch, so an engine whose origin/main ref is unknown is not judged
 // either way; only a KNOWN positive distance refuses. AUDIT_MIRROR_ALLOW_STALE=1 proceeds anyway.
 if (process.env.AUDIT_MIRROR_ALLOW_STALE !== "1") {
+  /** @type {number | null} */
   let behind = null;
   try {
     behind = Number(execFileSync("git", ["-C", engineRoot, "rev-list", "--count", "HEAD..origin/main"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim());

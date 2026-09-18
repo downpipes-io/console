@@ -32,7 +32,7 @@ import {
 import { EngineClient } from "../src/lib/api/client.ts";
 import { Transport } from "../src/lib/api/client-transport.ts";
 import { listRoles } from "../src/lib/api/client-rbac.ts";
-import { setProxiedTopology } from "../src/lib/api/topology.ts";
+import { setProxiedTopology, isEdgeHtmlFaultResponse } from "../src/lib/api/topology.ts";
 import { adoptProxiedTopology } from "../src/lib/store.ts";
 import { buildCfConfigSection } from "../src/screens/sources-downpipes/editor-cf-config-section.ts";
 import { openCreateWizard } from "../src/screens/sources-downpipes/editor-wizard.ts";
@@ -409,11 +409,27 @@ function g335(): void {
   eq("(NOISE): a URL typed correctly first time records NOTHING", rowsOf("form-rejected").length, 0);
 }
 
+// isEdgeHtmlFaultResponse reads the content-type header through `?? ""` before lower-casing it: a 5xx
+// in the proxied topology with NO content-type header at all (not "text/html", simply absent, which a
+// bare error page from an edge that dropped the response mid-write can send) must not throw on a null
+// header and must read as "not the HTML fault" rather than crash the classifier.
+function g400(): void {
+  console.log("\n-- isEdgeHtmlFaultResponse: a 5xx with no content-type header at all --");
+  setProxiedTopology(true);
+  const noHeaderAtAll = new Response("", { status: 500 });
+  ok(
+    "a proxied 5xx with no content-type header is NOT read as the edge HTML fault (missing header, not text/html)",
+    isEdgeHtmlFaultResponse(noHeaderAtAll) === false,
+  );
+  setProxiedTopology(false);
+}
+
 async function main(): Promise<void> {
   await g243();
   await g250();
   g289();
   g335();
+  g400();
   console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURE(S)`);
   verdictReached(failures); // the verdict is now DECLARED, so a silent exit 0 cannot pass as green
   if (failures > 0) process.exit(1);

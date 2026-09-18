@@ -7,7 +7,7 @@
 // added), unavailable (a token surface the engine does not advertise), and unknown (the downpipe list
 // or discovery could not be read). It RUNS the production function; it never re-implements it.
 //
-// House rules: Australian English, no em dashes, precise claims, no AI attribution.
+// House rules: Australian English, no em dashes, precise claims.
 
 import { installDomShim } from "./dom-shim.ts";
 import { surfaceCoverage, discoveryFailureClass, discoveryFailureNote, type SurfaceCoverage, type SurfaceType, type SurfaceState } from "../src/screens/overview.ts";

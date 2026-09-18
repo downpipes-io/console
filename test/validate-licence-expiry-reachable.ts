@@ -16,7 +16,7 @@
 //
 // Everything below drives the REAL screen body, over payloads shaped the way the engine really answers.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
 import type { LicenceStatus, StatusReport, UpdateStatus } from "../src/api.ts";

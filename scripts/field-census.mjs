@@ -119,6 +119,7 @@ function objProps(objNode) {
   for (const p of objNode.properties) {
     if (ts.isSpreadAssignment(p)) { hasSpread = true; continue; }
     const nameNode = p.name;
+    /** @type {string | null} */
     let key = null;
     if (nameNode) {
       if (ts.isIdentifier(nameNode)) key = nameNode.text;
@@ -272,7 +273,10 @@ for (const abs of walk(SRC, [])) {
   // (…Row / …Field / …Block / render… / build…) and whose body builds a control primitive.
   // Surfaced so a NEW wrapper cannot smuggle in uncatalogued controls unnoticed.
   const scanDefs = (node) => {
-    let name = null, body = null;
+    /** @type {string | null} */
+    let name = null;
+    /** @type {import("typescript").Block | import("typescript").ConciseBody | null | undefined} */
+    let body = null;
     if (ts.isFunctionDeclaration(node) && node.name) { name = node.name.text; body = node.body; }
     else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer &&
       (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) {
