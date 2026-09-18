@@ -29,7 +29,7 @@
 // restatement. Absent an engine this SKIPS on one declared line, and REQUIRE_ENGINE=1 (the cross-repo
 // chain) makes the absence a throw upstream in importFromEngine, as with every other cross-repo check here.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
 // Run with: node test/validate-cf-surface-contract.ts
 

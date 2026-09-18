@@ -6,7 +6,7 @@
 // `hasStableId` on some paths, so the fields that are not always present are declared optional. Anything
 // stated here as required is present on every row.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 /** One call site that is, or could be, a data-dp anchor. */
 export interface HookTarget {

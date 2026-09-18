@@ -134,11 +134,13 @@ const subs = new Set([...setMatch[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]));
 
 // CONTROLS ON THE PARSE ITSELF. An empty or tiny set would make every assertion below vacuous and the gate
 // would print a confident pass having checked nothing, which is a common way a gate reads as passing while
-// checking nothing. Two positives that must be in any real set, one negative that must not: /sessions/terminate-
-// others is deliberately exempt (it only bumps the caller's own epoch), so its presence would mean the
-// parse has picked up some other list.
+// checking nothing. Two positives that must be in any real set, one negative that must not: /notify/test is
+// deliberately exempt (one fixed, redaction-safe line to an already-configured channel), so its presence
+// would mean the parse has picked up some other list. The negative control was /sessions/terminate-others
+// until the engine gated that too (a stale ambient session must not sign the operator's other tabs out
+// unchallenged), which is the shape of change this control exists to notice.
 const POSITIVE_CONTROLS = ["/keys/rotate", "/roles/delete"];
-const NEGATIVE_CONTROL = "/sessions/terminate-others";
+const NEGATIVE_CONTROL = "/notify/test";
 const missingControl = POSITIVE_CONTROLS.find((c) => !subs.has(c));
 if (subs.size < 20 || missingControl !== undefined || subs.has(NEGATIVE_CONTROL)) {
   console.error(`STEP-UP CALL-SITE GATE: FAIL, the parsed set does not look like STEPUP_SUBS (${subs.size} members).`);

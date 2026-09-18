@@ -14,7 +14,7 @@
 // gates invite drift: nothing stops each repository's copy diverging from what a written policy says they
 // must all enforce, and a policy stated more than once has no single place that holds it. A published
 // package is the correct-in-principle answer and is refused on the same ground
-// control-plane/scripts/sibling-freshness-copy-gate.mjs refuses it: version-pinned per repository, the copies would
+// the sibling-freshness copy gate refuses it: version-pinned per repository, the copies would
 // drift by PIN instead of by bytes, and a stale pin is silent. What is taken here is duplication that a
 // gate polices, and the policing is cheaper than the sibling-freshness case because a self-digest needs
 // no peer on disk at all.
@@ -44,7 +44,7 @@
 //
 // EVERY TREE, NOT THE ROOT TREE. A repository can hold more than one lockfile, and auditing the root and
 // printing a repository-wide verdict is a false negative rather than a partial answer: a nested tree such
-// as workers/harness-sink can carry advisories the root tree never sees, with nothing but a Dependabot
+// as workers/sink can carry advisories the root tree never sees, with nothing but a Dependabot
 // alert naming the manifest path to point at it. This gate walks the checkout for package-lock.json,
 // audits every one it finds, and FAILS on any it finds that the config's `trees` list does not declare.
 //
@@ -71,8 +71,8 @@
 //
 // THE COMPLETION GUARD, and the one place the family had to bend. control-plane and docs require every
 // entry point to import scripts/lib/verdict-guard.mjs and call verdictReached before the exit that
-// reports the outcome. console, engine and harness have no such module, so a static import of it here
-// would crash this gate at load in three repositories, and an `await import()` would make the file
+// reports the outcome. the other repositories have no such module, so a static import of it here
+// would crash this gate at load there, and an `await import()` would make the file
 // asynchronous, which is exactly what console's verdict-guard rules say a scripts/ gate must not become.
 // So `main` is exported and takes hooks, and it runs itself only when it IS the entry module. The two
 // repositories that require enrolment invoke a small local file, scripts/dependency-advisory-guarded.mjs,
@@ -100,7 +100,7 @@ const ROOT = dirname(dirname(SELF));
 const CONFIG_PATH = join(ROOT, ".github", "dependency-advisories.json");
 const BLOCKING = new Set(["high", "critical"]);
 const DIGEST_DECLARATION = /^const CANONICAL_BODY_SHA256 = .*$/m;
-const CANONICAL_BODY_SHA256 = "2e1a9b1a81ddd5f82ed0297f52981d53441ba428c4bd3b10522cb5e4a2193654";
+const CANONICAL_BODY_SHA256 = "10ca8e8d883f4c8d716b49f0bca4ec24abeffb6fa1b7fea2c48b9835deb03d15";
 
 // The self-check. Hashing the file with the declaration line removed is what lets the constant live in
 // the file it describes. A copy that fails this has been edited in one repository and nowhere else, which
@@ -110,7 +110,7 @@ export function bodyDigest(source) {
 }
 
 // EVERY lockfile in the repository, found rather than assumed. Assuming the root is the whole repository
-// is a false negative: a nested tree such as workers/harness-sink/package-lock.json can carry advisories
+// is a false negative: a nested tree such as workers/sink/package-lock.json can carry advisories
 // the root tree never sees, with nothing but a Dependabot alert naming the manifest path to point at it. A
 // gate that audits one tree and reports "clean" for a repository is worse than no gate, because the
 // number it prints is about a different question from the one its reader is asking.
@@ -127,8 +127,8 @@ export function lockfilesUnder(root) {
     for (const e of entries) {
       if (e.isDirectory()) {
         // EVERY dot-directory, not a list of them. The first draft named .git, .wrangler, .astro and
-        // .venv and let .worktrees through, and harness's worktree-overscan gate caught it on this
-        // branch's own CI: a linked git worktree nested under a checkout holds a complete second copy of
+        // .venv and let .worktrees through, and a sibling repository's worktree-overscan gate caught it in
+        // CI: a linked git worktree nested under a checkout holds a complete second copy of
         // the repository, so a walk that descends into it reads another branch's lockfiles as part of
         // this one and reports trees this commit does not have.
         if (!e.name.startsWith(".") && !skip.has(e.name)) walk(join(dir, e.name));
@@ -440,11 +440,11 @@ function selfTest(hooks) {
   }
   {
     // The false negative described above, driven as a case rather than only described.
-    const r = grade({ ...base, config: cfg(), lockfilesFound: [".", "workers/harness-sink"] });
-    record("a lockfile the config does not declare fails", r.problems.some((p) => p.includes("workers/harness-sink/package-lock.json")), JSON.stringify(r.problems));
+    const r = grade({ ...base, config: cfg(), lockfilesFound: [".", "workers/sink"] });
+    record("a lockfile the config does not declare fails", r.problems.some((p) => p.includes("workers/sink/package-lock.json")), JSON.stringify(r.problems));
   }
   {
-    const r = grade({ ...base, config: cfg({ trees: [".", "workers/harness-sink"] }), lockfilesFound: [".", "workers/harness-sink"] });
+    const r = grade({ ...base, config: cfg({ trees: [".", "workers/sink"] }), lockfilesFound: [".", "workers/sink"] });
     record("every lockfile declared passes", r.problems.length === 0, JSON.stringify(r.problems));
   }
   {

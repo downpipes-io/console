@@ -21,7 +21,7 @@
 # It is deliberately NOT wired into push or pull_request. It writes nothing to the repository and it is not
 # a gate: validate-bundle.ts remains the thing that decides whether the committed bundle is correct.
 #
-# House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+# House style: Australian English, no em dashes, no rule-of-three.
 name: Bundle (Linux, artefact only)
 
 on:

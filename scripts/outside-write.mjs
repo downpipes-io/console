@@ -24,7 +24,7 @@
 // nothing, and the bare run was writing another repository. A flag that names its destination cannot be
 // read as the other one.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 export const OUTSIDE_WRITE_FLAG = "--write-internal-docs";
 

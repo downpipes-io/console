@@ -225,6 +225,19 @@ async function main(): Promise<void> {
     ok("with no ceremony wired the revoke fails rather than silently succeeding", threw);
     eq("and it is NOT retried", calls.length, 1);
   }
+  {
+    // A 200 whose body is NOT a revocation receipt (an engine build ahead of this console, or a proxy
+    // answering with something else entirely): the shape gate refuses it rather than handing back a
+    // value the caller would read as a real outcome.
+    const engine = new EngineClient("https://engine.test");
+    const { restore } = scriptFetch({ status: 200, body: { ok: true } });
+    const message = await engine.revokeSignInFactors("leaver@example.com").then(() => "").catch((e: unknown) => (e instanceof Error ? e.message : String(e))).finally(restore);
+    eq(
+      "a 200 with no revocation receipt shape throws the named refusal, not a silently-accepted result",
+      message,
+      "revoke sign-in factors: the response did not carry a revocation receipt",
+    );
+  }
 
   // ------------------------------------------------------------------------
   console.log("\n-- 1b: the panel's copy about the step-up prompt agrees with the ENGINE's own STEPUP_SUBS --");

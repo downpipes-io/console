@@ -23,7 +23,7 @@
 // This asserts on the text the screen PRESENTS, not on internal state, and in both directions: a
 // data-bearing plan must still report its own count and must not grow a config claim it has no surfaces for.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { installDomShim, qs, textOf } from "./dom-shim.ts";
 installDomShim();

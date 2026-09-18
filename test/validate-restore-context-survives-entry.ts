@@ -49,7 +49,7 @@
 //             binding, with no type-to-confirm because the new plan was not a redirect. confirm.ts's F4
 //             retry-subset re-entry had always carried the target; these two sites had not.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { flushAsync, installDomShim, markConnected, qs, qsa } from "./dom-shim.ts";
 import type { ShimEvent } from "./dom-shim-types.ts";

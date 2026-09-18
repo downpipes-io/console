@@ -34,7 +34,7 @@
 // and FAIL rather than pass silently. A caller that genuinely has no engine gets exit 2 and a sentence
 // saying so, which is distinguishable from both a pass and a finding.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
 //   node test/validate-restore-reason-vocabulary.ts
 

@@ -27,7 +27,7 @@
 //
 // This renders the REAL renderConfirm over the shared DOM shim and never re-implements it.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { flushAsync, installDomShim, markConnected } from "./dom-shim.ts";
 

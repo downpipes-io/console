@@ -30,7 +30,7 @@
 // deadlines are milliseconds out rather than hours, so the timer this file is about actually fires inside a
 // test run; the code path is the same one an hour-long deadline takes.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { flushAsync, installDomShim, markConnected } from "./dom-shim.ts";
 

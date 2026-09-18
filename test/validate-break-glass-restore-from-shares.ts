@@ -20,7 +20,7 @@
 // the pinned vector's identity under a fresh wrapping key and splitting that key, which is exactly the
 // shape the custody step emits.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

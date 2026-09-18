@@ -30,6 +30,9 @@
 
 import {
   classifyError,
+  classifyForbiddenBody,
+  forbiddenClass,
+  stepUpFailureMessage,
   detectAccessRedirectBody,
   detectHtmlBody,
   isUnauthorised,
@@ -361,6 +364,57 @@ ok("errText returns an Error's message verbatim", errText(new Error("admin: 404"
 ok("errText stringifies a thrown string", errText("plain reason") === "plain reason");
 ok("errText stringifies a non-Error object", errText({ toString: () => "obj-as-text" }) === "obj-as-text");
 ok("errText does not classify (raw message, no kind)", errText(new Error("admin: 401")) === "admin: 401");
+
+// ---- classifyForbiddenBody: the shape gate over a raw 403 body ----------------
+ok(
+  "classifyForbiddenBody: a body that parses to JSON null is not-engine-body (typeof null is 'object', so the null check itself must run)",
+  classifyForbiddenBody("null") === "not-engine-body",
+);
+ok(
+  "classifyForbiddenBody: an array body is not-engine-body",
+  classifyForbiddenBody("[1,2,3]") === "not-engine-body",
+);
+ok(
+  "classifyForbiddenBody: unparseable text is not-engine-body",
+  classifyForbiddenBody("<html>not json</html>") === "not-engine-body",
+);
+ok(
+  "classifyForbiddenBody: the engine's own capability gate shape is engine-capability",
+  classifyForbiddenBody(JSON.stringify({ error: "forbidden", required: "downpipes:write" })) === "engine-capability",
+);
+ok(
+  "classifyForbiddenBody: the DO's bare authz funnel shape is engine-authz",
+  classifyForbiddenBody(JSON.stringify({ error: "forbidden" })) === "engine-authz",
+);
+ok(
+  "classifyForbiddenBody: a CSRF refusal is engine-csrf",
+  classifyForbiddenBody(JSON.stringify({ error: "csrf origin check failed" })) === "engine-csrf",
+);
+
+// ---- forbiddenClass: reads the folded class back, EQUALITY against the closed enum only ----
+ok(
+  "forbiddenClass: a folded class inside the closed enum round-trips",
+  forbiddenClass(new Error("list downpipes: forbidden-class=engine-csrf: 403")) === "engine-csrf",
+);
+ok(
+  "forbiddenClass: a token that matches the marker's shape but is NOT one of the closed members returns null (equality, not the regex match, decides membership)",
+  forbiddenClass(new Error("list downpipes: forbidden-class=some-future-class: 403")) === null,
+);
+ok("forbiddenClass: no marker at all returns null", forbiddenClass(new Error("list downpipes: 403")) === null);
+
+// ---- parseRetryAfter: an absurdly long digit string overflows to Infinity, which is honestly null ----
+// Number.isInteger(Infinity) is false, so the folded value is treated as absent rather than as a
+// bogus wait time; the transport's default backoff applies instead of NaN/Infinity reaching a timer.
+ok(
+  "parseRetryAfter treats a float-overflow value (all-nines past Number.MAX_VALUE) as absent, not Infinity",
+  parseRetryAfter(`x: retry-after=${"9".repeat(400)}: 429`) === null,
+);
+
+// ---- stepUpFailureMessage: every reason gets its own sentence, including check-unavailable -------
+ok(
+  "stepUpFailureMessage('check-unavailable') says the engine could not be reached, not a generic retry",
+  stepUpFailureMessage("check-unavailable").includes("engine could not be reached"),
+);
 
 // ---- Exported constants carry exact values ------------------------------------
 ok("RESTORE_UNAPPROVED_REASON is 'restore not approved'", RESTORE_UNAPPROVED_REASON === "restore not approved");

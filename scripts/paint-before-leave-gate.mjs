@@ -259,6 +259,7 @@ function toggleShape(node, sf) {
  */
 function optionsBusyFlag(node, sf) {
   if (!ts.isCallExpression(node)) return null;
+  /** @type {boolean | null} */
   let flag = null;
   for (const a of node.arguments) {
     if (!ts.isObjectLiteralExpression(a)) continue;
@@ -566,6 +567,7 @@ function buildAnalyser(file, sf) {
     let released = false;
     let paint = false;
     let awaits = false;
+    /** @type {ReturnType<typeof handsOffToken>} */
     let handedOff = null;
     const conts = continuationsIn(node, token, (nm) => localFns.get(nm) ?? null);
     const scan = (n) => {

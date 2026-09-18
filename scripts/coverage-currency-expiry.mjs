@@ -123,6 +123,7 @@ export function workingTreeDigests(root) {
   return (file) => {
     if (cache.has(file)) return cache.get(file);
     const p = join(root, file);
+    /** @type {string | null} */
     let d = null;
     if (existsSync(p)) {
       try {
@@ -164,6 +165,7 @@ export function commitDigests(rev) {
   return (file) => {
     if (cache.has(file)) return cache.get(file);
     const oid = oidOf.get(file);
+    /** @type {string | null} */
     let d = null;
     if (oid !== undefined) {
       try {
@@ -203,7 +205,7 @@ export function recordInTree(root) {
  * all three are checked: the catalogue can be missing or empty, the record can hold no verdicts, and the
  * two can name disjoint sets of keys, which is the one a size check on either alone would miss.
  *
- * @param {{ catalogueRows: {key:string,file:string}[], record: {verdicts: object[]}, scored: {passing:unknown[],failing:unknown[],expiredPassing:unknown[],expiredFailing:unknown[]} }} args
+ * @param {{ catalogueRows: {key:string,file:string}[], record: {verdicts: {key:string}[]}, scored: {passing:unknown[],failing:unknown[],expiredPassing:unknown[],expiredFailing:unknown[]} }} args
  */
 export function assertPopulation({ catalogueRows, record, scored }) {
   if (catalogueRows.length === 0) throw new CouldNotCheck("the action catalogue holds ZERO rows, so there is no catalogued control to expire");
@@ -399,6 +401,7 @@ function selfTest(out) {
   });
 
   run("POPULATION: an EMPTY catalogue refuses rather than passing", () => {
+    /** @type {unknown} */
     let threw = null;
     try {
       scoreTree({ recordText: text, catalogueRows: [], digestOf: (f) => digests[f] ?? null });
@@ -410,6 +413,7 @@ function selfTest(out) {
 
   run("POPULATION: a record naming NO catalogued key refuses rather than passing", () => {
     const disjoint = JSON.stringify({ ...record, verdicts: record.verdicts.map((v) => ({ ...v, key: `unrelated.${v.key}` })) });
+    /** @type {unknown} */
     let threw = null;
     try {
       scoreTree({ recordText: disjoint, catalogueRows, digestOf: (f) => digests[f] ?? null });
@@ -420,6 +424,7 @@ function selfTest(out) {
   });
 
   run("POPULATION: a record with ZERO verdicts refuses rather than passing", () => {
+    /** @type {unknown} */
     let threw = null;
     try {
       scoreTree({ recordText: JSON.stringify({ ...record, verdicts: [] }), catalogueRows, digestOf: (f) => digests[f] ?? null });
@@ -430,6 +435,7 @@ function selfTest(out) {
   });
 
   run("REFUSAL OUTRANKS A PASS: an unreadable revision refuses rather than reporting every control expired", () => {
+    /** @type {unknown} */
     let threw = null;
     try {
       commitDigests("coverage-currency-no-such-revision-0000000");
@@ -519,7 +525,9 @@ function main(argv, out) {
 
   const range = argAfter("--range");
   const push = argv.indexOf("--push");
+  /** @type {string | null} */
   let a = null;
+  /** @type {string | null} */
   let b = null;
   if (range !== null) {
     const parts = range.split("..");
@@ -531,7 +539,9 @@ function main(argv, out) {
     if (b === "") throw new CouldNotCheck("--push needs a remote sha and a local sha");
     // A brand new branch arrives with an all-zero remote sha. Its merge base with main is the honest
     // baseline; without one there is nothing to attribute against and the level is reported instead.
-    if (/^0{40}$/.test(a)) {
+    // (a and b were both just assigned strings above; the null checks here are for the type checker,
+    // which cannot see across the `a = null` reassignment inside the catch below to know they still hold.)
+    if (a !== null && b !== null && /^0{40}$/.test(a)) {
       try {
         a = git(["merge-base", b, "origin/main"]).toString("utf8").trim();
       } catch {
@@ -548,6 +558,7 @@ function main(argv, out) {
 
   // Default: the working tree against origin/main, which is what a person is about to add to.
   const after = tree();
+  /** @type {string | null} */
   let base = null;
   try {
     base = git(["rev-parse", "--verify", "origin/main"]).toString("utf8").trim();

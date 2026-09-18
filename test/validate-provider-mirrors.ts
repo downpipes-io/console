@@ -24,7 +24,7 @@
 // copied table drifts the moment the authority changes, and a mirror test that cannot notice drift is
 // decorative.
 //
-// House style: Australian English, no em dashes, no rule-of-three, precise claims, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three, precise claims.
 
 import { AZURE_STORAGE_SUFFIXES as CONSOLE_AZURE_SUFFIXES } from "../src/screens/destination-cards.ts";
 import { demoProviderForEndpoint } from "../src/lib/demo/demo-world.ts";

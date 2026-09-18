@@ -34,7 +34,7 @@
 #   scripts/build-bundle-linux.sh            build into public/, ready to commit
 #   scripts/build-bundle-linux.sh --check    build into a temp dir and byte-compare, writing nothing
 #
-# House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+# House style: Australian English, no em dashes, no rule-of-three.
 set -euo pipefail
 
 IMAGE="node:22-bookworm"

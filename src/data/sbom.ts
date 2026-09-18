@@ -377,7 +377,14 @@ export const SBOM: Sbom = {
       "version": "6.0.3",
       "licence": "Apache-2.0",
       "url": "https://www.typescriptlang.org",
-      "purpose": "The typed superset of JavaScript the product is written in."
+      "purpose": "The typed superset of JavaScript the product is written in. Kept at this version because its compiler-API consumers (this repository's own build-time gates, and third-party tools elsewhere in the workspace) import the package by name."
+    },
+    {
+      "name": "typescript-7",
+      "version": "7.0.2",
+      "licence": "Apache-2.0",
+      "url": "https://www.typescriptlang.org",
+      "purpose": "The actual compiler binary every typecheck script runs (npm alias of the typescript package at 7.0.2, installed alongside the entry above so the tsc invocations get the newer compiler without moving the compiler-API import)."
     },
     {
       "name": "vitest",

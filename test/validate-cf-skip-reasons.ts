@@ -20,7 +20,7 @@
 // restore and nothing to fix, which is why the engine's own predicate excludes exactly that member from the
 // classes that fail an apply. A customer seeing it must not be told to widen a token.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { installDomShim, textOf } from "./dom-shim.ts";
 installDomShim();

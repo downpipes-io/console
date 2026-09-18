@@ -19,7 +19,7 @@
 // working. Standardising on one name and silently dropping the other would reproduce the exact fault this
 // file is here to remove.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";

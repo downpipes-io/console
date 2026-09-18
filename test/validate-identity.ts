@@ -199,7 +199,7 @@ ok("every persona has a non-empty id, label and blurb", PERSONAS.every((p) => p.
 ok("persona ids are unique", new Set(PERSONAS.map((p) => p.id)).size === PERSONAS.length);
 ok("a DR-responder persona maps to restore-operator", PERSONAS.some((p) => p.recommendedRole === "restore-operator"));
 ok("a CTO/owner persona maps to owner", PERSONAS.some((p) => p.recommendedRole === "owner"));
-// No persona copy may carry an em dash (house style) or an AI attribution. The check is for the em dash
+// No persona copy may carry an em dash (house style) or an attribution line. The check is for the em dash
 // character itself (U+2014), not the ASCII hyphen-minus, which legitimately appears in copy ("read-only",
 // "audit-only", "Day-to-day").
 ok("no persona blurb contains an em dash", !PERSONAS.some((p) => p.blurb.includes("—") || p.label.includes("—")));

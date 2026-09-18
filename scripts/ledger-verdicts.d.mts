@@ -1,7 +1,7 @@
 // Types for ledger-verdicts.mjs, which is plain JavaScript. Same arrangement as workspace-root.d.mts
 // beside it.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 /** The verdict words that PASS, from harness/lib/ledger.ts: CLEAN and HANDLED, and nothing else. */
 export const PASSING_VERDICTS: ReadonlySet<string>;

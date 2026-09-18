@@ -5,7 +5,7 @@
 // type-checks test/ under the same strictness src gets, so an untyped .mjs import is an error there rather
 // than an implicit any.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 /**
  * Every comment byte replaced by a space, newlines and offsets preserved, so a line number or an offset

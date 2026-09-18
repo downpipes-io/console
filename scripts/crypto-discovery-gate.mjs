@@ -81,10 +81,11 @@
 // (catching a one-sided edit that keeps both files syntactically valid) and, when the sibling engine repo
 // is checked out beside this one, compares the two files' blocks byte for byte.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
-// FS-WRITES: none outside this repo (the self-test writes and removes its own fixtures under
-// node:os tmpdir(), never under a sibling repository)
+// FS-WRITES: none outside this repo
+// (The self-test writes and removes its own fixtures under node:os tmpdir(), never under a sibling
+// repository.)
 //
 // SIBLING-SUPPLY: verifyTwin() below reads the engine's twin validator for a byte-equality check when
 // the engine happens to be checked out beside this repo, and degrades to a skip note (not a failure)
@@ -155,6 +156,8 @@ const INDIRECTION_ALLOWLIST = new Set([]);
 
 /** @typedef {{file: string, kind: "subtle"|"random"|"import"|"algorithm", detail: string}} Entry */
 /** @typedef {{kind: "literal", name: string} | {kind: "unclassifiable"}} AlgorithmClassification */
+/** A subtle.* call site the classifier could not place: which file, which method, and the argument text. */
+/** @typedef {{file: string, method: string, argText: string}} SubtleCall */
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
@@ -304,7 +307,7 @@ function classifyAlgorithmArg(argNode, constDecls) {
 /**
  * @param {import("typescript").SourceFile} sourceFile
  * @param {string} rel
- * @param {{entries: Entry[], subtleFiles: Set<string>, nobleFiles: Set<string>, subtleCryptoBindings: string[], unclassifiedCalls: object[], unapprovedCalls: object[]}} out
+ * @param {{entries: Entry[], subtleFiles: Set<string>, nobleFiles: Set<string>, subtleCryptoBindings: string[], unclassifiedCalls: SubtleCall[], unapprovedCalls: SubtleCall[]}} out
  */
 function scanOneFile(sourceFile, rel, out) {
   const constDecls = new Map();
@@ -536,7 +539,7 @@ function scanOneFile(sourceFile, rel, out) {
 
 /**
  * @param {string} root
- * @returns {{entries: Entry[], subtleFiles: Set<string>, nobleFiles: Set<string>, totalFiles: number, subtleCryptoBindings: string[], unclassifiedCalls: object[], unapprovedCalls: object[]}}
+ * @returns {{entries: Entry[], subtleFiles: Set<string>, nobleFiles: Set<string>, totalFiles: number, subtleCryptoBindings: string[], unclassifiedCalls: SubtleCall[], unapprovedCalls: SubtleCall[]}}
  */
 function scanTree(root) {
   const out = { entries: [], subtleFiles: new Set(), nobleFiles: new Set(), totalFiles: 0, subtleCryptoBindings: [], unclassifiedCalls: [], unapprovedCalls: [] };

@@ -153,6 +153,7 @@ function scanLiterals(text) {
   const interpDepth = []; // brace depth inside each open `${...}`, innermost last
   let mode = "code";
   let line = 1;
+  /** @type {{ kind: string, line: number, text: string } | null} */
   let simple = null; // the open sq/dq frame
   let prevSig = "\n"; // last significant (non-space, non-comment) character seen in code
   let word = ""; // the identifier currently being read in code, for the regex keyword test

@@ -20,7 +20,7 @@
 // The fix names it rather than reclassifying it: counted with failures where the question is "does anything
 // need attention", named apart everywhere the operator is told what happened.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { readFileSync } from "node:fs";
 import { installDomShim, textOf, qsa, flushAsync } from "./dom-shim.ts";

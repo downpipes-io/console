@@ -87,6 +87,9 @@ const HEALTHY: DownpipeState[] = [healthyRow("dp-uploads", "kv", "UPLOADS"), hea
 const ROW_SOURCE_ABSENT = { config: { id: "dp-ghost", name: "ghost", cadenceSeconds: 86400, enabled: true }, nextRunAt: null, lastRunId: null, inFlight: false } as unknown as DownpipeState;
 const ROW_TYPE_ABSENT = { config: { id: "dp-ghost", name: "ghost", cadenceSeconds: 86400, enabled: true, source: { include: [], exclude: [] } }, nextRunAt: null, lastRunId: null, inFlight: false } as unknown as DownpipeState;
 const ROW_CONFIG_NULL = { config: null, nextRunAt: null, lastRunId: null, inFlight: false } as unknown as DownpipeState;
+// A config that IS an object but whose id is a blank string: readDownpipeId's id !== "" arm, distinct
+// from the config-null case above (which never reaches the id check at all).
+const ROW_ID_BLANK = { config: { id: "", name: "blank-id", cadenceSeconds: 86400, enabled: true, source: { type: "r2", bucket: "b" } }, nextRunAt: null, lastRunId: null, inFlight: false } as unknown as DownpipeState;
 const MALFORMED: Array<[string, DownpipeState]> = [["source absent", ROW_SOURCE_ABSENT], ["source type absent", ROW_TYPE_ABSENT], ["config null", ROW_CONFIG_NULL]];
 
 const STATUS: StatusReport = {
@@ -144,6 +147,7 @@ for (const [label, row] of MALFORMED) {
 is("a healthy row reads as readable", readDownpipe(HEALTHY[0]!).readable === true);
 is("a healthy row's id reads back", readDownpipeId(HEALTHY[0]!) === "dp-uploads");
 is("a config-null row has no readable id", readDownpipeId(ROW_CONFIG_NULL) === null);
+is("a row whose id is a blank string has no readable id", readDownpipeId(ROW_ID_BLANK) === null);
 // THE CONTROL THAT MATTERS MOST HERE: a source type this build does not know is READABLE, not a fault.
 // Coarsening version skew into corruption would file an engine one release ahead as a malformed roster.
 const FUTURE_TYPE = { config: { id: "dp-new", name: "new", cadenceSeconds: 86400, enabled: true, source: { type: "queues", include: [], exclude: [] } }, nextRunAt: null, lastRunId: null, inFlight: false } as unknown as DownpipeState;

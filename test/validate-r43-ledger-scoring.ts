@@ -28,7 +28,7 @@
 //
 // Run with: node test/validate-r43-ledger-scoring.ts
 //
-// House style: Australian English, no em dashes, no rule-of-three, precise claims, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three, precise claims.
 
 import { keyOf, PASSING_VERDICTS, standingVerdicts } from "../scripts/ledger-verdicts.mjs";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

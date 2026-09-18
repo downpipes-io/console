@@ -16,7 +16,7 @@
 // one idea is the drift this codebase keeps paying for, and engine-path.ts already says so about the two
 // engine names it is stuck honouring. One name here, taken from the callers that already had it.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";

@@ -21,7 +21,7 @@
 //
 // Run with: node test/validate-currency-vs-regression.ts
 //
-// House style: Australian English, no em dashes, no rule-of-three, precise claims, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three, precise claims.
 
 import { classifyDrivenFall, contentDigest, scoreRecord, RECORD_SCHEMA } from "../scripts/verdict-record.mjs";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

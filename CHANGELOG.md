@@ -14,6 +14,20 @@ not misname anything, it describes keys that derive to different bytes.
 
 ## [Unreleased]
 
+### Changed
+
+- The first public CI run is green on a standalone clone.
+- Dead compatibility re-exports removed; every consumer already imported the real definition.
+
+### Dependencies
+
+- esbuild 0.28.2 and fast-check 4.10.0.
+- @noble/hashes 2.4.0 and @noble/post-quantum 0.7.1.
+- wrangler 4.131.2, @cloudflare/vitest-pool-workers 0.22 and @cloudflare/workers-types 5.
+- Biome 2.5.14, with its new optional-chaining rule satisfied at the sites it names.
+- knip 6.36.
+- GitHub Actions pins advanced to their current releases.
+
 ## [0.2.4] - 2026-09-07
 
 ### Changed

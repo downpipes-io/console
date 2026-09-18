@@ -892,7 +892,10 @@ function unreachable(node) {
   let sawConstGuard = false;
   for (let n = node; n.parent !== undefined && !ts.isSourceFile(n); n = n.parent) {
     const p = n.parent;
-    let cond = null, want = null;
+    /** @type {import("typescript").Expression | null} */
+    let cond = null;
+    /** @type {boolean | null} */
+    let want = null;
     if (ts.isIfStatement(p)) {
       if (p.thenStatement === n) { cond = p.expression; want = true; }
       else if (p.elseStatement === n) { cond = p.expression; want = false; }

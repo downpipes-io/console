@@ -30,7 +30,7 @@
 // instead of leaving. The nav bridge is installed here with a recording handler so a fix that painted and
 // then swallowed the departure fails just as loudly as one that left without painting.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 import { installDomShim } from "./dom-shim.ts";
 

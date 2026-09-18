@@ -53,7 +53,7 @@
 // are the ones this check was written for. Without that floor "every engine outcome is declared" is also
 // true of a run that read no outcomes.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 //
 //   node test/validate-update-outcome-vocabulary.ts
 

@@ -73,7 +73,7 @@ function selfSessionsCard(engine: EngineClient): HTMLElement {
   btn.addEventListener("click", async () => {
     const ok = await confirmModal({
       title: "Sign out your other sessions",
-      body: "This signs out every other session for your account, on other browsers and devices. This session stays signed in. Continue?",
+      body: "This signs out every other session for your account, on other browsers and devices. This session stays signed in. You may be asked to confirm with your own passkey before this runs. If you dismiss that prompt, or it fails, nothing is signed out and you can start again from this card. Continue?",
       confirmLabel: "Sign out other sessions",
       busyLabel: "Signing out",
     });
@@ -134,7 +134,7 @@ function sessionList(engine: EngineClient, sessions: SessionSummary[], reload: (
     if (!s.current) {
       const endBtn = h("button", { "data-dp": "access-security.button.end", class: "btn btn--ghost btn--sm", type: "button" }, svgIcon(ICON_TRASH, { size: 14 }), "Sign out") as HTMLButtonElement;
       endBtn.addEventListener("click", async () => {
-        const ok = await confirmModal({ title: "Sign out this session", body: `Sign out the ${methodLabel(s.method)} session${where ? ` (${where})` : ""}? It is refused on its next request; this session stays signed in.`, confirmLabel: "Sign out session", busyLabel: "Signing out" });
+        const ok = await confirmModal({ title: "Sign out this session", body: `Sign out the ${methodLabel(s.method)} session${where ? ` (${where})` : ""}? It is refused on its next request; this session stays signed in. You may be asked to confirm with your own passkey before this runs. If you dismiss that prompt, or it fails, nothing is signed out and you can start again from this row.`, confirmLabel: "Sign out session", busyLabel: "Signing out" });
         if (!ok) return;
         endBtn.disabled = true;
         try {
