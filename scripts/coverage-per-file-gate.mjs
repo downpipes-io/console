@@ -50,9 +50,14 @@ const BASELINE = new Map([
   // --- screen region, floor 20 -----------------------------------------------------------------
   // Only ten of 257 screen files sit under 20 per cent, which is why 20 is the floor: low enough that
   // the list is a real burndown rather than a wall of noise, high enough that "barely touched" fails.
-  ["src/screens/access-security/setup-wizard.ts", 12.5],
-  ["src/screens/command-palette/landing.ts", 13.57],
-  ["src/screens/settings/appearance.ts", 16.79],
+  // The three figures below were re-recorded when c8 moved from 10.1.3 to 12.0.0.
+  // The new c8 counts statements differently (the screens region went from 75,346 to 74,602 statements
+  // with no source change), and each of these files moved down by under a point with only comment
+  // edits between the two measurements: the code did not backslide, the instrument changed. The
+  // previous figures were 12.5, 13.57 and 16.79.
+  ["src/screens/access-security/setup-wizard.ts", 11.81],
+  ["src/screens/command-palette/landing.ts", 12.94],
+  ["src/screens/settings/appearance.ts", 16.14],
   ["src/screens/command-palette/controller.ts", 19.39],
 ]);
 

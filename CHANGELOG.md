@@ -14,19 +14,53 @@ not misname anything, it describes keys that derive to different bytes.
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-09-21
+
+The first release built and attested by the public release workflow. It carries
+everything below and the 0.2.5 changes, which were tagged on 17 September but never
+released.
+
 ### Changed
 
+- The two session sign-out confirmations (this session, every other session) now say that
+  a passkey prompt may follow, and that dismissing it or failing it signs nothing out.
 - The first public CI run is green on a standalone clone.
 - Dead compatibility re-exports removed; every consumer already imported the real definition.
 
 ### Dependencies
 
+- TypeScript 7.0.2 compiles the console (as the `typescript-7` package); TypeScript 6 stays
+  installed under its own name for the tools that still need the JavaScript compiler API.
+- c8 12, with the branch-coverage gap it exposed closed by tests rather than a lower floor.
 - esbuild 0.28.2 and fast-check 4.10.0.
-- @noble/hashes 2.4.0 and @noble/post-quantum 0.7.1.
+- @noble/hashes 2.4.0, @noble/curves 2.4.0 and @noble/post-quantum 0.7.1.
 - wrangler 4.131.2, @cloudflare/vitest-pool-workers 0.22 and @cloudflare/workers-types 5.
 - Biome 2.5.14, with its new optional-chaining rule satisfied at the sites it names.
 - knip 6.36.
 - GitHub Actions pins advanced to their current releases.
+
+## [0.2.5] - 2026-09-17
+
+Tagged but not released: the tag arrived in the same push that created the release
+workflow, so no artefacts were built and nothing was attested. Its changes ship in 0.2.6.
+
+### Added
+
+- Access and security lists every live session for the account, with a Sign out on each,
+  and can end one session on its own.
+
+### Changed
+
+- A stale Cloudflare Access caller is sent back through Access instead of being shown the
+  passkey sheet, and a step-up that ends without a passkey is named as such.
+- A pasted admin token is exchanged for a minted session and then discarded; the token
+  itself is not kept in the browser.
+- Every console file picker refuses a file above 64 KiB before reading it.
+- The console's browser storage for a session is cleared on every ending, including one
+  the server initiates.
+- Requests carrying hop-by-hop headers are refused before routing, and every text response
+  the console originates declares its charset.
+- The break-glass prune panel states exactly what it sends.
 
 ## [0.2.4] - 2026-09-07
 
@@ -113,7 +147,9 @@ forward unrebuilt through the 0.2.0 engine release.
 - Stray `coverage/` output that had been tracked in version control despite the ignore
   rule.
 
-[Unreleased]: https://github.com/downpipes-io/console/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/downpipes-io/console/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/downpipes-io/console/releases/tag/v0.2.6
+[0.2.5]: https://github.com/downpipes-io/console/releases/tag/v0.2.5
 [0.2.4]: https://github.com/downpipes-io/console/releases/tag/v0.2.4
 [0.2.3]: https://github.com/downpipes-io/console/releases/tag/v0.2.3
 [0.2.2]: https://github.com/downpipes-io/console/releases/tag/v0.2.2
