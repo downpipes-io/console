@@ -527,8 +527,8 @@ function openPushForm(opts: PushFormOpts): void {
     "p",
     { class: "field__hint" },
     mode === "replace"
-      ? "The S3 drop always writes NDJSON, one raw event per line (the format above is not used for this sink). Replacing re-collects the access key id and secret access key; the redacted view does not carry them."
-      : "The S3 drop always writes NDJSON, one raw event per line (the format above is not used for this sink).",
+      ? "Each batch is dropped as one object in the format above, under the prefix, keyed by time and sequence with that format's extension (.ndjson, .json, .cef or .leef). Replacing re-collects the access key id and secret access key; the redacted view does not carry them."
+      : "Each batch is dropped as one object in the format above, under the prefix, keyed by time and sequence with that format's extension (.ndjson, .json, .cef or .leef).",
   );
   const s3Group = h("div", { class: "stack-sm", hidden: true }, s3EndpointField.el, s3BucketField.el, s3RegionField.el, s3PrefixField.el, s3KeyField.el, s3SecretField.el, s3Note);
 

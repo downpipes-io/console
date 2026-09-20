@@ -87,8 +87,8 @@ const SYSLOG_TLS_FORMATS: readonly PushFormat[] = ["cef", "leef"];
 // validatePushFormatSink enforces the cross-field rules no SIEM's intake can route around, in BOTH directions.
 //
 // Direction one: CEF and LEEF are syslog-envelope formats. No SIEM auto-parses raw CEF or LEEF bytes posted
-// over HTTP, and the S3 drop always writes NDJSON regardless of the format field, so cef/leef only makes
-// sense on the syslog-tls sink.
+// over HTTP, and an S3 object holding raw CEF or LEEF has no syslog envelope to parse, so cef/leef only makes
+// sense on the syslog-tls sink (the engine refuses the pair on any other sink).
 //
 // Direction two, and the more serious of the pair: the syslog-tls sink carries ONLY those two formats. A
 // destination configured splunk-hec over syslog-tls that passed this validator and both of the engine's own
@@ -320,7 +320,7 @@ export function pushDestinationTargetLabel(view: Pick<PushDestinationView, "sink
 export function pushDestinationDetailLine(view: PushDestinationView): string {
   const sink = view.sink ?? "http";
   const fmt = pushFormatLabel(view.format ?? "ndjson");
-  if (sink === "s3") return `${fmt} (written as NDJSON); dropped to ${pushDestinationTargetLabel(view)}.`;
+  if (sink === "s3") return `${fmt}, one object per batch; dropped to ${pushDestinationTargetLabel(view)}.`;
   if (sink === "syslog-tls") {
     // The syslog-tls sink carries CEF or LEEF ONLY: the engine refuses any other format on this sink at
     // its router and its DO, and the sender reports a named non-delivery rather than shipping CEF under
