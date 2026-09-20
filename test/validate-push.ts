@@ -426,8 +426,8 @@ console.log("\n-- pushDestinationTargetLabel / pushDestinationDetailLine: per-si
   ok("http detail names the format and the header", http.includes("NDJSON") && http.includes("header DD-API-KEY"));
   const url = pushDestinationDetailLine(baseView({ sink: "http", authInUrl: true }));
   ok("http+authInUrl detail names the url-token posture, not a header", url.includes("token carried in the endpoint URL"));
-  const s3 = pushDestinationDetailLine({ present: true, sink: "s3", format: "cef", s3: { endpoint: "https://s3.example.com", bucket: "audit-bkt", region: "auto" }, trail: [] });
-  ok("s3 detail names NDJSON (the sink always writes NDJSON) and the bucket", s3.includes("NDJSON") && s3.includes("audit-bkt"));
+  const s3 = pushDestinationDetailLine({ present: true, sink: "s3", format: "json-array", s3: { endpoint: "https://s3.example.com", bucket: "audit-bkt", region: "auto" }, trail: [] });
+  ok("s3 detail names the chosen format (the engine writes the drop in it) and the bucket", s3.includes("JSON array") && !s3.includes("NDJSON") && s3.includes("audit-bkt"));
   const sl = pushDestinationDetailLine({ present: true, sink: "syslog-tls", format: "leef", syslog: { host: "siem.example.com", port: 6514 }, trail: [] });
   ok("syslog detail names the host and the syslog transport", sl.includes("siem.example.com") && sl.includes("syslog"));
 }
