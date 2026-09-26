@@ -9,7 +9,6 @@
     "node": ">=20"
   },
   "scripts": {
-    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath hooks || true",
     "lint": "node scripts/run-gate-chain.mjs lint:chain 41",
     "lint:chain": "npm run lint:tripwire && npm run lint:gate-chain && npm run lint:deps-installed && npm run lint:no-raw-nul && npm run lint:biome-scope && npm run lint:busy-label-convention && npm run lint:inflight-declaration && npm run lint:prose && npm run lint:size && npm run validate:doc-links && npm run validate:hooks && npm run lint:coverage-currency && npm run lint:ci-conclusion-freshness && npm run lint:xss && npm run lint:reachability && npm run lint:stepup-copy && npm run lint:verdict-guard && npm run lint:dead-vocab && npm run lint:typecheck-coverage && npm run lint:node-version && npm run lint:sibling-read && npm run lint:sibling-resolution && npm run lint:connect-src && npm run validate:engine-field-coverage && npm run validate:restore-fidelity-render && npm run validate:restore-crosszone-render && npm run lint:split-custody && npm run lint:posture-claims && npm run lint:custody-claim-parity && npm run lint:key-wipe && npm run lint:paint-before-leave && npm run lint:identity-gate-witness && npm run lint:route-table && npm run lint:capability-copy && npm run lint:dest-provenance && npm run lint:entry-module && npm run lint:change-ref && npm run lint:outside-writes && npm run lint:narration && npm run lint:dependency-advisories && npm run lint:crypto-discovery",
     "lint:gate-chain": "node scripts/run-gate-chain.mjs --self-test",

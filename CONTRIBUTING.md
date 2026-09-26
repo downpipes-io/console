@@ -52,31 +52,6 @@ Every push and pull request against `main` runs the CI workflow
 and a production-dependency `npm audit`. The `CI Success` check must pass before a
 change can merge.
 
-## Local hooks
-
-`npm install` (or `npm ci`) runs the `prepare` script, which points git at the
-repo-tracked `hooks/` directory (`git config core.hooksPath hooks`) instead of the
-per-clone, untracked `.git/hooks/`. That is how a hook change reaches every clone: edit
-`hooks/pre-commit` and commit it, and the next `npm install` picks it up everywhere.
-`.git/hooks/pre-commit` is a leftover local-only copy on some clones and is not the
-source of truth.
-
-`hooks/pre-commit` blocks committing private-key material, and rebuilds and stages the
-committed bundle (`public/*.js` and `public/__build.json`) when `src/`,
-`public/tokens.css` or the `package*.json` lockfiles change. It stages the whole emitted
-set, because a source change renames the content-hashed `chunk-<hash>.js` and staging the
-entry alone would commit an `app.js` importing a chunk that is not in the tree. The hook
-does not delete the renamed-away chunk; it names it, and you `git rm` it.
-
-The build is platform-independent, and an earlier note here saying otherwise was wrong.
-esbuild folds each bundled module's path, printed relative to the process working
-directory, into the `chunk-<hash>.js` name, and `--minify` then strips those paths from
-the emitted bytes, so a build run from the wrong directory ships identical bytes under a
-different name and the drift gate reports STALE. `scripts/stamp-build.mjs` pins that by
-chdir'ing to the package root and refusing a `node_modules` symlinked out of the repo, and
-`test/validate-bundle.ts` builds a second time from another directory to keep it pinned.
-The operating system is not an input.
-
 ## Developer Certificate of Origin
 
 This project uses the Developer Certificate of Origin (DCO). Sign off every commit to

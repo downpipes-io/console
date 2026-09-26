@@ -14,7 +14,7 @@
 // The refusal message names the byte count and the ceiling and nothing else. A file size is not a secret;
 // a byte of the file's content would be, and none is read.
 //
-// House style: Australian English, no em dashes, no rule-of-three, no AI attribution.
+// House style: Australian English, no em dashes, no rule-of-three.
 
 /** The maximum size, in bytes, of any file a console file picker reads: 64 KiB. */
 export const CONSOLE_FILE_MAX_BYTES = 64 * 1024;

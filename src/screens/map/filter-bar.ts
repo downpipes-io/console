@@ -6,7 +6,7 @@
 //
 // No-custody is never weakened: every label reaches the DOM through the dom.ts textContent path
 // (h()), so there is no markup-injection surface. House rules: Australian English, no em dashes,
-// precise claims, no AI attribution.
+// precise claims.
 
 import { h } from "../../lib/dom.ts";
 import type { StatusTone } from "../../components/status.ts";

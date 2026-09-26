@@ -4,7 +4,7 @@
 // importing demo-fetch.ts, which imports the walk's launcher: the registry in either of those files would
 // be an import cycle, and this two-function module is the seam that avoids one.
 //
-// House rules: Australian English, precise claims, no AI attribution.
+// House rules: Australian English, precise claims.
 
 const routeListeners = new Set<() => void>();
 

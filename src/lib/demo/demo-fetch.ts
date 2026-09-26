@@ -14,7 +14,7 @@
 // feels alarmingly real. Reads (GET) and routine polls never trigger it, and an honest refusal (a dual-control
 // 403, an unmodelled 501) does not either.
 //
-// House rules: Australian English, precise claims, no AI attribution.
+// House rules: Australian English, precise claims.
 
 import { toast } from "../../components/toast.ts";
 import { buildCallerFromWhoami } from "../app-identity.ts";
