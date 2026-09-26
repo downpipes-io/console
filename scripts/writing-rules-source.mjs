@@ -5,13 +5,13 @@
  *
  * Ported from the docs-site writing-rules-lint, adapted from Markdown prose to
  * source files. House style binds source comments too, per the GUARDRAILS comment
- * policy: "no AI-sounding uniformity", "zero banned words".
+ * policy: "zero banned words".
  *
  * What is checked, and where:
  *   - Em dashes (U+2014) and en dashes (U+2013): the WHOLE file. They never
  *     appear in code syntax, only in comments or string literals, and house
  *     style bans them in both.
- *   - Banned AI-attribution words: COMMENTS ONLY, and only the unambiguous
+ *   - Banned words: COMMENTS ONLY, and only the unambiguous
  *     marketing terms. Words like `robust` ("robust to ordering"), `powerful`
  *     ("a role more powerful than itself") and American spellings like
  *     `authorization` (the HTTP header / OAuth field) and `color` (the CSS

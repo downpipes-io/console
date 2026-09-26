@@ -15,7 +15,7 @@
 // snap the demo back to pristine without hunting for a hard refresh. It is the one interactive affordance on
 // the otherwise informational pill.
 //
-// House rules: Australian English, precise claims, no AI attribution. CSP: every style is applied through
+// House rules: Australian English, precise claims. CSP: every style is applied through
 // the CSSOM by the h() builder (per-property setProperty), never an inline style attribute, so the banner
 // runs under the console's strict style-src 'self' with no 'unsafe-inline'. The banner pill carries the
 // (role="note") standing label plus the Reset control; the outer strip is pointer-transparent so it never
