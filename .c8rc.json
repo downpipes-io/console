@@ -1,0 +1,27 @@
+{
+  "//": "Coverage gate for the console's NON-SCREEN src (lib, components, shell, root): the bespoke node validators under test/ (npm run validate) are the console's real test surface; c8 instruments them (V8 coverage maps through Node's type-stripping). The workerd vitest-pool suite is a runtime smoke test, not the coverage source. Thresholds enforce the project standard of 90 per cent or higher on EVERY dimension, and this region measures 96.69 statements, 92.73 functions and 90.91 branches, so the standard holds here.",
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/screens/**",
+    "src/app.ts",
+    "src/components/topology-types.ts",
+    "src/components/live-flow-types.ts",
+    "src/components/data-table-types.ts",
+    "src/shell/types.ts"
+  ],
+  "all": true,
+  "reporter": [
+    "text-summary",
+    "json-summary"
+  ],
+  "reports-dir": "coverage/c8",
+  "check-coverage": true,
+  "lines": 90,
+  "statements": 90,
+  "functions": 90,
+  "branches": 90,
+  "//screens": "src/screens/** is excluded HERE but is no longer ungated: it has its own config and floors at .c8rc.screens.json (npm run coverage:screens), added 26 July 2026. Keeping the two apart is deliberate: one merged aggregate would have to sit at about 82 per cent, which would LOWER the bar for the region that already holds 90. Two regions, two honest floors.",
+  "//per-file": "An aggregate hides a zero. This region reports 96.69 per cent and yet two files inside it sit at exactly zero, so scripts/coverage-per-file-gate.mjs enforces a per-file floor over the same summary, with a baseline that can only shrink. See that file."
+}

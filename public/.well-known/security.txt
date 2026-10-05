@@ -1,0 +1,6 @@
+Contact: mailto:security@maelstrom.au
+Encryption: https://maelstrom.au/.well-known/security.asc
+Expires: 2027-06-19T00:00:00Z
+Canonical: https://console.downpipes.io/.well-known/security.txt
+Preferred-Languages: en
+Policy: https://maelstrom.au/trust/security/disclosure

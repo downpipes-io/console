@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a defect in the in-account console
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. Please do not include any key
+        material, bearer tokens or customer data. For a security vulnerability, use the
+        private path in SECURITY.md instead of a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear description of the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps, including which screen and which action.
+      placeholder: |
+        1. Open the Keys screen
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and version, console version or commit, and engine version if known.
+    validations:
+      required: false

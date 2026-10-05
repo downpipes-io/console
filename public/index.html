@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>downpipes console</title>
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem("dp-theme");
+          // Unset defaults to the dark skin.
+          if (pref !== "light" && pref !== "dark" && pref !== "system") pref = "dark";
+          var root = document.documentElement;
+          if (pref === "light" || pref === "dark") {
+            root.setAttribute("data-theme", pref);
+          } else {
+            // "system": follow prefers-color-scheme; leave the attribute unset.
+            root.removeAttribute("data-theme");
+          }
+        } catch (e) {
+          // localStorage blocked: fall back to the default skin (dark).
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+        // Accessibility preferences apply before first paint so there is no flash of the
+        // un-preferred rendering. Same contract as the theme: a stored value writes the
+        // attribute; unset/system leaves the OS media queries to rule. Values are validated
+        // against the same allow-lists lib/a11y-prefs.ts uses; anything else is ignored.
+        try {
+          var root2 = document.documentElement;
+          var attrs = {
+            "dp-a11y-motion": ["data-motion", ["reduced", "full"]],
+            "dp-a11y-contrast": ["data-contrast", ["more"]],
+            "dp-a11y-underlines": ["data-underlines", ["always"]],
+            "dp-a11y-targets": ["data-targets", ["large"]],
+            "dp-a11y-focusRing": ["data-focus", ["always"]],
+            "dp-a11y-statusPalette": ["data-status-palette", ["cvd"]]
+          };
+          for (var key in attrs) {
+            var v = localStorage.getItem(key);
+            if (v !== null && attrs[key][1].indexOf(v) !== -1) root2.setAttribute(attrs[key][0], v);
+          }
+          // data-motion resolves "system"/unset to the effective motion, so the opt-in
+          // [data-motion="full"] animations are correct from the first paint and never
+          // flicker static-then-animate. The OS reduced-motion query decides full vs
+          // reduced; "reduced"/"full" already set above are left as-is.
+          if (!root2.hasAttribute("data-motion")) {
+            var osReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            root2.setAttribute("data-motion", osReduced ? "reduced" : "full");
+          }
+          var ts = localStorage.getItem("dp-a11y-textSize");
+          if (ts === "112.5" || ts === "125" || ts === "150") root2.style.setProperty("font-size", ts + "%");
+        } catch (e2) {
+          // Blocked storage: defaults (System) apply.
+        }
+        // This attribute marks that the script ran. A CSP violation report can then tell a
+        // stale hash (the attribute is absent) apart from a blocked, unrelated script (the
+        // attribute is present), so it is set outside the try blocks above.
+        document.documentElement.setAttribute("data-prepaint", "ran");
+      })();
+    </script>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/tokens.css" />
+  </head>
+  <body>
+    <div id="app">
+      <noscript>This console needs JavaScript. It runs entirely in your account and sends nothing to the vendor.</noscript>
+    </div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

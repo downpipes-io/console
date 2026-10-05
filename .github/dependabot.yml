@@ -1,0 +1,35 @@
+version: 2
+# Version updates run on Saturday evening, Melbourne time, so no pull request opens on a weekday.
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule: { interval: weekly, day: saturday, time: "20:00", timezone: "Australia/Melbourne" }
+    # Majors blocked upstream, each with its mechanism and a review date (release playbook,
+    # section 5). Dependabot otherwise reopens the same PR every week; the block is re-checked
+    # on the date, not on its schedule.
+    ignore:
+      # vitest 5 and its coverage provider: @cloudflare/vitest-pool-workers 0.22 peers vitest ^4.1,
+      # and this repository's tests run under that pool. Review this hold at each pool release.
+      - dependency-name: vitest
+        versions: [">=5.0.0"]
+      - dependency-name: "@vitest/coverage-istanbul"
+        versions: [">=5.0.0"]
+    groups:
+      # One grouped PR for routine npm bumps keeps the review queue small; security
+      # updates still open on their own so they are not held back behind the group.
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      npm-security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly, day: saturday, time: "20:00", timezone: "Australia/Melbourne" }
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
+      github-actions-security-updates:
+        applies-to: security-updates
+        patterns: ["*"]

@@ -1,0 +1,137 @@
+// Validates the pure presentation and parsing helpers in src/screens/costs/helpers.ts: the
+// currency / number formatting (money, formatRate, formatNumberInput), the byte-unit picker
+// (bytesToUnit, unitToBytes), the percentage error helper (pctError), the input parser
+// (parseNonNeg), the cadence matcher (matchCadence) and the single-occurrence list helper
+// (withoutOneOccurrence). These are deterministic, operator-facing, and otherwise unverified;
+// an edge-case regression here ships as a wrong display value. Run:
+//   node test/validate-cost-helpers.ts
+// Prints one line per check; exits non-zero on any failure.
+//
+// Some helpers build DOM (byteUnitOptions), but every helper exercised here is pure and does
+// not touch document, so no DOM shim is needed.
+
+import {
+  money,
+  formatRate,
+  formatNumberInput,
+  bytesToUnit,
+  unitToBytes,
+  pctError,
+  parseNonNeg,
+  matchCadence,
+  PRESET_SWEEP_RUNS_PER_MONTH,
+  presetRunsPerMonth,
+  withoutOneOccurrence,
+} from "../src/screens/costs/helpers.ts";
+import { CADENCE_SECONDS, cadenceToRunsPerMonth, type Cadence } from "../src/lib/cost-model.ts";
+import { cadenceRunsPerMonth } from "../src/lib/cost-cadence.ts";
+import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
+
+let failures = 0;
+
+function eq(label: string, got: unknown, want: unknown): void {
+  const cond = got === want;
+  console.log(cond ? `  ok   ${label}` : `  FAIL ${label}  got=${JSON.stringify(got)} want=${JSON.stringify(want)}`);
+  if (!cond) failures++;
+}
+
+function ok(label: string, cond: boolean): void {
+  console.log(cond ? `  ok   ${label}` : `  FAIL ${label}`);
+  if (!cond) failures++;
+}
+
+// ---------------------------------------------------------------------------
+console.log("-- money --");
+
+eq("undefined -> dash", money(undefined), "-");
+eq("Infinity -> dash", money(Infinity), "-");
+eq("NaN -> dash", money(NaN), "-");
+eq("negative clamps to zero", money(-0.5), "$0.00");
+eq("zero -> $0.00", money(0), "$0.00");
+eq("sub-cent uses 4 decimals", money(0.005), "$0.0050");
+eq("under 1000 uses cents", money(999.99), "$999.99");
+eq("1000 groups, no cents", money(1000), "$1,000");
+eq("1e6 groups, no cents", money(1e6), "$1,000,000");
+
+// ---------------------------------------------------------------------------
+console.log("\n-- formatRate / formatNumberInput --");
+
+eq("formatRate non-finite -> 0", formatRate(NaN), "0");
+eq("formatRate 0 -> 0", formatRate(0), "0");
+eq("formatRate trims trailing zeros", formatRate(0.015), "0.015");
+eq("formatRate rounds to 4 dp", formatRate(0.012345), "0.0123");
+eq("formatNumberInput integer has no point", formatNumberInput(5), "5");
+eq("formatNumberInput non-finite -> 0", formatNumberInput(Infinity), "0");
+eq("formatNumberInput trims fraction", formatNumberInput(1.5), "1.5");
+
+// ---------------------------------------------------------------------------
+console.log("\n-- bytesToUnit / unitToBytes --");
+
+eq("zero bytes -> 0 GB", JSON.stringify(bytesToUnit(0)), JSON.stringify({ value: 0, unit: "GB" }));
+eq("small bytes -> MB", JSON.stringify(bytesToUnit(5e6)), JSON.stringify({ value: 5, unit: "MB" }));
+eq("mid bytes -> GB", JSON.stringify(bytesToUnit(2e9)), JSON.stringify({ value: 2, unit: "GB" }));
+eq("large bytes -> TB", JSON.stringify(bytesToUnit(3e12)), JSON.stringify({ value: 3, unit: "TB" }));
+eq("negative clamps to 0 GB", JSON.stringify(bytesToUnit(-1)), JSON.stringify({ value: 0, unit: "GB" }));
+eq("unitToBytes MB", unitToBytes(5, "MB"), 5e6);
+eq("unitToBytes GB", unitToBytes(2, "GB"), 2e9);
+eq("unitToBytes TB", unitToBytes(3, "TB"), 3e12);
+eq("unitToBytes negative clamps", unitToBytes(-4, "GB"), 0);
+
+// ---------------------------------------------------------------------------
+console.log("\n-- pctError --");
+
+eq("empty is not an error", pctError("", "Dedup", 0), null);
+eq("non-number -> message", pctError("abc", "Dedup", 0), "Dedup must be a number.");
+eq("below min 0 -> negative message", pctError("-1", "Dedup", 0), "Dedup cannot be negative.");
+eq("below min 10 -> at-least message", pctError("5", "Dedup", 10), "Dedup must be at least 10.");
+eq("over 100 -> exceed message", pctError("101", "Dedup", 0), "Dedup cannot exceed 100.");
+eq("in range -> null", pctError("60", "Dedup", 0), null);
+
+// ---------------------------------------------------------------------------
+console.log("\n-- parseNonNeg --");
+
+eq("empty -> null", parseNonNeg(""), null);
+eq("whitespace -> null", parseNonNeg("   "), null);
+eq("negative -> null", parseNonNeg("-1"), null);
+eq("non-number -> null", parseNonNeg("abc"), null);
+eq("zero -> 0", parseNonNeg("0"), 0);
+eq("decimal -> number", parseNonNeg("1.5"), 1.5);
+eq("Infinity literal -> null", parseNonNeg("Infinity"), null);
+
+// ---------------------------------------------------------------------------
+console.log("\n-- matchCadence --");
+
+const named: Cadence[] = ["every15min", "hourly", "every6h", "daily", "weekly"];
+for (const c of named) {
+  eq(`exact preset runs-per-month matches ${c}`, matchCadence(presetRunsPerMonth(c)), c);
+  // The preset is the Observed seed's rule for a downpipe on that cadence, so the two cannot disagree.
+  ok(`the ${c} preset equals the seed's count for that cadence`, presetRunsPerMonth(c) === cadenceRunsPerMonth(CADENCE_SECONDS[c]));
+}
+// The figures, from the rule: the month (2,630,016 s) over the shortest gap the engine can leave. Every 15
+// minutes and hourly keep one run per interval, because the 15-minute tick takes up the 10 per cent early start.
+const MONTH_S = 30.44 * 86_400;
+ok("every 15 minutes: 2,630,016 / 900 = 2,922.24", Math.abs(presetRunsPerMonth("every15min") - MONTH_S / 900) < 1e-9);
+ok("hourly: 2,630,016 / 3,600 = 730.56", Math.abs(presetRunsPerMonth("hourly") - MONTH_S / 3_600) < 1e-9);
+ok("every 6 hours: 2,630,016 / 19,800 = 132.83", Math.abs(presetRunsPerMonth("every6h") - MONTH_S / 19_800) < 1e-9);
+ok("daily: 2,630,016 / 78,300 = 33.589, not 30.44", Math.abs(presetRunsPerMonth("daily") - MONTH_S / 78_300) < 1e-9);
+ok("weekly: 2,630,016 / 544,500 = 4.830", Math.abs(presetRunsPerMonth("weekly") - MONTH_S / 544_500) < 1e-9);
+ok("the sensitivity sweep runs at the preset figures, longest cadence first", PRESET_SWEEP_RUNS_PER_MONTH.join() === ["weekly", "daily", "every6h", "hourly", "every15min"].map((c) => presetRunsPerMonth(c as Cadence)).join());
+// One run per interval (the cost model's own figure, and what Custom counts) is not a preset for daily.
+ok("30.44 (one run a day) no longer reads as the Daily preset", matchCadence(cadenceToRunsPerMonth("daily")) === null);
+ok("a custom interval matches no named cadence", matchCadence(presetRunsPerMonth("daily") * 1.5) === null);
+ok("zero runs matches no named cadence", matchCadence(0) === null);
+
+// ---------------------------------------------------------------------------
+console.log("\n-- withoutOneOccurrence --");
+
+eq("missing element -> unchanged", JSON.stringify(withoutOneOccurrence([1, 2, 3], 9)), JSON.stringify([1, 2, 3]));
+eq("removes only the first duplicate", JSON.stringify(withoutOneOccurrence([5, 5, 5], 5)), JSON.stringify([5, 5]));
+eq("removes the single match", JSON.stringify(withoutOneOccurrence([1, 2, 3], 2)), JSON.stringify([1, 3]));
+eq("empty list -> empty", JSON.stringify(withoutOneOccurrence([], 1)), JSON.stringify([]));
+
+// ---------------------------------------------------------------------------
+// Summary
+// ---------------------------------------------------------------------------
+console.log(failures === 0 ? "\nCOST HELPERS PASS" : `\n${failures} FAILURE(S)`);
+verdictReached(failures); // the verdict is now DECLARED, so a silent exit 0 cannot pass as green
+if (failures > 0) process.exit(1);
