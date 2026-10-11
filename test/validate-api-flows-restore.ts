@@ -37,6 +37,7 @@ import {
   type Harness,
   type BlindTest,
   flushAsync,
+  waitFor,
   markConnected,
   querySelectorShim,
   querySelectorAllShim,
@@ -1122,7 +1123,7 @@ export async function runRestoreFlows(
   }
 
   // ---- 6S-approvals: the inbox approve/reject actions gate on restore.approve ----
-  async function driveApprovals(role: Role): Promise<{ text: string; approveBtns: number; rejectBtns: number }> {
+  async function driveApprovals(role: Role, opts: { discoverDelayMs?: number } = {}): Promise<{ text: string; approveBtns: number; rejectBtns: number }> {
     store.setCaller(callerOf(role));
     store.connect("https://engine.test");
     const engine = store.getEngine();
@@ -1146,9 +1147,25 @@ export async function runRestoreFlows(
     // buildRunNameJoin reads history; make it throw so the join is empty (the card falls back to the run id),
     // keeping this test about the capability gate, not the name join.
     (engine as unknown as { listAllHistory: () => Promise<never> }).listAllHistory = async () => { throw new Error("no history in this test"); };
+    // renderApprovalsInbox's load() (approvals.ts) awaits Promise.all([listApprovals, buildRunNameJoin,
+    // fetchCfConfigInBand]) before it replaces the skeleton -- fetchCfConfigInBand calls
+    // engine.discoverSources(). Left unstubbed, that falls through to a real fetch against the fake
+    // "https://engine.test" origin, which settles on its own real-clock schedule (DNS/connect failure
+    // timing), not on a microtask/macrotask tick -- a race the fixed-round flushAsync below cannot bound.
+    // Stub it with a fixed, typed, realistic response (no surface marked in-band) so that leg settles
+    // deterministically. opts.discoverDelayMs lets a case prove the wait below still holds when this leg
+    // is the slow one (0 by default: no delay).
+    (engine as unknown as { discoverSources: () => Promise<{ cfConfigSurfaces?: Array<{ id: string; inBand?: boolean }> }> }).discoverSources = async () => {
+      if (opts.discoverDelayMs) await new Promise<void>((r) => setTimeout(r, opts.discoverDelayMs));
+      return { cfConfigSurfaces: [] };
+    };
     const root = renderApprovalsInbox(engine);
     markConnected(root);
-    await flushAsync();
+    // Wait for the inbox's own completion signal rather than a fixed round count: the footnote below
+    // the card list only appears once load() has replaced the skeleton with the rendered records
+    // (renderInbox, approvals.ts), so its presence means every one of listApprovals, buildRunNameJoin
+    // and fetchCfConfigInBand has settled and the card is fully built.
+    await waitFor(() => textOf(root).includes("That is every pending approval."));
     const buttons = querySelectorAllShim(root, "button").map((b) => textOf(b));
     return {
       text: textOf(root),
@@ -1166,6 +1183,12 @@ export async function runRestoreFlows(
 
     const approver = await driveApprovals("approver");
     ok("6R-approvals: an approver still sees Approve + Reject (unchanged)", approver.approveBtns === 1 && approver.rejectBtns === 1);
+
+    // A deliberately slow discoverSources leg (50 ms, longer than flushAsync's fixed round budget):
+    // proves the waitFor above holds on the outcome, not on a round count, so this vector cannot
+    // regress back into the race the RED run demonstrated.
+    const slow = await driveApprovals("restore-operator", { discoverDelayMs: 50 });
+    ok("6R-approvals: the card still renders Approve + Reject when discoverSources is the slow leg", slow.approveBtns === 1 && slow.rejectBtns === 1);
   }
 
   // ---- 6S-batch: the batch queue gates request on restore.request and apply on restore.apply ----

@@ -17,7 +17,7 @@
 //   extractPRFSecret: pulls the first result from an ArrayBuffer and from a typed-array
 //     view, and returns null when absent
 //   prfEnabledAtCreation: reads prf.enabled
-//   enrolmentGuidance: states the >=2-keys, non-exportable reality (and uses no U+2014)
+//   enrolmentGuidance: states the >=2-keys, non-exportable reality
 
 import { hkdf } from "@noble/hashes/hkdf.js";
 import { sha256 } from "@noble/hashes/sha2.js";

@@ -19,8 +19,6 @@
 // No network and no archive: the engine is a recording stub, and the shares are built here by encrypting
 // the pinned vector's identity under a fresh wrapping key and splitting that key, which is exactly the
 // shape the custody step emits.
-//
-//
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

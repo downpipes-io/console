@@ -384,7 +384,7 @@ export function renderRestoreFlow(
   paintStepper(1);
   wrap.appendChild(stepperHost);
 
-  // A re-entry note (a retry-subset re-entry): an honest line explaining the flow was re-scoped.
+  // A re-entry note (a retry-subset re-entry): an honest line explaining the flow was narrowed.
   if (prefill?.note) {
     wrap.appendChild(banner({ tone: "info", message: prefill.note }));
   }

@@ -266,7 +266,7 @@ function trainingStartOverrides(world: DemoWorld): Pick<DemoWorld, "setupState" 
 // every id/seq positive, unique and correctly ordered regardless of how small the seed's own oldest
 // value already is (the seed's ~8-10-entry audit chain starts its oldest entry at a low seq, leaving
 // no room to insert further-past entries BELOW it with positive numbers). This fixture never
-// recomputes a cryptographic hash chain, so a renumbered hash/prevHash/parentHash string is carried
+// recomputes a cryptographic hash chain, so a hash/prevHash/parentHash string at a new position is carried
 // through unchanged from its template entry: harmless for a VISUAL accumulation render, and out of
 // scope for a chain-integrity check (a different, already-covered gap class).
 // ==================================================================================================
@@ -397,8 +397,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** advanceWorldDays simulates `days` of scheduled operation. Any in-flight run settles first (time
  *  passed, so it completed), then each downpipe's ring gains one synthesised ok run per day, newest a
  *  couple of hours ago, cloned from the ring's most recent ok entry (or its head, forced ok) exactly as
- *  the aged helpers clone their oldest entry. Indexes are renumbered by final array position
- *  (newest-first, so the head carries the highest index), runIds re-minted from the renumbered index,
+ *  the aged helpers clone their oldest entry. Indexes follow final array position
+ *  (newest-first, so the head carries the highest index), runIds are minted from that index,
  *  and the downpipe's lastRunId follows the new head. The audit / notify / config-history rings are
  *  stretched with the existing aged helpers so the accumulation shows on every history-shaped screen,
  *  not only on Runs. No cryptographic chain is recomputed (the aged helpers' own documented stance). */

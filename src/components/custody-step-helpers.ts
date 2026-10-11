@@ -2,9 +2,8 @@
 // custody-step.ts to keep that file under the structural budget; the logic is byte-for-byte
 // the same. They are shared by the step root and the per-tier panels.
 //
-// Design rules: CSSOM via node.style / the h() style helper
-// (never setAttribute("style")); every server/operator string via textContent or escape;
-// status by shape + label, not colour alone; accessible labels on every control.
+// CSSOM via node.style / the h() style helper (never setAttribute("style")); every server/operator string
+// via textContent or escape; status by shape + label, not colour alone; accessible labels on every control.
 
 import { h, svgIcon } from "../lib/dom.ts";
 import type { StatusTone } from "./status.ts";

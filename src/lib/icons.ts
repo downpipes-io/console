@@ -3,7 +3,7 @@
 // no network request. No icon font, no icon library (a supply chain risk). Only the glyphs the
 // console needs; add one when a real surface needs it.
 //
-// Design rule: the BRAND MARK is locked and used everywhere. It lives here as the single source so it
+// The BRAND MARK is locked and used everywhere. It lives here as the single source so it
 // cannot drift.
 
 // ---- Navigation glyphs ------------------------------------------------------

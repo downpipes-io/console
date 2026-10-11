@@ -6,6 +6,8 @@
 
 import { summariseReplication, destinationLaneStatus, downDestinationIds, destDownReasonLabel, distinctDownReasonLabels } from "../src/components/replication.ts";
 import type { DestReplState } from "../src/api.ts";
+import { freshnessPhrase } from "../src/components/topology-encoding.ts";
+import type { FlowRecord } from "../src/components/topology-types.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
 
 let failures = 0;
@@ -87,6 +89,13 @@ function main(): void {
       destinationLaneStatus("healthy", "b", repl, null) === "healthy");
     ok("a down destination reads failed even before any run (unreachable is unreachable)",
       destinationLaneStatus("healthy", "c", repl, null) === "failed");
+    // A destination that the engine reaches on every pass but that holds no run yet (holdsIndex -1) has no
+    // restorable copy. It reads the no-copy lane, never partial: there is nothing on it to catch up from.
+    const empty: Record<string, DestReplState> = { e: st(null, true) };
+    ok("a reachable destination that holds no run -> no-copy lane, not partial",
+      destinationLaneStatus("healthy", "e", empty, "r4") === "no-copy");
+    ok("...and that lane says there is no restorable copy yet",
+      freshnessPhrase({ status: "no-copy", lastRunAt: new Date(0).toISOString() } as FlowRecord, 60_000).startsWith("no restorable copy yet"));
 
     // THE LANE THE TICKET IS ABOUT, AND THE LANE THAT CRIED WOLF.
     //

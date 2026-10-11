@@ -272,7 +272,7 @@ export function presetLabel(id: PresetId): string {
 // the wide breakpoint. Inline because the screen composite is not in the shipped token
 // CSS; it is built from tokens (the same approach overview.ts gridStyle uses).
 export function formGridStyle(): string {
-  return "display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5);align-items:start;margin-top:var(--space-4)";
+  return "display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5);align-items:stretch;margin-top:var(--space-4)";
 }
 
 export function clamp01(n: number): number {

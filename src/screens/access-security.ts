@@ -18,7 +18,7 @@
 //                      offboarding ceremony on the Roles tab.
 //
 // The lead aesthetic is Obsidian (the dark default); both themes are first-class (the
-// tokens carry the light companion and the teal --trust verified accent). Precise claims
+// tokens carry the light companion and the teal --trust verified accent). The copy says
 // throughout: post-quantum hybrid / tamper-evident, never tamper-proof / used a second
 // factor. No custody is never weakened: the verifier reads the engine's verdict; the
 // wizard SHOWS the wrangler commands and never submits a secret; every server-supplied

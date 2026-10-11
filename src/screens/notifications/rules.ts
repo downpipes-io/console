@@ -6,7 +6,7 @@
 // rules are unit-tested without a DOM. It imports the shared leaf (./shared.ts) only, so it never imports
 // another panel module (which would form a cycle).
 //
-// Design rules: disabled-with-reason, never hidden-then-403; honest copy.
+// Disabled-with-reason, never hidden-then-403.
 
 import { h } from "../../lib/dom.ts";
 import { goSignedOut, navigate } from "../../lib/nav.ts";

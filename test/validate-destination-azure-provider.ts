@@ -336,15 +336,14 @@ console.log("\n-- the submitted payload --");
 // all is decided one level up, in submitDestination, and section 4 cannot see it. This section drives the
 // real function with a real pricing block and a stub engine, and reads what the engine was actually handed.
 //
-// IT USED TO ASSERT THE OPPOSITE, AND THAT ASSERTION HELD THE DEFECT IN PLACE. submitDestination forced the
-// mode to "" for Azure, this section proved the forcing worked, and the pair read as a guard doing its job.
-// The forcing was the defect: an Azure container with version-level immutability enforces a policy where
-// governance is an unlocked policy and compliance a locked one, so the console was refusing to arm a
-// guarantee the store would have kept, and no operator could tell, because the section was hidden as well.
-// Both are gone, and this section now grades the fact that matters: the policy the operator set reaches the
+// A FORCED EMPTY MODE WOULD BE A DEFECT, NOT A GUARD. If submitDestination forced the
+// mode to "" for Azure, a test proving the forcing worked would read as a guard doing its job.
+// The forcing would be the defect: an Azure container with version-level immutability enforces a policy where
+// governance is an unlocked policy and compliance a locked one, so the console would refuse to arm a
+// guarantee the store would have kept, and no operator could tell. This section grades the fact that matters: the policy the operator set reaches the
 // engine, which is the only party that can say whether this particular container enforces it.
 //
-// The compliance confirm is the visible half of the same change. Azure raises it now, exactly as
+// The compliance confirm is the visible half of the same behaviour. Azure raises it, exactly as
 // S3-compatible does, because compliance really is irreversible on an Azure locked policy.
 console.log("\n-- the immutability policy, through submitDestination --");
 {
@@ -530,10 +529,10 @@ console.log("\n-- the immutability policy, through submitDestination --");
   const s3 = buildCtx("s3");
   const pending = submitDestination(s3.ctx);
   // The confirm's own words are read on the way past, because this is the one run in the suite that raises
-  // it. It used to say a compliance lock could not be removed by "your account root", which is Amazon's
-  // name for the most privileged principal. The form now offers immutability for Google Cloud as well,
+  // it. It does not say a compliance lock cannot be removed by "your account root", which is Amazon's
+  // name for the most privileged principal. The form offers immutability for Google Cloud as well,
   // where no account root exists to look for, so the sentence names the property instead of one vendor's
-  // word for it. The claim itself is unchanged: a compliance lock stands above every principal the store has.
+  // word for it. A compliance lock stands above every principal the store has.
   const confirmText = await answerModalReadingText("Arm compliance lock");
   ok("the compliance confirm names the retention the operator typed", confirmText.includes("Lock every archive object for 30 days"), confirmText);
   ok("it does not send a Google Cloud operator looking for an AWS account root", !confirmText.includes("account root"), confirmText);

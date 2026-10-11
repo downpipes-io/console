@@ -267,7 +267,7 @@ const PAIRS: Pair[] = [
   ]),
 ];
 
-// TODO (asserted once each ships):
+// Not yet asserted (each is added when it ships):
 //  - --control-border replaces --border-strong on .btn--secondary /
 //    segmented controls; then assert the secondary-button boundary here.
 //  - sort-caret resting tone (effective opacity), trust-chip border on

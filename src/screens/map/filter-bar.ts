@@ -5,8 +5,8 @@
 // cached flow set, no refetch) as parameters. Moved verbatim from view.ts; behaviour unchanged.
 //
 // No-custody is never weakened: every label reaches the DOM through the dom.ts textContent path
-// (h()), so there is no markup-injection surface.
-//
+// (h()), so there is no markup-injection surface: a label is set as text and never parsed as
+// HTML.
 
 import { h } from "../../lib/dom.ts";
 import type { StatusTone } from "../../components/status.ts";

@@ -132,7 +132,7 @@ console.log("\n-- hash mode: current() and resolve() route on the hash --");
   r.add("/runs", (m) => { match = m; });
   r.add("/", () => {});
   // navigate() recomputes the target as "#" + to, then resolve() reads the (now stale) hash; to test
-  // resolve() reading the hash we set the hash directly and call navigate to trigger a resolve.
+  // resolve() reading the hash, the test sets the hash directly and call navigate to trigger a resolve.
   setLoc({ hash: "#/runs?status=failed" });
   r.navigate("/runs?status=failed");
   ok("hash mode resolves the hash path to its route", match !== null && (match as RouteMatch).pattern === "/runs");

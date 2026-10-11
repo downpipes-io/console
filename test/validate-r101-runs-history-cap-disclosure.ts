@@ -56,7 +56,7 @@ console.log("TC-r101-runs-history-cap-disclosure: the ring bound is stated on th
   ok("NEGATIVE CONTROL: the disclosure is present regardless of the run mix", /50 runs per downpipe/i.test(band), band);
 }
 
-// ---- 3. The wording matches the convention already settled on the two sibling surfaces. ----------
+// ---- 3. The wording matches the copy already settled on the two sibling surfaces. ----------
 {
   const band = textOf(buildSummary([run({ index: 0, status: "ok" })]) as never);
   ok("an older run is still restorable by id, matching date-picker.ts's honesty note", /still restorable by its id/i.test(band), band);

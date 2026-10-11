@@ -22,8 +22,6 @@
 // than as a bare engine reason", and the field catalogue row for saml-rollover-certs records in as many
 // words that the client caps the paste while the server caps the result. What was missing was the
 // arithmetic rather than the knowledge, which is why an assertion is worth more here than a comment.
-//
-//
 
 import { flushAsync, installDomShim, markConnected, qsa, textOf } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

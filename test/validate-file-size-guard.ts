@@ -12,8 +12,6 @@
 // constructed at all, which is the whole claim.
 //
 // Run with `node test/validate-file-size-guard.ts`.
-//
-//
 
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
 

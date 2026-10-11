@@ -82,7 +82,6 @@
 // is checked out beside this one, compares the two files' blocks byte for byte.
 //
 //
-//
 // FS-WRITES: none outside this repo
 // (The self-test writes and removes its own fixtures under node:os tmpdir(), never under a sibling
 // repository.)

@@ -215,10 +215,12 @@ export type AuditAction =
   | "attest-session-aborted"
   // A signer re-key's backup RUNLOG hand-over (runlog-handover), the attended, Owner-only re-sign of a
   // RUNLOG that does not verify under the current signer (runlog-resigned), the attended reset of a
-  // destination's anti-rollback floor (runlog-floor-reset), and the attended relink of one downpipe's
-  // anomalous chain (runlog-relinked). Target: runlog-signature.
+  // destination's anti-rollback floor (runlog-floor-reset), the attended relink of one downpipe's
+  // anomalous chain (runlog-relinked), and the attended publish of an absent RUNLOG.sig from the engine's
+  // pending signature (runlog-resumed). Target: runlog-signature.
   | "runlog-handover"
   | "runlog-resigned"
+  | "runlog-resumed"
   | "runlog-floor-reset"
   | "runlog-relinked";
 
@@ -323,7 +325,9 @@ export type AuditTarget =
   // acted on (an operator label, never a credential), the default pointer before and after (clearing the
   // current default silently PROMOTES the next remaining destination, redirecting where unassigned downpipes
   // write), whether a removal was FORCED past the orphan guard, how many origin runs then had no other proven
-  // copy, which downpipes those were, and, on a rejected set, a closed reject-reason class.
+  // copy, which downpipes those were, and, on a rejected set, a closed reject-reason class. A REFUSED save or
+  // clear (outcome "failed") carries the closed refusal class, the provider its endpoint names, and, when the live
+  // write probe failed, the probe's closed failure class and HTTP status. Never the endpoint, bucket or sentence.
   | {
       readonly kind: "dest-change";
       readonly op: "set" | "clear" | "default" | "remove";
@@ -333,6 +337,10 @@ export type AuditTarget =
       readonly force?: boolean;
       readonly uncoveredOriginRunCount?: number;
       readonly rejectReason?: "endpoint-not-https" | "missing-fields" | "invalid-config";
+      readonly refusal?: string;
+      readonly provider?: "r2" | "s3" | "gcs" | "azure";
+      readonly probeClass?: string;
+      readonly probeStatus?: number;
       readonly affectedDownpipeNames?: readonly string[];
     }
   // "metrics" is the Prometheus-scrape bearer scope, the third ingest scope alongside the vendor-diagnostics
@@ -393,14 +401,14 @@ export type AuditTarget =
   // is present only where the fault was scoped to one.
   | { readonly kind: "test-fault"; readonly op: "arm" | "disarm" | "fire"; readonly faultKind: string; readonly binding?: string; readonly armedAt?: string }
   // runlog-signature: a signer re-key's backup RUNLOG hand-over, the attended re-sign of a RUNLOG that does
-  // not verify, the attended reset of a destination's anti-rollback floor, or the attended relink of one
-  // downpipe's anomalous chain. op is closed; destinationIds and reasons name which destination and why on a
+  // not verify, the attended reset of a destination's anti-rollback floor, the attended relink of one
+  // downpipe's anomalous chain, or a relink the engine refused. op is closed; destinationIds and reasons name which destination and why on a
   // refusal; resigned/pending are the hand-over's counts; state, digest, maxIndex and lastGoodIndex describe
   // a single re-sign or floor reset; downpipeId, indexA, indexB and chainEntries describe a single relink.
   // Never a key or a signature value.
   | {
       readonly kind: "runlog-signature";
-      readonly op: "handover-refused" | "handover" | "held-key-discarded" | "resign" | "floor-reset" | "relink";
+      readonly op: "handover-refused" | "handover" | "held-key-discarded" | "resign" | "resume" | "floor-reset" | "relink" | "relink-refused";
       readonly destinationIds?: string[];
       readonly reasons?: string[];
       readonly resigned?: number;

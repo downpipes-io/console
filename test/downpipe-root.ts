@@ -15,8 +15,6 @@
 // where its own comments call it the convention alongside DOWNPIPES_ENGINE. Inventing a second name for
 // one idea is the drift this codebase keeps paying for, and engine-path.ts already says so about the two
 // engine names it is stuck honouring. One name here, taken from the callers that already had it.
-//
-//
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";

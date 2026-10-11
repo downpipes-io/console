@@ -189,7 +189,7 @@ export function renderAuditPanel(engine: EngineClient, query: URLSearchParams): 
         // its own; the denial latch above is what refuses them. Every one of the three actions is gated by
         // the SAME capability at the engine (GET /audit, GET /audit/verify and GET /audit/export each gate
         // on audit.read, engine admin/router-rbac.ts), so a caller denied the list is denied all three.
-        // Refusing them, rather than hiding them, is the design rule (disabled-with-reason, never
+        // Refusing them, rather than hiding them, is the rule here (disabled-with-reason, never
         // hidden-then-403), and it is the right one here: an action that vanishes teaches nothing, an
         // action that names the permission it needs and who can grant it is a governed refusal a customer
         // can act on.

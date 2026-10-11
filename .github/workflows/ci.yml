@@ -375,11 +375,9 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
       - run: npm ci
-      # The step name used to claim "0 infos required" while the command it ran did not enforce it:
-      # `biome lint --error-on-warnings` exits 0 on an informational diagnostic. It also ran over
-      # `src` alone while biome.json had declared src, test and scripts, so 709
-      # diagnostics in the gates and validators were linted nowhere, and biome.json's own 2 were
-      # linted nowhere either. All three are now enforced by scripts/biome-scope-gate.mjs inside
+      # `biome lint --error-on-warnings` exits 0 on an informational diagnostic, and a lint over `src`
+      # alone would skip the test and scripts roots that biome.json declares. The zero-infos rule, the
+      # declared scope and biome.json itself are enforced by scripts/biome-scope-gate.mjs inside
       # `npm run lint`: it fails if the declared scope and the linted scope disagree, it lints the
       # config as well as the declared roots, and it takes its verdict from the diagnostic count
       # rather than from biome's exit code, so an info fails like an error.

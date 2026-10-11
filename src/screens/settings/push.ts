@@ -11,7 +11,7 @@
 // This module is the DOM half; the pure, node-testable model + presentation logic lives in ./push-model.ts
 // (split along the max-lines seam). test/validate-push.ts drives the model through settings.ts's re-exports.
 //
-// Precise claims only: this is at-least-once delivery, never "guaranteed".
+// This is at-least-once delivery, and the copy never calls it "guaranteed".
 
 import type { EngineClient, PushDestinationView, PushFormat, PushSink } from "../../api.ts";
 import { isOwnerActionQueuedResult } from "../../api.ts";

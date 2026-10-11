@@ -23,8 +23,6 @@
 //      instead: the preset create path always attaches a secretRef and validateOauth2 derives pkce_public
 //      only when secretRef is absent, so an OAuth2 public client is unreachable and the tick can only
 //      produce a 400. The OIDC tiles are the positive control: the tick must stay offered there.
-//
-//
 
 import { installDomShim, qs, qsa, textOf, flushAsync, type ShimNode } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

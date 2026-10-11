@@ -7,7 +7,7 @@
 // attach a change number (or raise an Emergency Change); the engine records it in the audit log and flags any
 // emergency change in compliance.
 //
-// Design rules: no-custody (no value or key transits).
+// No-custody (no value or key transits).
 
 import type { EngineClient } from "../../api.ts";
 import { inlineRetry } from "../../components/error-view.ts";

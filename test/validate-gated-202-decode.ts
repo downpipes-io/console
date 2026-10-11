@@ -35,7 +35,7 @@
 // signing-certificate rollover) through their real render and their real handlers. Each of the five is
 // mutation-proven: delete its queued branch and this file goes red on that branch alone.
 //
-//
+// Run with: node test/validate-gated-202-decode.ts
 
 import { installDomShim, textOf, flushAsync, qs, qsa, markConnected, type ShimNode } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

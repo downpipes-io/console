@@ -29,7 +29,7 @@ The management console for the [downpipes](https://downpipes.io) backup platform
 
 ## Security model
 
-The break-glass private identity is generated in the browser and never leaves it except as a file you save offline; the engine and the vendor only ever see the break-glass public key. The run-signer private key does go to your in-account engine, because the engine signs every run; the recovery sheet and the configure step both state this plainly. The operational key is optional: the ceremony generates it and installs it on the engine only if you choose it. In the break-glass-only posture, a compromise of the live account cannot read past archives. With an operational key installed, it can read every archive sealed while that key was present. Without an operational key, the engine cannot reopen a run it sealed earlier on its own. For an in-console restore or an attended verification, you supply your break-glass key in the browser, and it does not leave the browser.
+The break-glass private identity is generated in the browser and never leaves it except as a file you save offline; the engine and the vendor only ever see the break-glass public key. The run-signer private key does go to your in-account engine, because the engine signs every run; the recovery sheet and the configure step both state this. The operational key is optional: the ceremony generates it and installs it on the engine only if you choose it. In the break-glass-only posture, a compromise of the live account cannot read past archives. With an operational key installed, it can read every archive sealed while that key was present. Without an operational key, the engine cannot reopen a run it sealed earlier on its own. For an in-console restore or an attended verification, you supply your break-glass key in the browser, and it does not leave the browser.
 
 Every server-supplied string is HTML-escaped before it reaches the DOM, the strict CSP allows only same-origin external scripts, and the console's data path talks only to your in-account engine admin API, apart from the optional licence claim-code exchange.
 
@@ -38,7 +38,7 @@ Every server-supplied string is HTML-escaped before it reaches the DOM, the stri
 A deliberately boring, auditable shape: one static Worker serving one esbuild bundle (no UI framework: vanilla TypeScript plus the pinned @noble crypto libraries; canvas-rendered visualisations), plus the engine's admin API as the single data source. The committed `public/app.js` and its split chunks are the built artefact the worker serves, and the validate chain includes a determinism guard proving the committed bundle byte-matches a clean rebuild.
 
 ```bash
-npm install
+npm ci
 npm run validate    # the full validator chain, including the bundle-drift guard
 npm run typecheck
 npm run build       # esbuild via scripts/stamp-build.mjs; validate:bundle proves the committed bundle byte-matches

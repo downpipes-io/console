@@ -317,7 +317,7 @@ function ruleValues(over: Partial<RuleFormValues>): RuleFormValues {
 }
 
 // ---------------------------------------------------------------------------
-// validateUrl: the engine's channel-url rule mirror (no-custody / design rule).
+// validateUrl: the engine's channel-url rule mirror (no-custody).
 // ---------------------------------------------------------------------------
 console.log("\n-- validateUrl --");
 

@@ -35,7 +35,6 @@
 // saying so, which is distinguishable from both a pass and a finding.
 //
 //
-//
 //   node test/validate-restore-reason-vocabulary.ts
 
 import { readFileSync } from "node:fs";

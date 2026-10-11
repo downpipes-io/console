@@ -26,8 +26,6 @@
 // flow depends on could stop rendering unnoticed.
 //
 // This renders the REAL renderConfirm over the shared DOM shim and never re-implements it.
-//
-//
 
 import { flushAsync, installDomShim, markConnected } from "./dom-shim.ts";
 

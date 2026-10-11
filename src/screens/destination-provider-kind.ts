@@ -51,7 +51,8 @@ export function providerForEndpointHost(hostOrUrl: string | undefined): Provider
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//i, "")
-    .replace(/\/.*$/, "")
+    .replace(/[/?#].*$/, "")
+    .replace(/^.*@/, "")
     .replace(/:\d+$/, "");
   if (host === "") return "s3";
   if (/(^|\.)r2\.cloudflarestorage\.com$/.test(host)) return "r2";

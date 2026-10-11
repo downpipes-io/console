@@ -7,7 +7,7 @@
 // configured channels. The check runs entirely in the customer's own account: the raw IP is never stored,
 // only the coarse prefix in a small rolling per-operator set.
 //
-// Design rules: no-custody (no value or key transits).
+// No-custody (no value or key transits).
 
 import type { EngineClient } from "../../api.ts";
 import { inlineRetry, stepUpAwareText } from "../../components/error-view.ts";

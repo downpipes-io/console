@@ -12,8 +12,6 @@
 //
 // The screen-level halves live where they always have: validate-tour.ts drives the scripted walks over
 // the real screens, and the harness's training-walk journey drives the shipped bundle in a real browser.
-//
-//
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";

@@ -69,8 +69,7 @@ account, so test only against your own deployment.
 
 ## Risk-based remediation SLA
 
-These timeframes run from the date a finding is confirmed (that is, triaged and
-reproduced, not merely reported).
+These timeframes run from the date we become aware of the finding.
 
 | Severity  | Definition (examples)                                         | Target remediation  |
 |-----------|---------------------------------------------------------------|---------------------|
@@ -122,7 +121,7 @@ Two automated mechanisms run on every push and pull request against `main`
    an advisory that is not written down fails the build. An acknowledgement whose
    fix **is** reachable carries a review date and fails once that date passes, so a
    deferral comes back on a known day rather than becoming permanent. An
-   acknowledgement the tree no longer carries also fails, so the list cannot rot.
+   acknowledgement for a package the tree does not carry also fails, so the list cannot rot.
    The gate prints the acknowledged advisories in full, and the questions it does
    not answer in full, on every run whatever the verdict.
 

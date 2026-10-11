@@ -712,7 +712,7 @@ async function resolveIdentity(shell: Shell, router: Router): Promise<void> {
 }
 
 // hostOf extracts the host for the engine chip from the remembered engine URL.
-// Best-effort; never throws. Design rule: the host is always a custom domain (the
+// Best-effort; never throws. The host is always a custom domain (the
 // connect flow enforces "never *.workers.dev"); this only displays it.
 function hostOf(url: string | null): string | null {
   if (!url) return null;

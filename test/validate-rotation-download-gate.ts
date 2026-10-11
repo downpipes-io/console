@@ -14,8 +14,6 @@
 // the real downloadText in keys/shared.ts, and the real deliverFile in lib/file-delivery.ts. The browser's
 // answer is controlled at the only place the console can observe it, URL.createObjectURL, which is exactly
 // what deliverFile's try block turns into its boolean. Nothing here re-implements the thing under test.
-//
-//
 
 import { readFileSync } from "node:fs";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

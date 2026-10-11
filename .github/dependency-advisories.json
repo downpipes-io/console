@@ -31,31 +31,7 @@
       "is reachable additionally needs a reviewBy date, and the gate FAILS once that date passes. That is",
       "the difference between recording a decision and burying one. Before writing one, try an override:",
       "that is what emptied this list, and `npm audit fix` does not try it."
-    ],
-    "GHSA-6j4f-fj2g-mc7p": {
-      "package": "brace-expansion",
-      "severity": "high",
-      "fixedIn": "5.0.12",
-      "fixReachable": true,
-      "reviewBy": "2026-10-11",
-      "reason": "Build tree only: `npm ls --omit=dev` lists no brace-expansion on main on 1 October 2026, so no shipped Worker or bundle carries it. The 0.3.7 release tree is frozen; an override inside the brace-expansion major goes into the 0.3.8 integration."
-    },
-    "GHSA-qhr7-859c-m2p7": {
-      "package": "brace-expansion",
-      "severity": "high",
-      "fixedIn": "5.0.12",
-      "fixReachable": true,
-      "reviewBy": "2026-10-11",
-      "reason": "Build tree only: `npm ls --omit=dev` lists no brace-expansion on main on 1 October 2026, so no shipped Worker or bundle carries it. The 0.3.7 release tree is frozen; an override inside the brace-expansion major goes into the 0.3.8 integration."
-    },
-    "GHSA-q2hr-2g5m-vwhr": {
-      "package": "brace-expansion",
-      "severity": "moderate",
-      "fixedIn": "5.0.12",
-      "fixReachable": true,
-      "reviewBy": "2026-10-11",
-      "reason": "Build tree only: `npm ls --omit=dev` lists no brace-expansion on main on 1 October 2026, so no shipped Worker or bundle carries it. The 0.3.7 release tree is frozen; an override inside the brace-expansion major goes into the 0.3.8 integration."
-    }
+    ]
   },
   "notCovered": {
     "$comment": [

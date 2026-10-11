@@ -15,8 +15,6 @@
 // canCap must still be false with no caller, or this file would be documenting a regression rather than a
 // fix. The console ALREADY classified the failure (faultClassForError separates not-found from auth from
 // transport) and put it in the support pack only. This puts the same fact where the customer is.
-//
-//
 
 import { installDomShim, textOf, qsa } from "./dom-shim.ts";
 installDomShim();

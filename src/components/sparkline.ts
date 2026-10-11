@@ -248,7 +248,7 @@ export function miniBars(opts: MiniBarsOptions): HTMLElement {
 
 // derivePhrase builds a fallback text alternative from a series: the latest finite
 // value plus the trend direction over the series (up / down / steady / no data). The
-// phrase is plain English; a caller with a richer phrase
+// phrase is plain words with no unit; a caller with a richer phrase
 // (with a formatted value + unit) should pass `label` instead.
 function derivePhrase(values: number[], unitLabel?: string): string {
   const finite = values.filter((v) => Number.isFinite(v));

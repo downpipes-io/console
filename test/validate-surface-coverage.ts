@@ -6,8 +6,6 @@
 // covered (a downpipe backs it up), added (a bound binding or an added token source), unadded (not
 // added), unavailable (a token surface the engine does not advertise), and unknown (the downpipe list
 // or discovery could not be read). It RUNS the production function; it never re-implements it.
-//
-//
 
 import { installDomShim } from "./dom-shim.ts";
 import { surfaceCoverage, discoveryFailureClass, discoveryFailureNote, type SurfaceCoverage, type SurfaceType, type SurfaceState } from "../src/screens/overview.ts";

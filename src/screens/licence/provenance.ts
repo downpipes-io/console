@@ -315,7 +315,7 @@ function renderVerifiedApply(last: NonNullable<UpdateStatusRecord["last"]>, chan
 // invoice-billed and licences are issued by the vendor; the CTA is a
 // plain external link (mailto or https) to ENTERPRISE_CONTACT.
 //
-// Precise claims: "tamper-evident", "post-quantum hybrid".
+// The copy says "tamper-evident" and "post-quantum hybrid".
 export function renderEnterpriseBody(): HTMLElement {
   const card = h("div");
 

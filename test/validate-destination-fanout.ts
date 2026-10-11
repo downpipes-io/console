@@ -10,13 +10,12 @@
 // The subtlety worth pinning hardest is the ordering rule: the picker reports ids in the order they
 // were TICKED, so ticking the third destination and then the first makes the THIRD the primary.
 //
-// This file used to assert the opposite, because the picker used to walk the checkboxes in list order
-// and report that. Every statement of the contract disagreed with it: the on-screen summary ("the first
+// Reporting in list order would break the contract. Every statement of the contract says tick order: the on-screen summary ("the first
 // ticked is the primary"), the field catalogue row for the control ("tick order = the fan-out order"),
 // and the published docs page backing-up/multiple-destinations ("Tick order is the selection order: the
-// first ticked is index 0, the primary"). List order meant the primary the run seals to, and therefore
-// the bucket a restore reads, was decided by however the destinations happened to be listed rather than
-// by the operator's choice. The code now matches the promise, and section (4) pins THAT.
+// first ticked is index 0, the primary"). List order would mean the primary the run seals to, and therefore
+// the bucket a restore reads, is decided by however the destinations happen to be listed rather than
+// by the operator's choice. Section (4) pins the tick-order rule.
 
 import { installDomShim, qsa, textOf } from "./dom-shim.ts";
 import { makeEvent } from "./dom-shim-core.ts";

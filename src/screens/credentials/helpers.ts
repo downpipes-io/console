@@ -6,7 +6,7 @@
 // and the add/edit forms reach for, so they live in this leaf and no section module imports another section
 // module (which would form a cycle).
 //
-// Design rules: no-custody (an item is a label + kind + class + an optional date only); status by hue + shape + label; honest copy.
+// No-custody (an item is a label + kind + class + an optional date only); status by hue + shape + label.
 
 import { h } from "../../lib/dom.ts";
 import { caller, navigate } from "../../lib/nav.ts";

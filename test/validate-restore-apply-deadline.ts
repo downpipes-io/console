@@ -24,8 +24,6 @@
 // and a plan that omits it (an older engine, or the field genuinely absent) must not invent one. A suite that
 // only checked the positive case would still pass if the render always printed a fixed deadline regardless
 // of what the plan said.
-//
-//
 
 import { installDomShim, qs, textOf } from "./dom-shim.ts";
 installDomShim();

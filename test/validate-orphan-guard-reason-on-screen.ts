@@ -293,20 +293,20 @@ async function openForceDialog(reason: string): Promise<{ st: DestinationStatus;
 // optional clauses at once (the replication wait, the unreplicable-runs clause, the older-runs-outside-
 // history clause), plus up to five downpipe names, which is how it reaches four figures. LONG_REFUSAL is
 // destOrphanRefusal({ count: 12, names: ["src-d1", "src-r2"], unreplicable: 2, olderOutsideHistory: 4 }),
-// built from engine src/sched/dest-removal-text.ts at 2fb7cd78 and pasted here verbatim (1,199 characters).
-// SHORT_REFUSAL is the same function's single-clause output for a small, single-name risk (589 characters,
+// built from engine src/sched/dest-removal-text.ts at fb1cfcba and pasted here verbatim (1,177 characters).
+// SHORT_REFUSAL is the same function's single-clause output for a small, single-name risk (567 characters,
 // the under-600 control the fixed cap used to let through unmarked).
 // ================================================================================================
 console.log("\n-- the whole refusal reaches the screen uncut, however long the engine's sentence runs --");
 
 const LONG_REFUSAL =
-  "destination is the only proven copy of 12 backed-up run(s) (src-d1, src-r2). Replication copies 10 of them to another destination of their downpipes at each 15-minute tick, oldest first within each downpipe. This count falls as replication copies runs. It can stay the same for several ticks while replication copies shared data, and the wait can take hours. If replication cannot copy a run (for example, no destination holds it), its downpipe's newer runs stay in this count until that run leaves the downpipe's newest 50 runs. 2 of them belong to downpipes with fewer than two destinations, which replication does not copy, so waiting does not clear them. To keep them, give each of those downpipes this destination and one other, wait for replication to copy the runs (this can take hours), then take this destination off them and remove it. Or remove it with force: downpipes then cannot restore those 12 run(s). 4 older run(s) of the downpipes that sealed runs here are no longer in the run history, which keeps the newest 50 runs of each downpipe. Replication does not copy those, so downpipes cannot restore any of them held only here once this destination is removed, with or without force.";
+  "destination is the only proven copy of 12 backed-up run(s) (src-d1, src-r2). Replication copies 10 of them to another destination of their downpipes at each 15-minute tick, oldest first within each downpipe. This count falls as replication copies runs. It can stay the same for several ticks while replication copies shared data, and the wait can take hours. If replication cannot copy a run (for example, no destination holds it), that run stays in this count until it leaves the downpipe's newest 50 runs. 2 of them belong to downpipes with fewer than two destinations, which replication does not copy, so waiting does not clear them. To keep them, give each of those downpipes this destination and one other, wait for replication to copy the runs (this can take hours), then take this destination off them and remove it. Or remove it with force: downpipes then cannot restore those 12 run(s). 4 older run(s) of the downpipes that sealed runs here are no longer in the run history, which keeps the newest 50 runs of each downpipe. Replication does not copy those, so downpipes cannot restore any of them held only here once this destination is removed, with or without force.";
 const SHORT_REFUSAL =
-  "destination is the only proven copy of 6 backed-up run(s) (Nightly KV). Replication copies them to another destination of their downpipes at each 15-minute tick, oldest first within each downpipe. This count falls as replication copies runs. It can stay the same for several ticks while replication copies shared data, and the wait can take hours. If replication cannot copy a run (for example, no destination holds it), its downpipe's newer runs stay in this count until that run leaves the downpipe's newest 50 runs. Or remove it with force: downpipes then cannot restore those 6 run(s).";
+  "destination is the only proven copy of 6 backed-up run(s) (Nightly KV). Replication copies them to another destination of their downpipes at each 15-minute tick, oldest first within each downpipe. This count falls as replication copies runs. It can stay the same for several ticks while replication copies shared data, and the wait can take hours. If replication cannot copy a run (for example, no destination holds it), that run stays in this count until it leaves the downpipe's newest 50 runs. Or remove it with force: downpipes then cannot restore those 6 run(s).";
 
 // POSITIVE CONTROLS on the fixtures themselves: the lengths this whole section depends on.
-ok("LONG_REFUSAL is really the 1,199-character variant", LONG_REFUSAL.length === 1199);
-ok("SHORT_REFUSAL is really under the old 600-character cap", SHORT_REFUSAL.length === 589 && SHORT_REFUSAL.length < 600);
+ok("LONG_REFUSAL is really the 1,177-character variant", LONG_REFUSAL.length === 1177);
+ok("SHORT_REFUSAL is really under the old 600-character cap", SHORT_REFUSAL.length === 567 && SHORT_REFUSAL.length < 600);
 ok("LONG_REFUSAL carries its closing sentence (the old cap would have cut it)", LONG_REFUSAL.endsWith("with or without force."));
 
 // ================================================================================================
@@ -349,7 +349,7 @@ console.log("\n-- the fixtures against the engine: LONG_REFUSAL and SHORT_REFUSA
   ok("the force-remove dialogue opened for the long refusal", surface !== null);
   if (surface !== null) {
     const full = textOf(surface);
-    ok("the dialogue's rendered text contains the whole 1,199-character refusal", full.includes(LONG_REFUSAL));
+    ok("the dialogue's rendered text contains the whole 1,177-character refusal", full.includes(LONG_REFUSAL));
     ok("the loss line (the engine's own count) is still present", full.includes("Downpipes then cannot restore those 12 run(s)."));
     const idxLoss = full.indexOf("Downpipes then cannot restore those 12 run(s).");
     const idxRefusal = full.indexOf(LONG_REFUSAL);

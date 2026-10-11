@@ -102,7 +102,7 @@ async function handleRotateClick(engine: EngineClient, rotateBtn: HTMLButtonElem
   try {
     // runKeyCeremony is the same browser-only path as the initial ceremony: it calls
     // makeRecipient() (X25519 + ML-KEM-1024 seed generation), no network, no storage.
-    // We set operational:false because a rotation replaces only the break-glass key;
+    // operational:false is passed because a rotation replaces only the break-glass key;
     // the operational key is a separate, independent decision.
     const fresh = await runKeyCeremony({ operational: false });
 

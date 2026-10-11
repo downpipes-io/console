@@ -23,8 +23,6 @@
 //
 // The reminder toggle beside it stays local, and that separation is asserted too: it must not reach the
 // engine, because whether to show a nudge on this screen is genuinely a per-browser preference.
-//
-//
 
 import { flushAsync, installDomShim, qs, type ShimNode, textOf } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

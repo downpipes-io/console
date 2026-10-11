@@ -10,17 +10,16 @@
 // an account-scoped surface into a "this zone only" downpipe, or dropping a zone surface it should have
 // captured.
 //
-// WHAT THIS FILE USED TO BE, because the shape is worth writing down. It carried a committed
-// ENGINE_CF_CONFIG_SNAPSHOT of {total: 314, zone: 119, account: 195} and a buildFixtureCatalogue() that
-// pushed filler entries INTO LOOPS BOUNDED BY THOSE NUMBERS, then asserted the fixture's counts back
-// against them. Every assertion was a tautology by construction: the zone count could not disagree with the
-// number the zone loop had counted up to, and the "a known ZONE surface is selected" pair tested two rows
-// the fixture itself hardcoded. The header said the file could not detect engine drift and only pinned
+// WHAT TO AVOID, because the shape is worth writing down. A committed
+// ENGINE_CF_CONFIG_SNAPSHOT of {total: 314, zone: 119, account: 195} with a buildFixtureCatalogue() that
+// pushes filler entries INTO LOOPS BOUNDED BY THOSE NUMBERS, then asserts the fixture's counts back
+// against them, is a tautology by construction: the zone count cannot disagree with the
+// number the zone loop counted up to, and a "known ZONE surface is selected" pair tests two rows
+// the fixture itself hardcodes. Such a file cannot detect engine drift and only pins
 // "today's truth in one place a human can diff against".
 //
-// It could not do even that. The engine's own validator
-// (engine/test/validate-cf-config-surface-count.ts) printed {"total":313,...,"zone":118,"account":195}: the
-// snapshot was stale by one zone surface and every assertion here was green. A tripwire nobody can trip is
+// It cannot do even that. A snapshot that is stale by one zone surface (the engine's own validator,
+// engine/test/validate-cf-config-surface-count.ts, prints the real counts) leaves every assertion green. A tripwire nobody can trip is
 // not a weaker check than a real one, it is a green line in a test log standing where a check should be.
 //
 // SO THE CATALOGUE IS THE ENGINE'S OWN NOW. The fixture is gone. cfConfigCatalogue() is imported from the
@@ -28,7 +27,6 @@
 // which "the console's zone-only selector agrees with the engine's scope tags" is a claim rather than a
 // restatement. Absent an engine this SKIPS on one declared line, and REQUIRE_ENGINE=1 (the cross-repo
 // chain) makes the absence a throw upstream in importFromEngine, as with every other cross-repo check here.
-//
 //
 //
 // Run with: node test/validate-cf-surface-contract.ts

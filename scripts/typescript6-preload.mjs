@@ -1,6 +1,7 @@
 // FS-WRITES: none outside this repo
 //
-// Preloaded by `npm run lint:circular` (node --import ./scripts/madge-typescript6.mjs ...) and nowhere else.
+// Preloaded by `npm run lint:circular` (madge) and `npm run test:mutation` (StrykerJS) with
+// node --import ./scripts/typescript6-preload.mjs, and nowhere else.
 //
 // madge parses .ts files through detective-typescript and @typescript-eslint/typescript-estree, which load the
 // JavaScript compiler API with require("typescript"). The `typescript` package in this repo is TypeScript 7,
@@ -8,8 +9,11 @@
 // loads and madge exits before it reads a file. npm cannot give that subtree its own TypeScript 6: .npmrc
 // sets legacy-peer-deps, so the peer edge is never placed and the parser resolves the hoisted package.
 //
+// StrykerJS core does the same: ts-config-preprocessor imports "typescript" and calls parseConfigFileTextToJson,
+// and it declares no typescript dependency that an npm override could redirect.
+//
 // This hook sends the bare specifier "typescript" to @typescript/typescript6, the classic compiler API that
-// the repo's own gates already import by name. It is registered only in the madge process. Every other
+// the repo's own gates already import by name. It is registered only in the madge and Stryker processes. Every other
 // specifier resolves as before.
 import { registerHooks } from "node:module";
 

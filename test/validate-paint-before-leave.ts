@@ -29,8 +29,6 @@
 // AND IT LEFT. goSignedOut() must STILL have been called: the rule is paint first THEN leave, not paint
 // instead of leaving. The nav bridge is installed here with a recording handler so a fix that painted and
 // then swallowed the departure fails just as loudly as one that left without painting.
-//
-//
 
 import { installDomShim } from "./dom-shim.ts";
 

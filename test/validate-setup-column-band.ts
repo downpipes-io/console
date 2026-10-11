@@ -25,8 +25,6 @@
 // Every check carries a NEGATIVE CONTROL, so none of it can pass vacuously: the rules it looks for must be
 // present with the right bounds, and the defective form (no relief across the whole 768-1023 band) must be
 // absent.
-//
-//
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

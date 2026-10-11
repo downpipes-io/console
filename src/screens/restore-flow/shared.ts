@@ -78,7 +78,7 @@ export function drillEvidenceMissedNote(): HTMLElement {
 // optional; runId defaults to the deep-linked run. include/exclude carry selectors (the
 // failed record NAMES become include selectors for the subset); these are names and
 // counts only, never a value or a key (no-custody). When a prefill is present the flow
-// auto-runs the dry-run so the operator lands on the re-scoped review.
+// auto-runs the dry-run so the operator lands on the narrowed review.
 export interface FlowPrefill {
   runId?: string;
   include?: string[];

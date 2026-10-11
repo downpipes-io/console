@@ -124,6 +124,10 @@ export interface DestinationStatus {
   // so with no worm policy this is what tells a lock with a rule (true) from a lock that retains nothing
   // (false). Absent means the engine did not record it: an older engine, or a record saved before 0.3.7.
   defaultRetention?: boolean;
+  // lockMode and lockRetentionDays are the default rule's mode and period, present only beside objectLock
+  // "enforced". "none" is a lock with no default rule and has no period.
+  lockMode?: "GOVERNANCE" | "COMPLIANCE" | "none";
+  lockRetentionDays?: number;
   // authMode is the redaction-safe authentication posture: "keys" (a stored long-lived key), "sts"
   // (AssumeRole temporary credentials) or "entra" (a Microsoft Entra service principal on an Azure Blob
   // destination). assumeRoleArn carries the (non-secret) role ARN when STS and azureEntra the two

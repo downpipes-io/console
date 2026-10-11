@@ -6,7 +6,7 @@
 // never the secret itself. Some items are AUTO-OBSERVED by the engine (a destination access
 // key, a SAML signing certificate); the rest the operator tracks by hand.
 //
-// Design rules carried through:
+// Behaviour:
 //   - No-custody / redaction-by-construction: an item is a label + kind + class + an optional
 //     expiry date + an optional note/purpose. There is NO field for the secret/key/value, and
 //     the copy says so.
@@ -17,7 +17,7 @@
 //     authenticated role.
 //   - Status by hue + shape + label, never colour alone: an expired item never reads green, AND a
 //     no-expiry item reads NEUTRAL (a distinct honest state, never green).
-//   - Honest copy throughout: never a fabricated expiry date; never "verified deleted" (the cleanup
+//   - No fabricated expiry date; never "verified deleted" (the cleanup
 //     attestation is the operator's word, not a Cloudflare-side check).
 //   - Calm density (design-system.md 7a): ONE at-a-glance band, the "Needs attention" tier and the
 //     four-tile summary band are mutually exclusive.

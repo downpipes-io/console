@@ -15,8 +15,6 @@
 // wire unread: the console's own LicenceStatus mirror did not declare it.
 //
 // Everything below drives the REAL screen body, over payloads shaped the way the engine really answers.
-//
-//
 
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
 import type { LicenceStatus, StatusReport, UpdateStatus } from "../src/api.ts";

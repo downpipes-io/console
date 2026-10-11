@@ -949,7 +949,7 @@ async function applyRestore(ctx: ApplyControlsCtx, applyBtn: HTMLButtonElement, 
     // everything else in the ANCESTOR plan card (the impact banner, figures, resolved destinations,
     // skipped groups, the integrity line and its own heading), so a short scroll lands directly on
     // the receipt rather than a stack of superseded banners. DOM-only: nothing is removed (only
-    // hidden via the CSSOM, per the convention), so this never touches a tour anchor's presence.
+    // hidden via the CSSOM), so this never touches a tour anchor's presence.
     // section.parentElement is the plan card renderPlan built (card.appendChild(renderConfirm(...))),
     // reached via a live DOM relationship rather than a new parameter, since confirm.ts already has
     // `section` in scope and plan.ts never re-parents it.

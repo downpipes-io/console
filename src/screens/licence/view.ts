@@ -50,6 +50,7 @@ import {
 } from "./estate-band.ts";
 import { activationSection } from "./activation.ts";
 import { renderReleaseMetadata, updateControl } from "./update.ts";
+import { supportNoticeBanner } from "./support-notice.ts";
 import { rollbackControl, type RollbackUrgentInfo } from "./rollback.ts";
 import { renderEnterpriseBody, renderProvenanceBody } from "./provenance.ts";
 import type { EngineClient } from "../../api.ts";
@@ -326,6 +327,9 @@ function updatesSection(engine: EngineClient, data: LicenceData, reload: () => v
   const updTone: StatusTone = updateTileTone(data.updates, consoleUpd, unresolved);
   const updLabel = updateTileLabel(data.updates, consoleUpd, unresolved);
   upd.appendChild(h("div", { style: "margin:var(--space-3) 0" }, statusWithLabel(updTone, updLabel)));
+  // The end-of-support notice for the running engine (the engine's supportStatus; nothing when it sends none).
+  const supportBanner = supportNoticeBanner(data.updates);
+  if (supportBanner) upd.appendChild(supportBanner);
 
   // Per-component version state -- NEVER a single "platform version". The engine and the console version
   // INDEPENDENTLY, so a lone number cannot say which it refers to; each component states its own running

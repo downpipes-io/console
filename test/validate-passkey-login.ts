@@ -618,7 +618,6 @@ async function testPureHelpers(fx: PasskeyFixtures): Promise<void> {
     ok("a real NotAllowedError DOMException still reads as cancelled or timed out", /cancelled or timed out/i.test(passkeyErrorMessage(new DOMException("cancelled", "NotAllowedError"), "register")));
     ok("a real SecurityError DOMException still names the https requirement", /secure \(https\)/i.test(passkeyErrorMessage(new DOMException("insecure", "SecurityError"), "login")));
     ok("the new browser-refusal copy contains no U+2014", !rangeReg.includes("—") && !passkeyErrorMessage(rangeErr, "login").includes("—"));
-    //
     const allCopy = [
       reasonMessage("unknown_credential", "login"), reasonMessage("already_registered", "register"),
       reasonMessage("challenge", "login"), reasonMessage("origin", "login"), reasonMessage("signature", "login"),
@@ -629,7 +628,7 @@ async function testPureHelpers(fx: PasskeyFixtures): Promise<void> {
       passkeyErrorMessage(named("SecurityError"), "login"), passkeyErrorMessage(named("AbortError"), "login"),
       passkeyErrorMessage(new Error("boom"), "register"),
     ].join(" ");
-    ok("no copy contains an em dash", !allCopy.includes("—"));
+    ok("no copy contains a U+2014", !allCopy.includes("—"));
   }
 }
 
@@ -1529,7 +1528,6 @@ async function testAnsweredIsNotUnreachable(): Promise<void> {
     // not be re-routed through the classifier.
     ok("a cancelled gesture is still a cancel, not an engine answer", /cancelled or timed out/i.test(passkeyErrorMessage(named("NotAllowedError"), "login")));
 
-    //
     const produced = [passkeyErrorMessage(unreachable, "login"), recoveryTransportMessage(unreachable)].join(" ");
     ok("no U+2014 in the copy this section exercises", !produced.includes("—"));
   } finally {

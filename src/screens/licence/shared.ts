@@ -786,8 +786,7 @@ export function componentRows(upd: UpdateStatus, ownConsoleVersion: string | nul
 }
 
 // componentRowLine renders one row as its plain-words line ("Engine 0.1.2 -> 0.2.0", "Console 0.1.0 is
-// up to date"), an ASCII arrow for an update and plain words for the rest: the convention keeps a dash out
-// of copy the operator reads. The unknown states state facts without a verdict. Pure, so the validator
+// up to date"), an ASCII arrow for an update and plain words for the rest. The unknown states state facts without a verdict. Pure, so the validator
 // pins the copy per state.
 export function componentRowLine(row: ComponentRow): string {
   if (row.state === "update" && row.running !== null) return `${row.label} ${row.running} -> ${row.recommended}`;

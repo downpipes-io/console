@@ -106,7 +106,7 @@ export function isStrictlyIncreasing(xs: number[]): boolean {
 }
 
 // distinctCount counts the distinct values in a series within a tiny floating tolerance
-// (used to assert a sweep's deltas genuinely differ from one another rather than collapsing
+// (it asserts a sweep's deltas genuinely differ from one another rather than collapsing
 // to a single repeated value).
 export function distinctCount(xs: number[]): number {
   const seen: number[] = [];

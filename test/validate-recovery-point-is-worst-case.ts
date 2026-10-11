@@ -25,7 +25,6 @@
 // against the defect this file exists to catch.
 //
 //
-//
 //   node test/validate-recovery-point-is-worst-case.ts
 
 import { readFileSync } from "node:fs";

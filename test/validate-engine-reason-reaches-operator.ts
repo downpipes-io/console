@@ -77,9 +77,8 @@ function thrownForPlainStatus(verb: string, status: number): Error {
 // stale.
 const transportSrc = readFileSync(new URL("../src/lib/api/client-transport.ts", import.meta.url), "utf8");
 // A SEARCH NEEDLE for the literal source text of client-transport.ts's terminal throw, not a template
-// that should interpolate. noTemplateCurlyInString is the right rule and it caught a real defect in this
-// workspace this morning (a banked ledger key written as a placeholder inside a plain string, which never
-// resolved); here the un-interpolated form IS the point, because interpolating it would search for this
+// that should interpolate. noTemplateCurlyInString is the right rule, since a placeholder written inside a plain string
+// never resolves; here the un-interpolated form IS the point, because interpolating it would search for this
 // file's own values instead of the source's.
 // biome-ignore lint/suspicious/noTemplateCurlyInString: deliberate search needle, see above
 const TERMINAL_THROW = "throw new Error(`${verb}: ${r.status}`);";

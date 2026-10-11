@@ -3,8 +3,6 @@
 // Split into its own module so the training walk's task graders (tour/director.ts) can subscribe without
 // importing demo-fetch.ts, which imports the walk's launcher: the registry in either of those files would
 // be an import cycle, and this two-function module is the seam that avoids one.
-//
-//
 
 const routeListeners = new Set<() => void>();
 

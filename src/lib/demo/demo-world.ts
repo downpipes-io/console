@@ -228,7 +228,8 @@ export function demoProviderForEndpoint(hostOrUrl: string | undefined): Provider
   const h = (hostOrUrl ?? "")
     .trim()
     .replace(/^https?:\/\//i, "")
-    .replace(/\/.*$/, "")
+    .replace(/[/?#].*$/, "")
+    .replace(/^.*@/, "")
     .replace(/:\d+$/, "")
     .toLowerCase();
   if (h === "") return "s3";
