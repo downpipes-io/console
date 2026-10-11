@@ -26,7 +26,7 @@ export const AUDIT_ACTION_GROUPS: Array<{ group: string; actions: AuditAction[] 
   { group: "Roles and access", actions: ["role-change", "group-role-change", "custom-role-change", "access-policy-change-intent", "posture-override-set", "posture-override-withdrawn"] },
   { group: "Identity and sign-in", actions: ["idp-connection-change", "idp-sign-in", "authn-failure", "denied-overflow", "recovery-codes-generated", "recovery-codes-staged", "recovery-code-used", "passkey-credential-revoke", "passkey-invite-enrol", "signin-factor-revoke", "session-terminate", "bootstrap-consumed", "break-glass-token-retired"] },
   { group: "Approvals and change control", actions: ["config-change-propose", "config-change-approve", "config-change-reject", "config-change-supersede", "config-policy-change", "owner-action-propose", "owner-action-approve", "owner-action-execute", "owner-action-reject", "change-recorded"] },
-  { group: "Keys", actions: ["key-ceremony-intent", "keys-installed", "config-secrets-rewrapped", "key-install-failed", "break-glass-rotated", "operational-added", "config-recovery-added", "operational-removed", "key-removal-failed", "posture-acknowledged", "custody-share-emailed", "secret-rotation-confirmed", "runlog-handover", "runlog-resigned", "runlog-floor-reset", "runlog-relinked"] },
+  { group: "Keys", actions: ["key-ceremony-intent", "keys-installed", "config-secrets-rewrapped", "key-install-failed", "break-glass-rotated", "operational-added", "config-recovery-added", "operational-removed", "key-removal-failed", "posture-acknowledged", "custody-share-emailed", "secret-rotation-confirmed", "runlog-handover", "runlog-resigned", "runlog-resumed", "runlog-floor-reset", "runlog-relinked"] },
   { group: "Attested verification", actions: ["attest-session-started", "attest-session-proven", "attest-run-verified", "attest-session-aborted"] },
   { group: "Engine and destinations", actions: ["discovery-token-set", "discovery-token-cleared", "discovery-accounts-set", "discovery-sources-set", "engine-account-verified", "dest-config-set", "dest-config-cleared", "canary-config", "licence-activated", "licence-cleared", "expiry-cleanup-attested", "engine-secret-present", "engine-secret-absent", "engine-version-change"] },
   { group: "Engine updates", actions: ["update-promoted", "update-applied", "update-rolled-back", "update-refused"] },
@@ -146,6 +146,7 @@ const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "secret-rotation-confirmed": "Secret rotation confirmed",
   "runlog-handover": "Backup RUNLOG handed over to the new signer",
   "runlog-resigned": "Backup RUNLOG re-signed by an Owner",
+  "runlog-resumed": "Backup RUNLOG signature file restored by an Owner",
   "runlog-floor-reset": "Backup RUNLOG floor reset by an Owner",
   "runlog-relinked": "Backup RUNLOG chain relinked by an Owner",
   // The three fault events answer three different questions and the labels keep them apart. Armed says a
@@ -325,7 +326,12 @@ function describeTargetKind(t: AuditTarget): HTMLElement {
       const parts = [`destination ${t.op}`];
       if (t.id) parts.push(t.id);
       if (t.fromDefaultId || t.toDefaultId) parts.push(`default ${t.fromDefaultId ?? "(none)"} → ${t.toDefaultId ?? "(none)"}`);
-      if (t.rejectReason) parts.push(`refused: ${t.rejectReason}`);
+      if (t.refusal) {
+        // A refused save or clear: the closed class, then the live probe's class and HTTP status when it failed.
+        const probe = t.probeClass ? `; probe ${t.probeClass}${t.probeStatus ? ` HTTP ${t.probeStatus}` : ""}` : "";
+        parts.push(`REFUSED (${t.refusal}${probe})`);
+      } else if (t.rejectReason) parts.push(`refused: ${t.rejectReason}`);
+      if (t.provider) parts.push(`provider ${t.provider}`);
       const wrap = h("span", { class: "mono" }, parts.join(" "));
       if (t.force) {
         const uncovered = typeof t.uncoveredOriginRunCount === "number" ? t.uncoveredOriginRunCount : 0;
@@ -399,8 +405,8 @@ function describeTargetKind(t: AuditTarget): HTMLElement {
       return h("span", { class: "mono" }, `test fault ${t.op} ${t.faultKind}${binding}${since}`);
     }
     case "runlog-signature": {
-      // A signer re-key's RUNLOG hand-over, an attended re-sign, an attended floor reset, or an attended
-      // relink. Destination/downpipe ids, counts, indices and the closed state/op vocabulary only: never a
+      // A signer re-key's RUNLOG hand-over, an attended re-sign, an attended resume of an absent .sig, an attended
+      // floor reset, or an attended relink or a refused relink. Destination/downpipe ids, counts, indices and the closed state/op vocabulary only: never a
       // key, a signature or a RUNLOG byte.
       if (t.op === "resign") {
         const dest = t.destinationIds && t.destinationIds.length > 0 ? t.destinationIds[0] : "(default)";
@@ -408,6 +414,12 @@ function describeTargetKind(t: AuditTarget): HTMLElement {
         if (typeof t.maxIndex === "number" || typeof t.lastGoodIndex === "number") {
           wrap.appendChild(h("span", { class: "field__hint" }, ` highest index ${t.maxIndex ?? 0}, last good index ${t.lastGoodIndex ?? "none"}`));
         }
+        return wrap;
+      }
+      if (t.op === "resume") {
+        const dest = t.destinationIds && t.destinationIds.length > 0 ? t.destinationIds[0] : "(default)";
+        const wrap = h("span", { class: "mono" }, `RUNLOG signature file restored for ${dest}`);
+        if (typeof t.maxIndex === "number") wrap.appendChild(h("span", { class: "field__hint" }, ` highest index ${t.maxIndex}`));
         return wrap;
       }
       if (t.op === "floor-reset") {
@@ -423,6 +435,13 @@ function describeTargetKind(t: AuditTarget): HTMLElement {
         const wrap = h("span", { class: "mono" }, `RUNLOG chain relinked for ${dest}${t.downpipeId ? ` downpipe ${t.downpipeId}` : ""}${t.state ? ` (${t.state})` : ""}`);
         if (typeof t.indexA === "number" && typeof t.indexB === "number") wrap.appendChild(h("span", { class: "field__hint" }, ` index ${t.indexA} and index ${t.indexB}`));
         if (typeof t.chainEntries === "number") wrap.appendChild(h("span", { class: "field__hint" }, ` ${t.chainEntries} entries`));
+        return wrap;
+      }
+      if (t.op === "relink-refused") {
+        const dest = t.destinationIds && t.destinationIds.length > 0 ? t.destinationIds[0] : "(default)";
+        const why = t.reasons && t.reasons.length > 0 ? ` (${t.reasons.join(", ")})` : "";
+        const wrap = h("span", { class: "mono" }, `RUNLOG chain relink refused for ${dest}${t.downpipeId ? ` downpipe ${t.downpipeId}` : ""}${why}`);
+        if (t.state) wrap.appendChild(h("span", { class: "field__hint" }, ` anomaly ${t.state}`));
         return wrap;
       }
       if (t.op === "held-key-discarded") return h("span", { class: "mono" }, "re-key hand-over: held signer key discarded");

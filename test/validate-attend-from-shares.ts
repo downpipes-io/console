@@ -24,8 +24,6 @@
 // The archive and engine are never touched. The screen is rendered under the shared DOM shim and driven
 // through the card's real controls, so the assertions exercise production code rather than a
 // re-implementation of it.
-//
-//
 
 import { installDomShim, qs, qsa, textOf, flushAsync, type ShimNode } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

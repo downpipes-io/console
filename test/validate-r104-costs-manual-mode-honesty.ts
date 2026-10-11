@@ -8,7 +8,7 @@
 // was non-null, never whether the operator was still in Observed mode, so switching to Manual and
 // typing a hypothetical cadence still priced the monthly platform figure off the real historical
 // mean while the card's own label kept claiming the whole monthly total was "measured from your run
-// history" -- a precision failure against the convention ("precise claims"). The fix gates the seed
+// history" -- a precision failure. The fix gates the seed
 // on ctx.mode === "observed", so the label is true exactly when it is shown.
 //
 // This renders the REAL buildResults() with a real observed op-count seed present, and flips only

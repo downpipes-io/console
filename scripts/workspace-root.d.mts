@@ -1,6 +1,4 @@
 // Types for workspace-root.mjs, which is plain JavaScript. Same arrangement as hook-lib.d.mts beside it.
-//
-//
 
 /** True when any segment of this path is literally ".worktrees". */
 export function underWorktrees(p: string): boolean;

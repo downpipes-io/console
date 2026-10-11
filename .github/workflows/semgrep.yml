@@ -52,7 +52,7 @@ jobs:
       - name: Semgrep scan (rules p/default + p/secrets)
         run: |
           pipx install semgrep==1.167.0
-          semgrep scan --config p/default --config p/secrets --metrics off --sarif --output semgrep.sarif || true
+          semgrep scan --config p/default --config p/secrets --exclude public/app.js --metrics off --sarif --output semgrep.sarif || true
       # WHY THIS UPLOAD IS SKIPPED RATHER THAN ALLOWED TO FAIL.
       #
       # Code scanning ingest needs GitHub Advanced Security, which this private repository does not

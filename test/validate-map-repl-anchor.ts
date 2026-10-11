@@ -161,7 +161,7 @@ console.log("\n-- 6. the SVG aria SUMMARY (components/topology-encoding.ts tally
 const counts = tally(flows);
 ok("exactly one no-copy lane is tallied for the aria-label", counts.noCopy === 1);
 ok("the just-added lane is tallied as partial, not as no-copy and not as unknown", counts.partial === 1 && counts.unknown === 0);
-ok("the aria edge phrase for the dark lane names the absent copy", freshnessPhrase(darkD2, NOW).startsWith("no copy on this destination"));
+ok("the aria edge phrase for the dark lane names the absent copy", freshnessPhrase(darkD2, NOW).startsWith("no restorable copy yet"));
 ok("the aria edge phrase for the just-added lane says partial, never 'fresh' and never 'no copy'",
   freshnessPhrase(newD2, NOW).startsWith("partial,"));
 

@@ -314,9 +314,9 @@ function immutabilityCell(st: DestinationStatus): HTMLElement {
 // verification's cleanup delete (engine/src/sched/sched-fault-ledger.ts: "the credential is not allowed to
 // delete"), and it runs that probe WITHOUT lock headers so a WORM bucket does not lock its own probe object
 // (engine/src/admin/router-destinations.ts). So "denied" says nothing about a lock, and the engine refuses to
-// infer one from it (engine/src/admin/posture-checks-immutability.ts). This note used to say
-// "archives are immutable" whenever the probe was denied, which told an operator whose credential merely lacks
-// delete permission that their archives were locked.
+// infer one from it (engine/src/admin/posture-checks-immutability.ts). The note therefore never
+// says "archives are immutable" on a denied probe: an operator whose credential merely lacks delete
+// permission must not be told their archives are locked.
 //
 // GOVERNANCE IS NOT COMPLIANCE. Both modes show as enforced, but under governance a principal holding the
 // bypass permission can shorten or remove the window, so the card says so rather than showing one green badge

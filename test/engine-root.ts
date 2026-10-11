@@ -18,8 +18,6 @@
 // ENGINE_WORKTREE is still read, after DOWNPIPES_ENGINE, so nobody's existing invocation quietly stops
 // working. Standardising on one name and silently dropping the other would reproduce the exact fault this
 // file is here to remove.
-//
-//
 
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";

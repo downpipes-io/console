@@ -25,8 +25,6 @@
 # It reads the step text from stdin (the gate is the one composer of that text) and writes
 # public/narration/*.mp3 plus public/narration/manifest.json. The manifest carries the sha256 of the text it
 # ACTUALLY spoke, which is what makes the gate meaningful: only a real render can move it.
-#
-#
 
 import argparse
 import hashlib

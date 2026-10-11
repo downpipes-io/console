@@ -203,8 +203,10 @@ function everyTarget(): void {
     ["test-fault", { kind: "test-fault", op: "fire", faultKind: "r2-put-503", binding: "DEST" }, "test-fault-fired"],
     ["denied-overflow", { kind: "denied-overflow" }, "denied-overflow"],
     ["runlog-signature", { kind: "runlog-signature", op: "resign", destinationIds: ["dest-a"], state: "sig-invalid", digest: "ab".repeat(48), maxIndex: 8, lastGoodIndex: 8 }, "runlog-resigned"],
+    ["runlog-signature (resume)", { kind: "runlog-signature", op: "resume", destinationIds: ["dest-a"], digest: "ef".repeat(12), maxIndex: 8 }, "runlog-resumed"],
     ["runlog-signature (floor-reset)", { kind: "runlog-signature", op: "floor-reset", destinationIds: ["dest-a"], state: "below-floor", maxIndex: 9, lastGoodIndex: 12 }, "runlog-floor-reset"],
     ["runlog-signature (relink)", { kind: "runlog-signature", op: "relink", destinationIds: ["dest-a"], downpipeId: "dp-1", state: "duplicate-index", indexA: 4, indexB: 4, chainEntries: 9, digest: "cd".repeat(48) }, "runlog-relinked"],
+    ["runlog-signature (relink-refused)", { kind: "runlog-signature", op: "relink-refused", destinationIds: ["dest-a"], downpipeId: "dp-1", reasons: ["not-cleared"], state: "duplicate-index", chainEntries: 9 }, "runlog-relinked"],
   ];
 
   for (const [name, target, action] of targets) {
@@ -241,6 +243,10 @@ function everyTarget(): void {
   // These sit on the engine's most ordinary paths, so name them as such.
   ok("an IdP sign-in does not file skew, despite being one of the engine's most common events", render(event("idp-sign-in", { kind: "idpconnection", connId: "okta-1", connKind: "oidc", op: "signin" })).length === 0);
   ok("a forced destination removal does not file skew, despite changing where backups go", render(event("dest-config-cleared", { kind: "dest-change", op: "remove", id: "d2", force: true })).length === 0);
+  // A REFUSED save or clear (engine dest-save-refusal.ts) rides the same dest-change target with a closed class.
+  ok("a refused destination save does not file skew", render(event("dest-config-set", { kind: "dest-change", op: "set", refusal: "probe-failed", provider: "s3", probeClass: "auth-refused", probeStatus: 403 })).length === 0);
+  ok("a refused save row names the class, the provider and the probe class and status", ((): boolean => { const t = describeTarget({ kind: "dest-change", op: "set", refusal: "probe-failed", provider: "s3", probeClass: "auth-refused", probeStatus: 403 }).textContent ?? ""; return t.includes("REFUSED (probe-failed; probe auth-refused HTTP 403)") && t.includes("provider s3"); })());
+  ok("a refused clear row names its class", describeTarget({ kind: "dest-change", op: "clear", refusal: "clear-in-use" }).textContent?.includes("REFUSED (clear-in-use)") === true);
 }
 
 // ---------------------------------------------------------------------------------------------------------

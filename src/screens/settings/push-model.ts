@@ -141,9 +141,7 @@ export function validatePushEndpoint(v: string): string | null {
 // validateSyslogHost checks the syslog target is a bare host, not a URL: a scheme, a path or whitespace is a
 // paste mistake. It does NOT SSRF-screen, which is a deliberate client-side decision and no longer says
 // anything about the engine: router-push.ts refuses a private, loopback, link-local or
-// cloud-metadata syslog host with a 400, and the sender re-screens at send time. The second half of this
-// comment used to claim "the engine does not egress-screen the syslog host either", which was true when it
-// was written and false for twelve days before anyone read it against the engine. The screen stays
+// cloud-metadata syslog host with a 400, and the sender re-screens at send time. The screen stays
 // server-side only on purpose: an SSRF classifier duplicated in the browser drifts from the one that
 // enforces. An empty value is left to the field's own required rule. Exported (pure) for the validator.
 export function validateSyslogHost(v: string): string | null {

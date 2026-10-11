@@ -5,8 +5,8 @@
 // shape; a refusal is shown inline. It imports the shared leaf (./helpers.ts) only, so it never imports the
 // list section (which would form a cycle).
 //
-// Design rules: no-custody (no secret is ever collected); honest copy ("deleted (attested)", never
-// "verified").
+// No-custody (no secret is ever collected); the cleanup state reads "deleted (attested)", never
+// "verified".
 
 import { h, svgIcon } from "../../lib/dom.ts";
 import { goSignedOut } from "../../lib/nav.ts";

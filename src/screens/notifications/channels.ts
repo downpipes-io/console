@@ -5,7 +5,7 @@
 // delivery without sending real alert content; fail-open delivery is the engine's concern. It imports the
 // shared leaf (./shared.ts) only, so it never imports another panel module (which would form a cycle).
 //
-// Design rules: no-custody (a channel carries the customer's own destination, never a key or value);
+// No-custody (a channel carries the customer's own destination, never a key or value);
 // disabled-with-reason, never hidden-then-403.
 
 import { h, svgIcon } from "../../lib/dom.ts";

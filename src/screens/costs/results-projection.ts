@@ -10,7 +10,7 @@ import { HEADLINE_MONTH, money } from "./helpers.ts";
 import type { Projection } from "../../lib/cost-model.ts";
 
 // Sparkline geometry (px) for each regime chart, sized to the cost-charts flex column
-// (flex-basis 240px). Kept as named constants per design rules on magic numbers.
+// (flex-basis 240px). Kept as named constants.
 const COST_SPARKLINE_WIDTH = 260;
 const COST_SPARKLINE_HEIGHT = 56;
 

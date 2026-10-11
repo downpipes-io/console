@@ -5,7 +5,7 @@
 // posture is a pure computation over the account's own observable state; the vendor reads
 // nothing.
 //
-// Design rules carried through:
+// Behaviour:
 //   - No-custody: a check carries names, a status, a control reference, an observed detail
 //     and a remediation only; never a secret, key or value. Every server-supplied string
 //     enters the DOM via textContent / typed element creation (dom.ts).
@@ -13,7 +13,7 @@
 //     can(caller.role, ...) - the CLIENT MIRROR of the engine's server-side gate. The engine
 //     is ALWAYS the enforcement point; a gated control is shown disabled-with-reason, never
 //     hidden-then-403. The reads are any authenticated role.
-//   - Precise claims: tamper-evident (never tamper-proof); post-quantum hybrid (never
+//   - Claims: tamper-evident (never tamper-proof); post-quantum hybrid (never
 //     quantum-proof). A risk-accepted check is stated as an accepted risk, not a pass.
 //
 // This file is the COORDINATOR: it owns the screen descriptor (route, title, measure, render) and the two

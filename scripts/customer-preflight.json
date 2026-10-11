@@ -207,6 +207,7 @@
     "node test/validate-r30-workspace-resolution.ts": "cross-repo",
     "node test/validate-r43-ledger-scoring.ts": "dev-process",
     "node test/validate-r43-verdict-record.ts": "dev-process",
+    "node test/validate-verdict-shards.ts": "dev-process",
     "node test/validate-currency-vs-regression.ts": "dev-process",
     "node test/validate-field-catalogue-gate.ts": "cross-repo",
     "node test/validate-field-catalogue-stale-guard.ts": "cross-repo",
@@ -222,10 +223,12 @@
     "node test/validate-idp-connections-list.ts": "console-screens",
     "node test/validate-saml-email-refusal-copy.ts": "console-screens",
     "node test/validate-saml-form-default.ts": "console-screens",
+    "node test/validate-saml-form-no-idp-initiated.ts": "console-screens",
     "node test/validate-oauth2-weak-email-note.ts": "console-screens",
     "node test/validate-samlcert-rollover-capacity.ts": "console-screens",
     "node test/validate-rotation-download-gate.ts": "console-screens",
     "node test/validate-licence-expiry-reachable.ts": "console-screens",
+    "node test/validate-support-notice.ts": "console-screens",
     "node test/validate-run-abandoned-visible.ts": "console-screens",
     "node test/validate-run-support-reference.ts": "console-screens",
     "node test/validate-identity-unresolved-remedy.ts": "console-screens",
@@ -287,6 +290,12 @@
     "node test/validate-delete-not-found-copy.ts": "console-screens",
     "node test/validate-canary-refusal-copy.ts": "console-screens",
     "node test/validate-runlog-handover-progress.ts": "console-screens",
-    "node test/validate-runlog-attended-resign-screen.ts": "console-screens"
+    "node test/validate-runlog-attended-resign-screen.ts": "console-screens",
+    "node test/validate-config-keys-owner-gate.ts": "console-screens",
+    "node test/validate-setup-draft-session-end.ts": "console-screens",
+    "node test/validate-setup-draft-no-secrets.ts": "console-screens",
+    "node test/validate-overwrite-note-escaping.ts": "console-screens",
+    "node test/validate-custody-card-disconnect-wipe.ts": "console-screens",
+    "node test/validate-split-format-lines.ts": "console-screens"
   }
 }

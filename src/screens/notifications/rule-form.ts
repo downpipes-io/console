@@ -4,7 +4,7 @@
 // openRuleForm in rules.ts orchestrates these; the public export stays there so importers
 // and the validators do not move.
 //
-// Design rules: disabled-with-reason, never hidden-then-403; honest copy.
+// Disabled-with-reason, never hidden-then-403.
 
 import { h, svgIcon } from "../../lib/dom.ts";
 import { stepUpAwareText } from "../../components/error-view.ts";

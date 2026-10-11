@@ -13,7 +13,7 @@
 //      re-provision. It now has its own group.
 //   3. THE SINGLE-RUN APPLY said "This apply was sent and its outcome is unknown" after the engine had
 //      refused the apply before any write (a dismissed step-up, a role denial, a rate limit, another 4xx),
-//      and retracted "Nothing has been written yet" with it. The confirm dialogue had promised the operator
+//      and withdrew "Nothing has been written yet" with it. The confirm dialogue had promised the operator
 //      that a dismissed step-up writes nothing.
 //   4. THE CHANGE BUTTON warned that changing the plan voids an approval on an estate with no approval at
 //      all, because the no-approval-required "Ready to apply" state carried the approval-armed marker.
@@ -22,8 +22,6 @@
 //
 // Each section carries a CONTROL that must stay as it was, so a change that flipped every case at once
 // fails here as surely as the original defect does.
-//
-//
 
 import { flushAsync, installDomShim, markConnected, qs, qsa, textOf } from "./dom-shim.ts";
 
@@ -195,7 +193,7 @@ async function main(): Promise<void> {
     //
     // The section is mounted inside a stand-in plan card that carries the plan's own "Nothing has been
     // written yet" line, marked the way plan.ts marks it. markApplyOutcomeUnknown reaches that line through
-    // section.parentElement, so without a parent this file could not see it retracted and the assertion on
+    // section.parentElement, so without a parent this file could not see it withdrawn and the assertion on
     // it would pass whatever the code did.
     const driveApply = async (thrown: Error): Promise<{ section: HTMLElement; unwritten: HTMLElement }> => {
       const engine = {

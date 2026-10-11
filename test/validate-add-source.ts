@@ -102,8 +102,8 @@ eq(
 // representative type. The reminder + command are stable constants. The command MUST be the
 // guided `npm run deploy` (binding-safe superset reconcile), never a bare `npx wrangler deploy`
 // which replaces the live bindings with wrangler.toml's and drops console-attached sources
-// (operations/deploy-safety-bindings is the authority; the fieldwalk audit found the old bare
-// command contradicted it).
+// (operations/deploy-safety-bindings is the authority; a bare
+// command contradicts it).
 eq(
   "full copy-block (KV) is exact",
   fullBlock(kvInput),

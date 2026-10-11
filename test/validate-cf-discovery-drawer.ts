@@ -13,7 +13,7 @@
 //
 //   node test/validate-cf-discovery-drawer.ts
 //
-//
+// Run with: node test/validate-cf-discovery-drawer.ts
 
 import { installDomShim, qsa, textOf } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

@@ -112,6 +112,13 @@ export interface UpdateStatus {
   // channelBase (ADDITIVE): the public channel directory (UPDATE_CHANNEL_URL minus its filename) for
   // resolving the provenance block's channel-relative attestation paths into openable links.
   channelBase?: string;
+  // supportedUntil and supportStatus (ADDITIVE): the end of support of the RUNNING engine version, from the
+  // signed channel's release dates (engine src/admin/update-support.ts). supportedUntil is 90 days after the
+  // next release shipped, and absent for the latest release. supportStatus is "supported", "ending" (30 days
+  // or fewer left) or "end-of-life". Both are absent from an older engine and from a channel without release
+  // dates; the Updates section then shows no end-of-support notice (screens/licence/support-notice.ts).
+  supportedUntil?: string;
+  supportStatus?: "supported" | "ending" | "end-of-life";
 }
 
 // UpdateProvenance mirrors the engine's ComponentProvenance (src/admin/updates.ts): the signed channel's

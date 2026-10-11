@@ -147,7 +147,7 @@ export function attentionReadsUnread(data: OverviewData): string[] {
 export const ATTENTION_INCOMPLETE_LEAD =
   "This list is incomplete, so it cannot say that nothing needs you." as const;
 
-// listPhrase joins the named reads into a plain-English list ("A", "A and B", "A, B and C"), no
+// listPhrase joins the named reads into a plain list ("A", "A and B", "A, B and C"), no
 // serial comma, matching the copy elsewhere on this screen.
 function listPhrase(parts: readonly string[]): string {
   if (parts.length <= 1) return parts[0] ?? "";

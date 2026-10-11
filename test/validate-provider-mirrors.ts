@@ -23,8 +23,6 @@
 // It is graded against the ENGINE'S OWN FUNCTION rather than a hand-copied expectation table, because a
 // copied table drifts the moment the authority changes, and a mirror test that cannot notice drift is
 // decorative.
-//
-//
 
 import { AZURE_STORAGE_SUFFIXES as CONSOLE_AZURE_SUFFIXES } from "../src/screens/destination-cards.ts";
 import { demoProviderForEndpoint } from "../src/lib/demo/demo-world.ts";
@@ -66,6 +64,8 @@ if (mod === null) {
     "storage.googleapis.com.attacker.test",
     "myaccount.blob.core.cloudapi.de",
     "evilblob.core.windows.net.attacker.test",
+    "https://storage.googleapis.com?x=1",
+    "https://user:pw@myaccount.blob.core.windows.net/c",
     "",
   ];
   let agreed = 0;
@@ -76,7 +76,7 @@ if (mod === null) {
     if (demo === engine) agreed++;
   }
   // Without this the block would pass if the loop never ran, which is how a mirror test becomes a comment.
-  ok("the mirror compared every vector, so agreement is a measurement", agreed === hosts.length && hosts.length === 10, `agreed=${agreed} of ${hosts.length}`);
+  ok("the mirror compared every vector, so agreement is a measurement", agreed === hosts.length && hosts.length === 12, `agreed=${agreed} of ${hosts.length}`);
   // And the vectors must reach all four answers, or a mirror could agree on nothing but the residual.
   const answers = new Set(hosts.map((h) => mod.providerForEndpoint(h)));
   ok("the vectors reach all four providers, so agreement is not agreement on the residual", answers.size === 4, [...answers].sort().join("|"));

@@ -4,8 +4,6 @@
 // It exists because test/validate-sealed-export-unseal.ts imports blankComments, and tsconfig.test.json
 // type-checks test/ under the same strictness src gets, so an untyped .mjs import is an error there rather
 // than an implicit any.
-//
-//
 
 /**
  * Every comment byte replaced by a space, newlines and offsets preserved, so a line number or an offset

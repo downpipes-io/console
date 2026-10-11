@@ -37,9 +37,9 @@ installDomShim();
 //
 // Bounded, so a genuinely broken modal still fails fast rather than hanging.
 //
-// A TIMEOUT IS A FAILURE, NOT A RETURN, and the correction is measured rather than argued. This comment
-// used to say that on timeout the wait simply returns and the assertion that follows reports the real
-// failure. That is not true of every call site here. At width 128 the worst completed wait used 3,779 ms
+// A TIMEOUT IS A FAILURE, NOT A RETURN, and that is measured rather than argued. It is not true that
+// on timeout the wait can simply return and the assertion that follows reports the real
+// failure, at every call site here. At width 128 the worst completed wait used 3,779 ms
 // of the 5,000 ms budget, a margin of only 1.3x. At width 256, 95 of 256 runs of the unmodified file
 // exited 1, and 86 of those were TypeError: Cannot read properties of undefined (reading '1') rather than
 // any named assertion: ok() is NOT fatal, so a failed count assertion fell straight through into the line

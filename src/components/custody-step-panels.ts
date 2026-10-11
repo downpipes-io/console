@@ -568,7 +568,7 @@ export function renderSplitOutput(
 
   // Prove the split actually reconstructs, BEFORE the operator distributes it and destroys the original.
   // Every share and the checksum are in memory at this instant, so the check is free, and it is the one
-  // thing that turns "we split the key" into "we know a quorum recovers it". Deliberately uses only a
+  // thing that turns "the key is split" into "we know a quorum recovers it". Deliberately uses only a
   // THRESHOLD-sized subset, because that is the promise being made, not the whole set.
   //
   // The step is recorded HERE, against this check's own outcome, not against whether the split call above

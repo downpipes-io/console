@@ -13,8 +13,6 @@
 // reassuring, debounced toast tells them it was a local simulation against sample data, so a public demo never
 // feels alarmingly real. Reads (GET) and routine polls never trigger it, and an honest refusal (a dual-control
 // 403, an unmodelled 501) does not either.
-//
-//
 
 import { toast } from "../../components/toast.ts";
 import { buildCallerFromWhoami } from "../app-identity.ts";

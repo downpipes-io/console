@@ -175,9 +175,9 @@ async function main(): Promise<void> {
   const grid = renderIntegrationGrid(groups, () => "allowed", () => {}, null);
   ok("grid renders 40 tiles", grid.querySelectorAll(".idp-tile").length === 40);
   ok("grid shows the Auto-parses tag on the auto vendors", grid.querySelectorAll(".integration-autotag").length === CATALOGUE.filter((v) => v.auto).length);
-  // PINNED TO THE TILE, not to the grid. This assertion used to read `grid.textContent.includes("Active")`
-  // over the whole 40-tile grid, so it passed if ANY tile was Active, including if the Splunk tile had gone
-  // blank, and it could never have caught the co-light it was named for. tileState() is read per tile.
+  // PINNED TO THE TILE, not to the grid. An assertion on `grid.textContent.includes("Active")`
+  // over the whole 40-tile grid would pass if ANY tile was Active, including if the Splunk tile had gone
+  // blank, and could never catch the co-light it is named for. tileState() is read per tile.
   const tileLabel = (name: string): string => {
     const el = [...grid.querySelectorAll(".idp-tile")].find((t) => (t.getAttribute("aria-label") ?? "").startsWith(`${name},`));
     return el?.getAttribute("aria-label") ?? "";

@@ -7,8 +7,8 @@
 // keep file size manageable; it imports the shared leaf (./shared.ts) only, so it never imports another
 // section module (which would form a cycle).
 //
-// Design rules: no-custody (no value or key transits; the fresh codes are shown once and never re-fetchable).
-//
+// No-custody: no value or key transits this module. The fresh recovery codes are shown once and
+// cannot be fetched again.
 
 import { type EngineClient, isOwnerActionQueuedResult, type RecoveryCodesResult, type StatusReport } from "../../api.ts";
 import { inlineRetry, sessionEnded, stepUpAwareText } from "../../components/error-view.ts";

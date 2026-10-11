@@ -1135,7 +1135,7 @@ ok("status is ready (dashboard mounts) but does NOT claim throwaway demoMode", s
     ok(`the ${name} walk closes on the funnel (two CTAs, no info-points, the free Community edition)`, close.route === "/" && (close.ctas ?? []).length === 2 && close.infoPoints.length === 0 && close.title.includes("Community edition"));
   }
   // Every beat across BOTH walks carries a real anchor + a non-empty title + body (a useful explanation, never a
-  // stub), and the copy uses precise claims, never the banned absolute forms. The deduped union is the corpus.
+  // stub), and the copy never uses the banned absolute forms. The deduped union is the corpus.
   const allChapters = [...new Set([...ctoChapters, ...engineerChapters])];
   const allPoints: InfoPoint[] = allChapters.flatMap((c) => [...c.infoPoints]);
   ok("every beat names an anchor + carries a non-empty title and body (a real explanation)", allPoints.length >= 1 && allPoints.every((p) => p.anchor !== "" && p.title.length > 0 && p.body.length > 20));

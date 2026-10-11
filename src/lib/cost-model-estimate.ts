@@ -15,8 +15,7 @@
 // It transmits nothing. Nothing here is a no-custody concern: it never touches a key,
 // a secret, or archive content, only sizes and counts.
 //
-// Design rules followed:
-// custom domains only (no vendor URLs appear here at all). exactOptionalPropertyTypes is
+// Custom domains only (no vendor URLs appear here at all). exactOptionalPropertyTypes is
 // ON, so optional fields are added via conditional spreads and are never assigned
 // undefined; noUncheckedIndexedAccess is satisfied by guarding every indexed read.
 

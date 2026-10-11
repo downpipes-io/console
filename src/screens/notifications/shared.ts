@@ -5,7 +5,7 @@
 // destination-display truncation). These are the building blocks the channels, rules and history panels reach
 // for, so they live in this leaf and no panel module imports another panel module (which would form a cycle).
 //
-// Design rules: no-custody (a channel carries the customer's own url / routing key / addresses, never a key or
+// No-custody (a channel carries the customer's own url / routing key / addresses, never a key or
 // value); textContent on every server string.
 
 import { recordContractSkew } from "../../lib/client-diag/ring.ts";

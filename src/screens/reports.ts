@@ -5,8 +5,8 @@
 // state and SIGNED with the engine signer, so an auditor can verify it. The vendor reads
 // nothing.
 //
-// Design rules carried through:
-//   - Precise claims: a signed report is "tamper-evident, signed", NEVER "tamper-proof".
+// Behaviour:
+//   - Signature claims: a signed report is "tamper-evident, signed", NEVER "tamper-proof".
 //     The signature scheme is the post-quantum hybrid "edmldsa1:" (Ed25519 + ML-DSA-87).
 //     The console shows the signature is PRESENT and well-formed and offers it for an
 //     auditor to verify out of band; it does not claim to have cryptographically verified

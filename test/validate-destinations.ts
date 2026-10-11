@@ -440,8 +440,8 @@ async function main(): Promise<void> {
     ok("wormBlocked+denied: cross-references the delete-permission note", tWorm.includes("this credential is also not allowed to delete, as the note below records"));
     ok("wormBlocked+denied: the delete-permission note is present", tWorm.includes("credential is not allowed to delete") && tWorm.includes("retention pruning cannot delete anything with it"));
 
-    // A DENIED PROBE IS A PERMISSION, NOT A LOCK. The note used to read "archives are
-    // immutable" whenever deleteProbe was "denied", which the engine defines as a 401/403 on the cleanup
+    // A DENIED PROBE IS A PERMISSION, NOT A LOCK. The note never reads "archives are
+    // immutable" when deleteProbe is "denied", which the engine defines as a 401/403 on the cleanup
     // delete and nothing more. On a bucket with no lock at all it must not claim one.
     const deniedNoLock = cardText(baseSt({ deleteProbe: "denied" }));
     ok("denied, no lock: never claims archives are immutable", !deniedNoLock.includes("immutable") && !deniedNoLock.includes("object lock"));

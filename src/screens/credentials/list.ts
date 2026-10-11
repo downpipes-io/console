@@ -6,8 +6,8 @@
 // reader). It imports the shared leaf (./helpers.ts) and the write flows (./forms.ts) one way, so it
 // never forms a cycle.
 //
-// Design rules: status by hue + shape + label, never colour alone (an expired item never reads green, a
-// no-expiry item reads NEUTRAL); honest copy.
+// Status by hue + shape + label, never colour alone (an expired item never reads green, a
+// no-expiry item reads NEUTRAL).
 
 import { h, svgIcon } from "../../lib/dom.ts";
 import { navigate } from "../../lib/nav.ts";

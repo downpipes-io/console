@@ -8,11 +8,35 @@ on a `0.x.y` line while the platform is in active development.
 
 The console is the in-account management UI for the downpipes platform. It carries no
 archive-format version of its own; the on-disk archive format (`downpipe/0.1.0`) is
-versioned independently in the `downpipe` repository's `docs/format/SPEC.md`. The
+versioned independently in the `downpipe` repository's archive format specification. The
 identifier is a key-derivation label rather than a name, so a stale copy of it here does
 not misname anything, it describes keys that derive to different bytes.
 
-## [Unreleased]
+## [0.2.9] - 2026-10-11
+
+### Added
+
+- The Updates section of the Licence and updates screen shows an end-of-support notice for the running
+  engine. A release is supported until 90 days after the next release ships. The notice shows from 30 days
+  before that date (a warning) and after it (a danger notice), from the engine's `supportedUntil` and
+  `supportStatus`. Nothing shows for the latest release, or when the engine sends neither field.
+- The audit trail labels the `runlog-resumed` action: "Backup RUNLOG signature file restored by an Owner".
+
+### Changed
+
+- On the map, a destination that is reached on every pass but holds no run reads "no restorable copy yet",
+  not partial.
+- On the SAML connection form, the trust-idp note names the routes to the privileged roles: Access admin,
+  Approver and Restore operator need a group mapping, a connection that verifies the email, a passkey or
+  Cloudflare Access; Owner needs one of the last three, because a group cannot confer Owner.
+- On the cost estimate, the inputs card and the destination pricing card are the same height in the
+  two-column layout, and the offline recoveries field has a full-width row.
+- Dependency install scripts are off, and the install guide uses `npm ci`.
+
+### Dependencies
+
+- Biome 2.5.15, knip 6.39.0, wrangler 4.145.0 and @cloudflare/workers-types 5.20261001.1.
+- source-map-js 1.2.2, smol-toml 1.9.0 and brace-expansion 5.0.12 in the build tooling, set through npm `overrides`.
 
 ## [0.2.8] - 2026-10-05
 
@@ -159,11 +183,9 @@ not misname anything, it describes keys that derive to different bytes.
   default, while the canary is on. It also names this console, as well as the offline reader, as a way to
   prune your archives. Needs engine 0.3.7, which records `v3` and refuses `v2`.
 
-- The Config approvals inbox shows pending changes only, which is all the engine sends. The code for
-  applied, rejected and superseded cards and for the "Decided requests" section is gone, because no
-  engine response could reach it. In the demo, an approved or rejected change now leaves the inbox, as it
-  does against a real engine. The config history screen shows the configuration versions that the engine
-  records after it applies a change.
+- The Config approvals inbox shows pending changes only, which is all the engine sends. An approved or
+  rejected change leaves the inbox, in the demo as against a real engine. The config history screen
+  shows the configuration versions that the engine records after it applies a change.
 
 - The create wizard no longer holds a hidden token field and a "Protect and continue" step that no
   source could open. Every source the wizard offers is already attached or is read with the discovery
@@ -183,9 +205,7 @@ not misname anything, it describes keys that derive to different bytes.
   require-flag and had no field for the verified attribute, so a connection built with the default
   admitted nobody. A note under the picker says which roles an emailed invite can receive: on trust-idp,
   only Viewer, Operator, or a custom role with no people, access or approval permission; every role,
-  including Owner, binds under require-flag once the attribute is set. On trust-idp, the note adds that
-  Access admin, Approver and Restore operator need a group mapping, a connection that verifies the email,
-  a passkey or Cloudflare Access. Owner needs one of the last three, because a group cannot confer Owner.
+  including Owner, binds under require-flag once the attribute is set.
 
 ### Fixed
 
@@ -483,7 +503,7 @@ not misname anything, it describes keys that derive to different bytes.
 
 - TypeScript 7.0.2 is now the `typescript` package, and `npm run typecheck` runs it. The gates that walk
   the syntax tree import the TypeScript 6 compiler API from `@typescript/typescript6`. `npm run
-  lint:circular` loads `scripts/madge-typescript6.mjs` first, which gives madge's parser that same API.
+  lint:circular` loads `scripts/typescript6-preload.mjs` first, which gives madge's parser that same API.
 - wrangler 4.142.0 (from 4.131.2), which a deploy's `npm ci` installs.
 - @types/node 26.6.3 (from 22.20.0).
 - @cloudflare/workers-types 5.20260928.1 (from 5.20260914.1).
@@ -612,15 +632,14 @@ Its changes ship in the 0.2.6 release.
 
 ### Added
 
-- Root `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `.editorconfig`, issue and pull-request
-  templates, and a `.well-known/security.txt` disclosure endpoint.
+- A `.well-known/security.txt` disclosure endpoint.
 
 ### Removed
 
 - Stray `coverage/` output that had been tracked in version control despite the ignore
   rule.
 
-[Unreleased]: https://github.com/downpipes-io/console/compare/v0.2.8...HEAD
+[0.2.9]: https://github.com/downpipes-io/console/releases/tag/v0.2.9
 [0.2.8]: https://github.com/downpipes-io/console/releases/tag/v0.2.8
 [0.2.6]: https://github.com/downpipes-io/console/releases/tag/v0.2.6
 [0.2.5]: https://github.com/downpipes-io/console/releases/tag/v0.2.5

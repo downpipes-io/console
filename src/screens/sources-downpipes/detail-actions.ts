@@ -30,8 +30,8 @@ import { BILL_SHOCK_PER_RUN_THRESHOLD, errMsg } from "./helpers.ts";
 // ---- per-downpipe actions ---------------------------------------------------
 
 // runNow triggers a run (flow.md G). For a large KV source it first shows a
-// cost-aware confirm; "skipped" is an expected in-flow outcome (a run is already
-// in flight), not an error. After a successful trigger the drawer is closed (exactly
+// cost-aware confirm; "skipped" is an expected in-flow outcome (the engine names
+// the reason, for example a run already in flight), not an error. After a successful trigger the drawer is closed (exactly
 // like toggleEnabled) so its now-stale state does not linger.
 export async function runNow(
   engine: EngineClient,
@@ -60,7 +60,7 @@ export async function runNow(
   try {
     const res = await engine.trigger(dp.id);
     if ("skipped" in res) {
-      toast({ message: `A run is already in progress for ${dp.name}; this trigger was skipped.`, tone: "info" });
+      toast({ message: `No run started for ${dp.name}: ${res.skipped}.`, tone: "info" });
     } else {
       toast({ message: `Run started for ${dp.name} (${res.runId}).` });
       // A run is now in flight, so the open drawer's status strip and badges are stale;

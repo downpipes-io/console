@@ -11,8 +11,6 @@
 // rather than re-implementing them.
 //
 // Run with: node test/cov/components-data-table.ts
-//
-//
 
 import {
   installDomShim,

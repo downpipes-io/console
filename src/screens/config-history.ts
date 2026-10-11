@@ -10,7 +10,7 @@
 // + verify + manual snapshot only. It never restores or re-applies a past version (rollback is not
 // delivered). It is the config-history analogue of the runs/audit read surfaces, not a write surface.
 //
-// Design rules: reading the history/version/diff is gated on downpipe.read (the read floor; any
+// Reading the history/version/diff is gated on downpipe.read (the read floor; any
 // authenticated role may view the config). The manual snapshot is a config-policy act gated on
 // access.policy (Owner / access-admin), shown disabled-with-reason for a caller who lacks it (the engine
 // re-checks, defence in depth). Every server-supplied string (a summary, a diff line, an author email, a

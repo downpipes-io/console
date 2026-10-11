@@ -29,8 +29,6 @@
 // This drives the REAL renderConfirm over the shared DOM shim and never re-implements the gate. The
 // deadlines are milliseconds out rather than hours, so the timer this file is about actually fires inside a
 // test run; the code path is the same one an hour-long deadline takes.
-//
-//
 
 import { flushAsync, installDomShim, markConnected } from "./dom-shim.ts";
 

@@ -30,7 +30,6 @@
 // dating it would make an unchecked thing look checked.
 //
 //
-//
 //   node test/validate-preset-rate-provenance.ts
 
 import { verdictCannotCheck, verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

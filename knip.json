@@ -18,7 +18,8 @@
     "-knipignore"
   ],
   "ignoreBinaries": [
-    "go"
+    "go",
+    "semgrep"
   ],
   "ignoreDependencies": [
     "@stryker-mutator/command-runner"

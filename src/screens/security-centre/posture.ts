@@ -9,7 +9,7 @@
 // determination. It imports the shared leaf (./shared.ts) only, so it never imports another section
 // module, which would form a cycle.
 //
-// Design rules: no-custody (a check carries names, statuses, a control reference, an observed detail, a
+// No-custody (a check carries names, statuses, a control reference, an observed detail, a
 // method line and a remediation only); disabled-with-reason, never hidden-then-403.
 
 import { recordContractSkew } from "../../lib/client-diag/ring.ts";

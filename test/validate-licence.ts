@@ -267,12 +267,10 @@ function removeButtonShown(l: LicenceStatus): boolean {
   return consoleSet(l);
 }
 
-// engineRefusalText is IMPORTED from the screen, not re-implemented here, and that is a correction rather
-// than a tidy-up. This file used to carry a local copy of the transform with the comment "this is the EXACT
-// transform the screen applies", and it was not: the whole of section 5 exercised a function that does not
-// ship. A copy asserts only that the copy behaves as the copy was written, so the screen could have been
-// rewritten in any way at all and every assertion below would still have passed. It is the same shape as
-// the fixtures that used to be console literals claiming to be the engine's (see section 5's own note).
+// engineRefusalText is IMPORTED from the screen, not re-implemented here, because a local copy of the
+// transform would exercise a function that does not ship. A copy asserts only that the copy behaves as the
+// copy was written, so the screen could be rewritten in any way at all and every assertion below would
+// still pass. It is the same shape as a console literal claiming to be the engine's (see section 5's own note).
 
 // ===========================================================================
 // 1. RENEWAL AWARENESS -- renewalNotice

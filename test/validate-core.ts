@@ -28,7 +28,7 @@ const localStorageStore: Map<string, string> = new Map();
 };
 
 // Stub location (router.ts reads location.protocol / .pathname / .search / .hash in
-// some code paths, and theme.ts has no direct location use). We set protocol to
+// some code paths, and theme.ts has no direct location use). The stub sets protocol to
 // "https:" so the router stays in pathname mode, not hash mode.
 (globalThis as Record<string, unknown>).location = {
   protocol: "https:",

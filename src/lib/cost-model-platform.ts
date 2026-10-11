@@ -17,8 +17,7 @@
 //   3. No-custody is inherent: everything runs in the customer's own account. This module is
 //      still pure (no DOM, no network, no wall-clock, no randomness) and touches only counts.
 //
-// Design rules: no vendor URLs;
-// exactOptionalPropertyTypes is ON (optional fields via conditional spreads, never assigned
+// No vendor URLs; exactOptionalPropertyTypes is ON (optional fields via conditional spreads, never assigned
 // undefined); noUncheckedIndexedAccess is satisfied by guarding every indexed read.
 
 import { BYTES_PER_GB, type Inputs, nonNeg, OBJECTS_PER_MILLION, type Pricing, sanitisePricing } from "./cost-model-rates.ts";

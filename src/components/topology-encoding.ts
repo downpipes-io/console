@@ -151,14 +151,14 @@ export function freshnessPhrase(flow: FlowRecord, now: number): string {
   // "fresh" wording, which would contradict the partial tone and glyph.
   if (flow.status === "partial") return `partial, last run ${rel}`;
   // Never fall through to "fresh". The RUN is fresh; this destination's copy of it does not exist.
-  if (flow.status === "no-copy") return `no copy on this destination, last run ${rel}`;
+  if (flow.status === "no-copy") return `no restorable copy yet, last run ${rel}`;
   return `fresh, last run ${rel}`;
 }
 
 // relativeFrom is a relative-time phrase against an EXPLICIT `now` (epoch ms). The shared
 // relativeTime (format.ts) reads the ambient Date.now and so has no injection point; this
 // local form keeps buildTopologyModel a pure function of (data, now). Same unit ladder and
-// plain-English wording; presentation only.
+// wording; presentation only.
 export function relativeFrom(input: string | number | null | undefined, now: number): string {
   const ms = toMsLocal(input);
   if (ms === null) return "-";

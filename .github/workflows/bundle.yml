@@ -1,12 +1,11 @@
 # Build the committed SPA bundle on Linux and publish it as an artefact.
 #
-# WHY THIS EXISTS, CORRECTED. This header used to say esbuild's output "is not reproducible across
-# operating systems", so a macOS build "can never pass the drift guard". THAT IS REFUTED. The variable was
-# never the operating system: `--splitting` names the shared chunk chunk-<hash>.js and esbuild folds each
+# WHY THIS EXISTS. esbuild's output is reproducible across operating systems. The operating system is
+# not what varies: `--splitting` names the shared chunk chunk-<hash>.js and esbuild folds each
 # input module's path, printed relative to the PROCESS WORKING DIRECTORY, into that hash, while `--minify`
 # strips those paths back out of the emitted bytes. Two builds therefore ship a byte-identical chunk under
 # two names, and test/validate-bundle.ts, which compares the file-name set first, reads STALE against a
-# bundle that is not stale. Re-measured at d0b9e3b on macOS: five working directories, five
+# bundle that is not stale. Measured on macOS: five working directories gave five
 # different chunk names, chunk content sha256/16 b2e6f578c00c26b8 in every one, and app.js byte-identical
 # once the two hashed names are normalised. scripts/stamp-build.mjs now pins that input (it chdirs to the
 # package root, refuses a node_modules that resolves outside it, and refuses any bundled module the
@@ -16,12 +15,10 @@
 # second route to a bundle when a local checkout cannot produce one, for instance when dependencies are
 # installed somewhere stamp-build refuses to build from. Dispatch it, download the artefact, unzip it over
 # public/, and commit. scripts/build-bundle-linux.sh is the same idea with a node:22-bookworm container,
-# and needs a working local Docker daemon, which was itself the blocker.
+# and needs a working local Docker daemon.
 #
 # It is deliberately NOT wired into push or pull_request. It writes nothing to the repository and it is not
 # a gate: validate-bundle.ts remains the thing that decides whether the committed bundle is correct.
-#
-#
 name: Bundle (Linux, artefact only)
 
 on:

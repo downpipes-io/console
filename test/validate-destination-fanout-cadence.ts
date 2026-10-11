@@ -1,13 +1,13 @@
 // destinationCell's multi-destination hint (sources-downpipes/detail-config-section.ts) must state the
 // real replication cadence. The engine's replicate pass runs only from the cron tick (src/sched
 // runReplications, on SliceBudget.passWindow), oldest run first: a run is never replicated the moment it
-// seals. The hint used to say "each copy is replicated after every run", which is not the engine's
+// seals. The hint must not say "each copy is replicated after every run", which is not the engine's
 // contract. This pins the true cadence in the hint's own words, reusing the engine's own phrasing
 // ("Replication copies ... at each 15-minute cron tick, oldest first", engine src/sched/dest-removal-text.ts).
 //
 //   node test/validate-destination-fanout-cadence.ts
 //
-//
+// Run with: node test/validate-destination-fanout-cadence.ts
 
 import { installDomShim, flushAsync, textOf } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

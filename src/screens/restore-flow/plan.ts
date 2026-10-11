@@ -111,7 +111,7 @@ export async function renderPlan(
   // re-entry re-mounts the pick form and AUTO-RUNS its own dry-run (flow.ts's prefill branch), so whatever it
   // does not carry is not merely lost from the form: it is absent from the plan that then paints, and from
   // the approval that arms against it. Without it, narrowing a redirected plan to one record would silently
-  // write that record back over its live original binding, because the re-scoped plan would not be a
+  // write that record back over its live original binding, because the narrowed plan would not be a
   // redirect and so would carry no type-to-confirm.
   //
   // One expression, spread at every re-entry site (including confirm.ts's retry-subset re-entry), is one

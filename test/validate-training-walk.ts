@@ -12,8 +12,6 @@
 //
 // The real-browser half (the shipped bundle, real CSP, real clicks at four viewports) is the harness's
 // training-walk journey; this file is the fast, per-push half that runs inside validate:chain.
-//
-//
 
 import { installDomShim } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

@@ -2,9 +2,8 @@
 //
 // THE CLASS IT CLOSES. A validator that reaches exit 0 without ever reaching its own verdict line, so the
 // RUN is structurally incapable of reporting a failure however much it checked. The distinction between
-// the run and the assertions matters and this header used to blur it, saying every assertion in the run
-// was incapable of failing while describing, in the next sentence, a run that printed 109 of them. Those
-// 109 could each have failed; what could not happen was any of them turning into a red. It was measured
+// the run and the assertions matters: each assertion the run printed (109 in the case below) could have
+// failed; what could not happen was any of them turning into a red. It was measured
 // in the sibling engine repo on test/validate-destsim-selftest.ts: a stall fault parked an accepted raw
 // socket behind an unref()'d timer, so net.Server.close()'s completion callback never fired, the promise
 // wrapping it never settled, Node found nothing ref'd holding the event loop open, drained it, and exited

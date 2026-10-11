@@ -19,8 +19,6 @@
 // And `entitlement` is NOT a problem. The account's plan does not carry the surface, so there is no item to
 // restore and nothing to fix, which is why the engine's own predicate excludes exactly that member from the
 // classes that fail an apply. A customer seeing it must not be told to widen a token.
-//
-//
 
 import { installDomShim, textOf } from "./dom-shim.ts";
 installDomShim();

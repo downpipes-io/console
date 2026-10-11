@@ -31,8 +31,6 @@
 // to everything, or true to everything, fails here.
 //
 // Run with `node test/validate-identity-gate-witness.ts`.
-//
-//
 
 import { flushAsync, installDomShim } from "./dom-shim.ts";
 import { makeChecks } from "./validate-checks.ts";

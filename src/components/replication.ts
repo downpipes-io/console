@@ -196,6 +196,8 @@ export function destinationLaneStatus(
   // engine does not hold (a legacy record) keeps the milder lane: its age cannot be established, so no claim
   // is made about it.
   if (!st) return neverReportedIsProven(destId, anchor) ? "no-copy" : "partial";
+  // Reachable but holding no run at all: there is no restorable copy here yet, so it is not catching up.
+  if (st.lastOk && st.holdsIndex < 0 && st.holdsRunId === null) return "no-copy";
   if (st.holdsRunId !== latestRunId) return "partial"; // reported and reachable, catching up
   return downpipeStatus; // holds the latest run
 }

@@ -3,7 +3,7 @@
 // WHY THIS EXISTS
 // ---------------
 // The engine's update outcome enum has seven members (src/admin/update-apply.ts). Two of them exist
-// BECAUSE the enum used to assert the opposite of reality, and the engine's own comment says so:
+// BECAUSE an enum without them would assert the opposite of reality, and the engine's own comment says so:
 //
 //   rollback-failed       the canary said no, the automatic rollback deploy ITSELF failed, and the engine
 //                         is STILL SERVING THE BAD BUILD.
@@ -52,7 +52,6 @@
 // engine union must parse to at least five members AND must contain the two members named above, which
 // are the ones this check was written for. Without that floor "every engine outcome is declared" is also
 // true of a run that read no outcomes.
-//
 //
 //
 //   node test/validate-update-outcome-vocabulary.ts

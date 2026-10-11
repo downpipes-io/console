@@ -13,7 +13,7 @@
 // button is never a dead end: it is hidden on a caller's own proposal, and disabled-with-reason for a
 // caller whose capability set does not hold the change's write capability.
 //
-// Design rules: read gated on downpipe.read (the read floor; any authenticated role may see the queue),
+// Read gated on downpipe.read (the read floor; any authenticated role may see the queue),
 // the approve/reject actions gated (best-effort) on the change's write capability. Every server-supplied
 // string (the diff, the proposer email, the kind) enters the DOM as a TEXT NODE via the dom.ts h()
 // builder; no innerHTML, no inline handlers, strict-CSP safe. No-custody: a change carries an id, a coarse

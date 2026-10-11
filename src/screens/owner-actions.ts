@@ -14,7 +14,7 @@
 // enforced SERVER-SIDE; this screen mirrors them so the Approve button is never a dead end: it is hidden on a
 // caller's own proposal, and the screen itself is surfaced only to an owner.
 //
-// Design rules: read gated on downpipe.read (the read floor; any authenticated role may see the queue, the
+// Read gated on downpipe.read (the read floor; any authenticated role may see the queue, the
 // engine shows a non-owner proposer only their OWN proposals), the approve/reject actions are owner-only
 // (keys.ceremony) and the engine enforces it. Every server-supplied string (the summary, the proposer email,
 // the kind label returned by ownerActionKindLabel) enters the DOM as a text node via the dom.ts h() builder;

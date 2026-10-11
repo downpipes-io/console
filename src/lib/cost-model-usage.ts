@@ -3,7 +3,7 @@
 // backup consumes over a period; these helpers default, sum and scale those counts. All pure
 // (no DOM, no network, no wall-clock, no randomness) and touching only counts.
 //
-// Design rules: exactOptionalPropertyTypes is ON; noUncheckedIndexedAccess is
+// exactOptionalPropertyTypes is ON; noUncheckedIndexedAccess is
 // satisfied by guarding every indexed read.
 
 import { nonNeg } from "./cost-model-rates.ts";

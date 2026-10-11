@@ -2115,7 +2115,7 @@ await (async (): Promise<void> => {
     const engTitles = engineerChapters.map((c) => c.title);
     ok("the Engineer walk covers the estate, a backup end-to-end, the recoverability proof, the failure, canary, notifications and integrations", engTitles.includes("Downpipes") && engTitles.includes("A backup, end to end") && engTitles.includes("Proof it's recoverable") && engTitles.includes("When it goes wrong") && engTitles.includes("Canary flights") && engTitles.includes("Notifications") && engTitles.includes("Integrations"));
     ok("the Engineer run + restore-proof chapters carry a preAction (the canary chapter needs none)", engineerChapters.filter((c) => typeof c.preAction === "function").length >= 3);
-    // Every beat across both walks names an anchor + carries a real (non-stub) explanation, and uses precise claims.
+    // Every beat across both walks names an anchor + carries a real (non-stub) explanation, and avoids the banned absolute forms.
     const allPoints: InfoPoint[] = allChapters.flatMap((c) => [...c.infoPoints]);
     ok("every beat names an anchor + a non-empty title and a real body", allPoints.length >= 1 && allPoints.every((p) => p.anchor !== "" && p.title.length > 0 && p.body.length > 20));
     const allCopy = allPoints.map((p) => `${p.title} ${p.body}`).join(" ").toLowerCase();

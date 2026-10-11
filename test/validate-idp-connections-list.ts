@@ -20,8 +20,6 @@
 // here, because a screen that hides the control instead reads as "this product cannot do that".
 //
 // Run with: node test/validate-idp-connections-list.ts
-//
-//
 
 import { flushAsync, installDomShim, qsa, textOf } from "./dom-shim.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts

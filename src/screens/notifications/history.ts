@@ -5,7 +5,7 @@
 // It imports the shared leaf (./shared.ts) only, so it never imports another panel module (which would form a
 // cycle).
 //
-// Design rules: redaction-safe one-liners; status by hue + shape + label.
+// Redaction-safe one-liners; status by hue + shape + label.
 
 import { h, svgIcon } from "../../lib/dom.ts";
 import { goSignedOut } from "../../lib/nav.ts";

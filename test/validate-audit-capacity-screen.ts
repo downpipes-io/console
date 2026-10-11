@@ -82,9 +82,8 @@ ok("the rollover statement does not move with the head entry number", textOf(ren
 // NEGATIVE CONTROL: a deleted TAIL is a different fault and must keep out-ranking a rollover.
 const truncated: ChainVerdict = { ...rolled, headTruncated: true, headTruncatedAt: 12345 };
 ok("a deleted tail still out-ranks the rollover notice", textOf(renderChainVerdict(truncated)).includes("are missing"));
-// THIS ASSERTION USED TO PIN THE DEFECT. It read "a rolledOver flag with a zero count does not claim a
-// loss" and asserted the screen says NOTHING, on the reasoning that retention had not bitten. Retention
-// HAS bitten: rolledOver:true is the engine's statement that entries are gone, and the count is only how
+// A rolledOver flag with a zero count still claims a loss. A screen that says NOTHING there would assume
+// retention had not bitten. Retention HAS bitten: rolledOver:true is the engine's statement that entries are gone, and the count is only how
 // many. The pair is reachable and was driven through the real Durable Object -- a rollover record whose
 // count has been lost reports rolledOver:true with rolledOverCount:0, and the engine books
 // `rollover-record-lost` for exactly that state -- so the operator got the plain "Chain intact" surface

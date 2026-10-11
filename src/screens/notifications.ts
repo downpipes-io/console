@@ -3,7 +3,7 @@
 // redaction-safe test-send. This is the customer's own alerting config and outcome
 // history in their own account; the vendor never reads it.
 //
-// Design rules carried through:
+// Behaviour:
 //   - No-custody: a channel carries the customer's own url / pagerduty routing key /
 //     email addresses (their config), never a key or value; the history detail is a
 //     redaction-safe one-liner. Every server-supplied string enters the DOM via

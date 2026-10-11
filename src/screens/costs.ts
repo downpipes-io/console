@@ -31,8 +31,8 @@
 // locally). No write, no gated control, so the descriptor exports a single navigation
 // action and the screen renders for a Viewer exactly as for an Owner.
 //
-// Design rules: precise claims ("estimate" / "projected" /
-// "indicative", never "guaranteed"); custom domains only (none appear here).
+// Wording is "estimate" / "projected" /
+// "indicative", never "guaranteed"; custom domains only (none appear here).
 //
 // This file is the COORDINATOR: it owns the screen descriptor (route, title, measure,
 // actions, render) and re-exports the symbols external callers (the cost-model validator)

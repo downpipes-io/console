@@ -34,8 +34,6 @@
 // Every check carries a NEGATIVE CONTROL, so none of it can pass vacuously: the anchor text it keys off
 // must be present in tokens.css, and the defective form (a bare `1fr` column on .shell, a nowrap stepper
 // with no docked-band relief) must be absent.
-//
-//
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

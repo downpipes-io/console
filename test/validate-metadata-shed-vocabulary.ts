@@ -31,7 +31,6 @@
 // on the exact question this file exists to answer, and the console has already been wrong about it once.
 //
 //
-//
 //   node test/validate-metadata-shed-vocabulary.ts
 
 import { readFileSync } from "node:fs";

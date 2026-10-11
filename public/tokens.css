@@ -3754,6 +3754,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 .cost-ops { grid-template-rows: repeat(6, auto); }
 .cost-ops > .field { grid-row: span 6; grid-template-rows: subgrid; }
+/* The third field has no partner, so it takes the whole row instead of a half-width cell that wraps its label. */
+.cost-ops > .field:nth-child(3) { grid-column: 1 / -1; }
 @media (max-width: 480px) {
   .cost-ops { grid-template-columns: minmax(0, 1fr); }
 }

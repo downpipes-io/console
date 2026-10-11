@@ -14,8 +14,6 @@
 // type rather than the call site, so reverting the call site to the old flat string left it green. A pure
 // mapper nobody calls is exactly that failure wearing a different hat: every case here would pass while the
 // screen still showed the operator nothing.
-//
-//
 
 import { readFileSync } from "node:fs";
 import { ailingCauseLine } from "../src/screens/canary-copy.ts";

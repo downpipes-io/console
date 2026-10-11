@@ -232,8 +232,8 @@ export async function deriveWrappingKeyFromAssertion(opts: {
 }
 
 // enrolmentGuidance is the copy the ceremony surfaces next to the YubiKey option. It states
-// the non-exportable, device-specific reality and the >=2-keys requirement plainly, in
-// plain English, without overstating what a security key can do.
+// the non-exportable, device-specific reality and the >=2-keys requirement plainly,
+// without overstating what a security key can do.
 export function enrolmentGuidance(): string {
   return (
     "A security key derives a wrapping key on the device; it does not store the break-glass key. " +
