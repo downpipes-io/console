@@ -62,7 +62,7 @@ jobs:
       - name: Build A (workspace path)
         run: |
           set -euo pipefail
-          npm ci
+          npm ci --no-audit --no-fund
           node scripts/build-release-bundle.mjs --allow-dirty --out "${RUNNER_TEMP}/a.json" > "${RUNNER_TEMP}/a-facts.json"
           cat "${RUNNER_TEMP}/a-facts.json"
       - name: Build B (fresh clone at a different path)
@@ -70,7 +70,7 @@ jobs:
           set -euo pipefail
           git clone --quiet "file://${GITHUB_WORKSPACE}" "${RUNNER_TEMP}/repro-b"
           cd "${RUNNER_TEMP}/repro-b"
-          npm ci
+          npm ci --no-audit --no-fund
           node scripts/build-release-bundle.mjs --allow-dirty --out "${RUNNER_TEMP}/b.json" > "${RUNNER_TEMP}/b-facts.json"
           cat "${RUNNER_TEMP}/b-facts.json"
       - name: Compare

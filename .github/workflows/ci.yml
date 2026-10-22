@@ -66,7 +66,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: tsc --noEmit
         run: npm run typecheck
 
@@ -98,7 +98,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: Run the full validator suite (includes CSP-hash + bundle-drift gates)
         run: npm run validate
 
@@ -117,7 +117,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: schedule time-helper property vectors
         run: npm run test:property
 
@@ -143,7 +143,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: c8 coverage over the validator suite (fails below the .c8rc.json thresholds)
         run: npm run coverage
 
@@ -171,7 +171,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: c8 coverage over src/screens (fails below the .c8rc.screens.json thresholds)
         run: npm run coverage:screens
 
@@ -187,7 +187,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: Bundle the SPA
         run: npx esbuild src/app.ts --bundle --format=esm --platform=browser --outfile=public/app.js
       - name: wrangler bundle (dry-run, no upload)
@@ -205,7 +205,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       # The simplest possible statement of the production rule, kept as its own step rather than folded
       # into the gate below. The gate is a strict superset of it, so the two cannot disagree in a
       # direction that hurts: if this line fails, the gate must fail too, and if the gate is ever broken
@@ -258,6 +258,12 @@ jobs:
       - name: npm audit (prod deps, high+)
         run: |
           set -uo pipefail
+          # The audits run on npm 11.19.1, pinned exactly and first on PATH for this step only, which asks
+          # the registry's bulk advisory endpoint.
+          NPM11="${RUNNER_TEMP:-/tmp}/npm-11.19.1"
+          npm install --prefix "$NPM11" --no-audit --no-fund npm@11.19.1 >/dev/null || { echo "REFUSED: npm 11.19.1 for the audit could not be installed, so this step checked nothing."; exit 1; }
+          export PATH="$NPM11/node_modules/.bin:$PATH"
+          [ "$(npm --version)" = "11.19.1" ] || { echo "REFUSED: the audit npm is $(npm --version), not 11.19.1."; exit 1; }
           TRANSPORT='audit endpoint returned an error|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|ERR_SOCKET|socket hang up|request to .* failed'
 
           prod=$(node -p "Object.keys(require('./package.json').dependencies||{}).length")
@@ -352,6 +358,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
+          # The audits run on npm 11.19.1, pinned exactly and first on PATH for this step only, which asks
+          # the registry's bulk advisory endpoint.
+          NPM11="${RUNNER_TEMP:-/tmp}/npm-11.19.1"
+          npm install --prefix "$NPM11" --no-audit --no-fund npm@11.19.1 >/dev/null || { echo "REFUSED: npm 11.19.1 for the audit could not be installed, so this step checked nothing."; exit 1; }
+          export PATH="$NPM11/node_modules/.bin:$PATH"
+          [ "$(npm --version)" = "11.19.1" ] || { echo "REFUSED: the audit npm is $(npm --version), not 11.19.1."; exit 1; }
           for attempt in 1 2 3; do
             code=0
             npm run audit:dependencies || code=$?
@@ -374,7 +386,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       # `biome lint --error-on-warnings` exits 0 on an informational diagnostic, and a lint over `src`
       # alone would skip the test and scripts roots that biome.json declares. The zero-infos rule, the
       # declared scope and biome.json itself are enforced by scripts/biome-scope-gate.mjs inside
@@ -428,7 +440,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: madge (circular dependencies)
         run: npm run lint:circular
       - name: knip (unused files / exports / deps)
@@ -508,7 +520,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - name: vitest (the Worker's fetch handler and SPA fallback)
         run: npm run test:vitest
 
