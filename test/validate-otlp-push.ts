@@ -221,6 +221,20 @@ const attempt = (over: Partial<OtlpPushDeliveryAttempt>): OtlpPushDeliveryAttemp
   ok("names the reason verbatim", line.text.includes("timeout"));
 }
 {
+  const line = otlpAttemptLine(attempt({ ok: false, reason: "egress-not-allowlisted" }));
+  ok("egress-not-allowlisted renders its explanatory sentence", line.text.includes("not on the engine's egress allowlist"));
+  ok("the bare egress-not-allowlisted slug never shows", !line.text.includes("egress-not-allowlisted"));
+}
+{
+  const line = otlpAttemptLine(attempt({ ok: false, reason: "http-auth" }));
+  ok("a shared code (http-auth) renders its sentence", line.text.includes("rejected the credential"));
+  ok("the bare http-auth slug never shows", !line.text.includes("http-auth"));
+}
+{
+  const line = otlpAttemptLine(attempt({ ok: false, reason: "brand-new-code" }));
+  ok("an unknown code keeps the raw fallback", line.text.includes("brand-new-code"));
+}
+{
   const line = otlpAttemptLine(attempt({ ok: false, httpStatus: 401 }));
   ok("a failure with no engine reason falls back to the HTTP status", line.text.includes("HTTP 401"));
 }
@@ -294,6 +308,51 @@ console.log("\n-- redaction: no secret ever surfaces --");
   // The type itself: OtlpPushDestinationView has no secret-shaped field at all.
   const view: OtlpPushDestinationView = baseView({});
   ok("OtlpPushDestinationView carries no top-level key that looks like a secret", !Object.keys(view).some((k) => /secret|authheadervalue/i.test(k)));
+}
+
+// ---------------------------------------------------------------------------
+console.log("\n-- B-302: endpointRedacted (a non-Owner reader sees the endpoint cut to scheme and host) --");
+{
+  const NOTE = "(scheme and host only; an Owner sees the full endpoint)";
+  const cut = baseView({ endpoint: "https://otlp.datadoghq.com", endpointRedacted: true });
+  const on = otlpPushStatePresentation(cut);
+  ok("redacted + enabled: the headline names the host and carries the note", on.label.includes("https://otlp.datadoghq.com") && on.label.includes(NOTE));
+  ok("redacted + enabled: the cut endpoint is not presented as the full one (note follows the host)", on.label.includes(`https://otlp.datadoghq.com ${NOTE}`));
+  const off = otlpPushStatePresentation(baseView({ endpoint: "https://otlp.datadoghq.com", endpointRedacted: true, enabled: false }));
+  ok("redacted + disabled: the headline carries the note", off.label.includes(NOTE));
+  eq("redacted: the toggle never rebuilds a set from the cut endpoint", buildOtlpToggleSubmission(cut, false), null);
+  const full = otlpPushStatePresentation(baseView({}));
+  eq("Owner reply renders as before", full.label, "Enabled: pushing metrics to https://otlp.datadoghq.com/v1/metrics on the scheduler tick.");
+  ok("Owner reply carries no note", !full.label.includes("Owner sees"));
+  ok("Owner reply still rebuilds a toggle", buildOtlpToggleSubmission(baseView({}), false)?.endpoint === "https://otlp.datadoghq.com/v1/metrics");
+}
+
+// ---------------------------------------------------------------------------
+console.log("\n-- B-308 (the OTLP push panel wraps its endpoint) --");
+{
+  const { installDomShim, markConnected, flushAsync, qsa, textOf, classesOf } = await import("./dom-shim.ts");
+  installDomShim();
+  const { setCaller } = await import("../src/lib/store.ts");
+  const { renderOtlpPushDestination } = await import("../src/screens/settings/otlp-push.ts");
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  setCaller({ email: "owner@example.test", role: "owner", customRole: null } as never);
+  const ENDPOINT = "https://http-inputs.northwind.splunkcloud.example/services/collector/event";
+  const view = { present: true, enabled: true, endpoint: ENDPOINT, authHeaderName: "Authorization", trail: [] } as unknown as OtlpPushDestinationView;
+  const engine = { getOtlpPush: () => Promise.resolve(view) } as never;
+  const card = renderOtlpPushDestination(engine) as never;
+  markConnected(card);
+  await flushAsync();
+  const hits = qsa(card, ".wrap-anywhere").filter((n) => textOf(n).includes(ENDPOINT));
+  ok("the rendered panel really carries the endpoint (not a vacuous skip)", textOf(card).includes(ENDPOINT));
+  ok("the headline line that names the endpoint carries the wrap-anywhere class", hits.some((n) => textOf(n).includes("Enabled: pushing metrics to ")));
+  ok("the status wrapper carries status--wrap so it can shrink to the viewport", qsa(card, ".status--wrap").some((n) => textOf(n).includes(ENDPOINT)));
+  ok("the detail line is not the only wrapped element (headline AND wrapper)", hits.length >= 1 && qsa(card, ".status--wrap").length >= 1);
+  ok("wrap-anywhere is never combined with a break-all class", !hits.some((n) => classesOf(n).includes("break-all")));
+  const css = readFileSync(fileURLToPath(new URL("../public/tokens.css", import.meta.url)), "utf8");
+  const rule = /\.wrap-anywhere\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+  ok("tokens.css defines .wrap-anywhere with overflow-wrap:anywhere", /overflow-wrap:\s*anywhere/.test(rule));
+  ok("tokens.css .wrap-anywhere keeps word-break:normal, never break-all", /word-break:\s*normal/.test(rule) && !/break-all/.test(rule));
 }
 
 // ---------------------------------------------------------------------------

@@ -24,6 +24,9 @@ export const STAGE_UPDATING_CONSOLE = "Updating the console…" as const;
 // ---------------------------------------------------------------------------
 // Two sentences, not one joined by "--".
 export const STALL_LINE = "Still verifying. This screen keeps checking by itself." as const;
+// The same state when every answer so far was "inconclusive": the engine answered, but the old version still
+// does. The screen settles again by itself once the new version answers (pollUntilDefinitive's resettle).
+export const STALL_INCONCLUSIVE_LINE = "The new version is not answering yet. The console checks every 20 seconds and verifies the update when it answers." as const;
 export const STALL_EXHAUSTED_LINE = "This screen stopped checking before the engine recorded a result. Reload this screen to see the update state." as const;
 
 // ---------------------------------------------------------------------------

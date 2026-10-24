@@ -22,12 +22,15 @@ export function statusDot(tone: StatusTone, label: string): HTMLElement {
 
 // statusWithLabel is the common form: a dot plus the VISIBLE text label (so the
 // status reads by hue + shape + text in the UI, not only to a screen reader).
-export function statusWithLabel(tone: StatusTone, label: string): HTMLElement {
+//
+// opts.wrap is for a label that can carry an endpoint, host or bucket: the text takes the shared
+// .wrap-anywhere class so an unbreakable URL wraps inside the viewport instead of widening the page.
+export function statusWithLabel(tone: StatusTone, label: string, opts: { wrap?: boolean } = {}): HTMLElement {
   return h(
     "span",
-    { class: "status", style: "display:inline-flex;align-items:center;gap:var(--space-2)" },
+    { class: opts.wrap === true ? "status status--wrap" : "status", style: "display:inline-flex;align-items:center;gap:var(--space-2)" },
     h("span", { class: `dot dot--${tone}`, "aria-hidden": "true" }),
-    h("span", label),
+    h("span", opts.wrap === true ? { class: "wrap-anywhere" } : {}, label),
   );
 }
 

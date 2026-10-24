@@ -220,7 +220,7 @@ function buildFactorsTable(engine: EngineClient, listing: SignInFactorListing, r
   wrap.appendChild(
     noteLine(
       ICON_INFO,
-      "Revoking is not the same act as removing a role, and the console keeps them apart. Removing a role can be a demotion for somebody who keeps authority through an identity-provider group; revoking deletes their passkey credentials and their recovery codes, and recovery codes cannot be re-derived.",
+      "Revoking is not the same act as removing a role. Removing a role can be a demotion for somebody who keeps authority through an identity-provider group; revoking deletes their passkey credentials and their recovery codes, and recovery codes cannot be re-derived. The Remove member step offers to revoke as well, and the admin can untick it.",
     ),
   );
   return wrap;

@@ -39,19 +39,32 @@ The build is a deterministic function of the committed source; `npm run validate
 the committed `public/app.js` byte-matches a clean rebuild, and `CI Success` requires it before a
 pull request can merge.
 
-## Step 2: verify the cosign signatures and SLSA provenance
+## Step 2: verify the release files
 
-Every release carries a cosign bundle per file and an SLSA provenance attestation. Download
-`console-X.Y.Z.json.cosign-bundle` and `console.intoto.jsonl` from the tag's GitHub release,
-then run:
+Download every file of the tag's GitHub release into one empty folder, and run the commands
+below from that folder. The release holds the bundle as `console-X.Y.Z.json`, with no `dist/`
+folder.
+
+Check the sums first:
+
+```bash
+sha256sum -c --ignore-missing SHA256SUMS.txt
+```
+
+The check passes only when it prints `console-X.Y.Z.json: OK`, with `release-facts.json: OK` and
+`sbom.cdx.json: OK` beside it, and exits 0. A line that reads `FAILED`, or no
+`console-X.Y.Z.json` line at all, is a failed check.
+
+Every release also carries a cosign bundle per file and an SLSA provenance attestation. Use
+`console-X.Y.Z.json.cosign-bundle` and `console.intoto.jsonl` from the same folder:
 
 ```bash
 cosign verify-blob --bundle console-X.Y.Z.json.cosign-bundle \
   --certificate-identity-regexp '^https://github.com/downpipes-io/console/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  dist/console-X.Y.Z.json
+  console-X.Y.Z.json
 
-slsa-verifier verify-artifact dist/console-X.Y.Z.json \
+slsa-verifier verify-artifact console-X.Y.Z.json \
   --provenance-path console.intoto.jsonl \
   --source-uri github.com/downpipes-io/console
 ```

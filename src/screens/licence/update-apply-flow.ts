@@ -44,7 +44,7 @@ import {
   type RetryHooks,
   type SettleLadderOutcome,
 } from "./update-retry.ts";
-import { STAGE_CHECKING, STAGE_DEPLOYING_ENGINE, STAGE_PROVING, STAGE_PROVING_SUBLINE, STAGE_UPDATING_CONSOLE, DESTINATION_GATE_ENGINE_REASON, STALL_EXHAUSTED_LINE, appliedTerminalLine } from "./update-outcome-copy.ts";
+import { STAGE_CHECKING, STAGE_DEPLOYING_ENGINE, STAGE_PROVING, STAGE_PROVING_SUBLINE, STAGE_UPDATING_CONSOLE, DESTINATION_GATE_ENGINE_REASON, STALL_EXHAUSTED_LINE, STALL_INCONCLUSIVE_LINE, appliedTerminalLine } from "./update-outcome-copy.ts";
 import { terminalLineForOutcome, destinationGateNode } from "./update-outcome-render.ts";
 import type { ComponentApplyResult, EngineClient, SettleResult, UpdateComponentId } from "../../api.ts";
 
@@ -359,7 +359,7 @@ export async function runLiveApplyFlow(
         // own copy rather than the stall line, see terminalLineForDisplay): the WHOLE client retry budget is
         // spent. This is the s2 stall state -- it keeps checking by itself, no user action requested, no
         // reload (nothing is concluded yet).
-        region.setTerminal(terminalLineForDisplay(outcome));
+        region.setTerminal(run.kind === "unresolved" && run.inconclusive === true && outcome.kind === "pending" ? STALL_INCONCLUSIVE_LINE : terminalLineForDisplay(outcome));
         pollUntilDefinitive(
           engine,
           isLive,
@@ -374,6 +374,7 @@ export async function runLiveApplyFlow(
           },
           () => region.setTerminal(STALL_EXHAUSTED_LINE),
           hooks,
+          { token, components: componentsArg },
         );
         return "done";
       }

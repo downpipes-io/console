@@ -554,7 +554,7 @@ ok("network-tls does NOT suggest disabling verification", !/skip|disable|ignore|
 const FAIL_CODES = [
   "network-tls", "network-dns", "network-reset", "network-error", "timeout",
   "http-auth", "http-rate-limited", "http-bad-request", "http-gone", "http-redirect", "http-4xx", "http-5xx",
-  "internal-sink-blocked", "url-invalid", "credential-undecryptable",
+  "internal-sink-blocked", "egress-not-allowlisted", "url-invalid", "credential-undecryptable",
   "syslog-tls-untrusted", "syslog-connect-refused", "syslog-sockets-unsupported", "syslog-internal-sink-resolved",
   // The Splunk HEC body vocabulary (engine src/notify/siem-push-sender.ts HEC_BODY_CLASSES). These reach the
   // trail on sends whose HTTP status was frequently a 200, so without a sentence each the operator reads a
@@ -660,6 +660,50 @@ console.log("\n-- redaction: no secret ever surfaces, across sinks --");
   const view: PushDestinationView = baseView({ sink: "s3", s3: { endpoint: "https://s3.example.com", bucket: "b", region: "auto" }, endpoint: undefined });
   ok("PushDestinationView carries no top-level key that looks like a secret", !Object.keys(view).some((k) => /secret|authheadervalue|accesskey/i.test(k)));
   ok("the s3 view carries no access-key or secret key", !Object.keys(view.s3 ?? {}).some((k) => /secret|accesskey/i.test(k)));
+}
+
+// ---------------------------------------------------------------------------
+console.log("\n-- B-302: endpointRedacted (a non-Owner reader sees the endpoint cut to scheme and host) --");
+{
+  const NOTE = "(scheme and host only; an Owner sees the full endpoint)";
+  const cut = baseView({ sink: "http", endpoint: "https://hec.example.com", endpointRedacted: true });
+  ok("redacted: the target label names the host and the note follows it", pushDestinationTargetLabel(cut) === `https://hec.example.com ${NOTE}`);
+  ok("redacted + enabled: the headline carries the note", pushStatePresentation({ ...cut, enabled: true }).label.includes(NOTE));
+  ok("redacted + disabled: the headline carries the note", pushStatePresentation({ ...cut, enabled: false }).label.includes(NOTE));
+  eq("redacted: the toggle never rebuilds a set from the cut endpoint", buildToggleSubmission(cut, false), null);
+  const s3 = baseView({ sink: "s3", endpoint: undefined, s3: { endpoint: "https://s3.example.com", bucket: "b", region: "auto" }, endpointRedacted: true });
+  ok("redacted s3: the target label carries the note", pushDestinationTargetLabel(s3).endsWith(NOTE));
+  const full = baseView({ sink: "http", endpoint: "https://hec.example.com/services/collector?x=1" });
+  eq("Owner reply renders as before", pushDestinationTargetLabel(full), "https://hec.example.com/services/collector?x=1");
+  ok("Owner reply still rebuilds a toggle", buildToggleSubmission(full, false)?.endpoint === "https://hec.example.com/services/collector?x=1");
+}
+
+// ---------------------------------------------------------------------------
+console.log("\n-- B-308 (the SIEM push panel wraps its endpoint) --");
+{
+  const { installDomShim, markConnected, flushAsync, qsa, textOf, classesOf } = await import("./dom-shim.ts");
+  installDomShim();
+  const { setCaller } = await import("../src/lib/store.ts");
+  const { renderPushDestination } = await import("../src/screens/settings/push.ts");
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  setCaller({ email: "owner@example.test", role: "owner", customRole: null } as never);
+  const ENDPOINT = "https://http-inputs.northwind.splunkcloud.example/services/collector/event";
+  const view = { present: true, enabled: true, sink: "http", format: "splunk-hec", endpoint: ENDPOINT, authHeaderName: "Authorization", trail: [] } as unknown as PushDestinationView;
+  const engine = { getPush: () => Promise.resolve(view) } as never;
+  const card = renderPushDestination(engine) as never;
+  markConnected(card);
+  await flushAsync();
+  const hits = qsa(card, ".wrap-anywhere").filter((n) => textOf(n).includes(ENDPOINT));
+  ok("the rendered panel really carries the endpoint (not a vacuous skip)", textOf(card).includes(ENDPOINT));
+  ok("the headline line that names the endpoint carries the wrap-anywhere class", hits.some((n) => textOf(n).includes("Enabled: draining to ")));
+  ok("the status wrapper carries status--wrap so it can shrink to the viewport", qsa(card, ".status--wrap").some((n) => textOf(n).includes(ENDPOINT)));
+  ok("the detail line is not the only wrapped element (headline AND wrapper)", hits.length >= 1 && qsa(card, ".status--wrap").length >= 1);
+  ok("wrap-anywhere is never combined with a break-all class", !hits.some((n) => classesOf(n).includes("break-all")));
+  const css = readFileSync(fileURLToPath(new URL("../public/tokens.css", import.meta.url)), "utf8");
+  const rule = /\.wrap-anywhere\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+  ok("tokens.css defines .wrap-anywhere with overflow-wrap:anywhere", /overflow-wrap:\s*anywhere/.test(rule));
+  ok("tokens.css .wrap-anywhere keeps word-break:normal, never break-all", /word-break:\s*normal/.test(rule) && !/break-all/.test(rule));
 }
 
 // ---------------------------------------------------------------------------

@@ -335,7 +335,7 @@ async function main(): Promise<void> {
     try { await engine.controlPlaneAcknowledgeRecovery(); } catch (e) { msg = e instanceof Error ? e.message : String(e); }
     ok("a 403 reaches DP-R33, not DP-R11 (which says 'not an Owner', wrong in both directions here)", msg.includes("DP-R33"));
     // R-19: the sentence must carry the capability PHRASE, never the raw id, and the role by its display
-    // label. Pinned here because the raw-id version passed this assertion and failed capability-copy-gate.
+    // label. Pinned here because the raw-id version passed this assertion and failed a check on the capability phrase.
     ok("and the 403 message names the capability, in the phrase a customer can read", msg.includes(capabilityPhrase("access.policy")));
     ok("and it carries no raw capability id and no raw built-in role id", !msg.includes("access.policy") && !msg.includes("access-admin"));
 

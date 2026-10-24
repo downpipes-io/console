@@ -44,13 +44,19 @@ class ShimClassList {
 // = ...). Reading back a property returns whatever was last written. setProperty is the path the
 // production dom.ts uses (never setAttribute("style", ...)), so this keeps the CSP-safe contract.
 class ShimStyle {
-  [prop: string]: string | ((p: string, v: string, priority?: string) => void);
+  [prop: string]: string | ((p: string, v: string, priority?: string) => void) | ((p: string) => string);
   setProperty(prop: string, value: string, _priority?: string): void {
     this[prop] = value;
   }
   getPropertyValue(prop: string): string {
     const v = this[prop];
     return typeof v === "string" ? v : "";
+  }
+  // As in the CSSOM: returns the value that was set (or "") and clears it.
+  removeProperty(prop: string): string {
+    const old = this.getPropertyValue(prop);
+    delete this[prop];
+    return old;
   }
 }
 
@@ -230,6 +236,14 @@ export class ShimNode {
   }
   remove(): void {
     if (this.parentNode) this.parentNode.removeChild(this);
+  }
+  // As the real ChildNode.replaceWith: the given nodes take this node's place, in order, and this node
+  // leaves the tree (unless it is one of them). With no parent it does nothing.
+  replaceWith(...nodes: Array<ShimNode | string | number>): void {
+    const parent = this.parentNode;
+    if (!parent) return;
+    for (const n of nodes) if (n !== this) parent.insertBefore(n, this);
+    if (!nodes.includes(this)) parent.removeChild(this);
   }
   replaceChildren(...nodes: Array<ShimNode | string | number>): void {
     for (const c of [...this.childNodes]) this.removeChild(c);
@@ -516,6 +530,10 @@ export class ShimElement extends ShimNode {
     this.tagName = String(tag).toUpperCase();
     this.localName = String(tag).toLowerCase();
     this.namespaceURI = ns;
+    // A canvas with no rendering context, as a browser reports when it cannot provide one.
+    if (this.tagName === "CANVAS") {
+      (this as unknown as { getContext: (type: string) => null }).getContext = () => null;
+    }
   }
 }
 

@@ -70,7 +70,9 @@ function readEngineVocab(): { actions: string[]; targetKinds: string[] } | null 
     // noUncheckedIndexedAccess too, and the compiler cannot know that, so the coalesce is what makes the
     // declared string[] honest rather than an assertion. An empty string can never be produced here (both
     // patterns require at least one character), so it adds no member the comparison could be fooled by.
-    actions: [...actionBlock.matchAll(/^\s*"([a-z0-9-]+)",/gm)].map((m) => m[1] ?? ""),
+    // Every quoted member in the slice, with // comments removed first: the engine puts several members on one
+    // line (and trails a comment after them), so a line-anchored read took only the first.
+    actions: [...actionBlock.replace(/\/\/[^\n]*/g, "").matchAll(/"([a-z0-9-]+)"/g)].map((m) => m[1] ?? ""),
     targetKinds: [...new Set([...targetBlock.matchAll(/kind: "([a-z-]+)"/g)].map((m) => m[1] ?? ""))],
   };
 }
@@ -231,6 +233,9 @@ function everyTarget(): void {
   ok("a time-boxed custom-role assignment's row shows its expiry", describeTarget({ kind: "customrole", name: "auditor", capabilityCount: 3, expiresAt: "2026-10-01T00:00:00.000Z" }).textContent?.includes("until 2026-10-01T00:00:00.000Z") === true);
   ok("a SAML create row shows the email-trust choice", describeTarget({ kind: "idpconnection", connId: "okta-1", connKind: "saml", op: "create", emailVerifiedPolicy: "trust-idp" }).textContent?.includes("email trust trust-idp") === true);
   ok("a role row without an expiry shows none", describeTarget({ kind: "role", email: "a@acme.example", role: "owner" }).textContent?.includes("until") === false);
+  const noticeRow = describeTarget({ kind: "role", email: "a@acme.example", role: "owner", notice: { state: "partial", reason: "send-rejected", owners: 3, sent: 1, skipped: 1, failed: 1 } }).textContent ?? "";
+  ok("a recovery-enrolment notice row shows the state, the reason and the counts", noticeRow.includes("Owners emailed: partial, send rejected (1 sent of 3, 1 skipped, 1 failed)"));
+  ok("a role row without a notice shows no email trace", describeTarget({ kind: "role", email: "a@acme.example", role: "owner" }).textContent?.includes("Owners emailed") === false);
   eq("a time-boxed role row records NOTHING as skew", render(event("role-change", { kind: "role", email: "a@acme.example", role: "operator", expiresAt: "2026-10-01T00:00:00.000Z" })).length, 0);
 
   // The router audit fold (engine 0.3.7, sched/audit-fold.ts) can attach deniedAttempts to a denied row of

@@ -449,7 +449,7 @@ const VOCAB_PAIRS: Array<[string, readonly string[], number]> = [
   // a refusal the operator actually saw.
   ["CLIENT_DIAG_FORM_FIELDS", CLIENT_DIAG_FORM_FIELDS, 57],
   ["CLIENT_DIAG_REJECT_OUTCOMES", CLIENT_DIAG_REJECT_OUTCOMES, 2],
-  ["CLIENT_DIAG_CATALOGUE_CLASSES", CLIENT_DIAG_CATALOGUE_CLASSES, 20], // +the five classified catalogue-read throws (cf-surface-list-not-an-engine / -denied / -refused-at-edge / -rate-limited / -transport) and cf-rediscover-refused-at-edge: a 403 that did not speak the ENGINE'S refusal vocabulary is not a role denial
+  ["CLIENT_DIAG_CATALOGUE_CLASSES", CLIENT_DIAG_CATALOGUE_CLASSES, 22], // +the five classified catalogue-read throws (cf-surface-list-not-an-engine / -denied / -refused-at-edge / -rate-limited / -transport) and cf-rediscover-refused-at-edge: a 403 that did not speak the ENGINE'S refusal vocabulary is not a role denial
   ["CLIENT_DIAG_FEATURE_CLASSES", CLIENT_DIAG_FEATURE_CLASSES, 7], // -custom-roles: it had no caller, so it was dead vocabulary
   ["CLIENT_DIAG_FEATURE_OUTCOMES", CLIENT_DIAG_FEATURE_OUTCOMES, 13], // +refused-not-by-engine: a 403 whose body is not a refusal the engine emits establishes neither the role nor the address
   ["CLIENT_DIAG_GOV_GATES", CLIENT_DIAG_GOV_GATES, 2],

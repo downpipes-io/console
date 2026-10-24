@@ -20,7 +20,7 @@ import { Router, type RouteMatch } from "./lib/router.ts";
 import { mountShell, type Shell } from "./shell/app-shell.ts";
 import {
   getEngine, getEngineUrl, restoreConnection, adoptProxiedTopology, getCaller, setCaller,
-  setWhoamiAvailable, isWhoamiAvailable, signOut as storeSignOut,
+  setWhoamiAvailable, isWhoamiAvailable,
   clearSensitiveState, setStepUpRunner,
   clearSessionData,
 } from "./lib/store.ts";
@@ -34,6 +34,7 @@ import {
 import { unknownCapabilityCount } from "./lib/identity-custom-roles.ts";
 import { noteRouteForLanding, SETUP_ENTRY_ROUTE, setupAllows } from "./lib/setup-state.ts";
 import { toast } from "./components/toast.ts";
+import { performSignOut } from "./lib/app-sign-out.ts";
 import { setAmbientRoutePaused } from "./components/ambient-field.ts";
 
 import { overviewScreen } from "./screens/overview.ts";
@@ -49,7 +50,7 @@ import { buildCallerFromWhoami } from "./lib/app-identity.ts";
 import type { Caller } from "./api.ts";
 import {
   getSetupView, setupWatched, refreshSetup, forceRefreshSetup, refreshExpiryCount, maybeRefreshExpiryCount,
-  maybeRefreshUpdateChip, primeUpdateChipRefresh,
+  maybeRefreshUpdateChip, primeUpdateChipRefresh, wireSinkRefresh,
 } from "./lib/app-refresh.ts";
 // Only the cheap, dependency-free tour guard is imported statically; the heavy tour boot (startDemo and the
 // whole faked-backend + tour subtree it pulls in) is loaded with a dynamic import inside the guard below, so
@@ -57,7 +58,7 @@ import {
 import { isTourMode } from "./lib/demo/tour-mode.ts";
 import { isTrainingMode } from "./lib/demo/training-mode.ts";
 import { identityFaultFrom, setIdentityFault } from "./lib/identity-remedy.ts";
-import { faultClassForError, httpClassForThrown, recordBootFault, recordConsoleSkew, recordContractSkew, recordDeepLinkLost, recordIdentityUnresolved, recordReadDegraded, setActiveScreen, setConsoleBuild } from "./lib/client-diag/ring.ts";
+import { faultClassForError, httpClassForThrown, recordBootFault, recordConsoleSkew, recordContractSkew, recordDeepLinkLost, recordIdentityUnresolved, setActiveScreen, setConsoleBuild } from "./lib/client-diag/ring.ts";
 import { consoleVersion, recordServedBundleSkew } from "./lib/console-version.ts";
 import { installWindowFaultHandlers } from "./lib/client-diag/window-faults.ts";
 import { currentScreenGatedBlind, noteIdentityLanded } from "./lib/client-diag/identity-gate.ts";
@@ -162,6 +163,7 @@ async function bootInner(): Promise<void> {
   router.onBeforePop(leaveGuardAllows);
   router.start();
   installFocusRefresh(shell);
+  wireSinkRefresh(shell);
 
   // 6. Identity: resolve the verified caller in the background (honest degrade until whoami is
   //    available, never a faked identity). The FIRST resolve applies the caller's per-role landing +
@@ -316,31 +318,6 @@ function installFocusRefresh(shell: Shell): void {
 // change), so the operator is not yanked off the screen they are on. The view-mode control reflect
 // runs every resolve (it is idempotent and harmless).
 let firstIdentityApplied = false;
-
-// performSignOut is THE sign-out path, shared by the shell account menu, the Settings and
-// Access "Sign out" buttons, and the palette's auth.sign-out (via the nav bridge), so a
-// sign-out always genuinely ends what it can and the session does not survive Back.
-function performSignOut(shell: Shell, router: Router): void {
-  // Tell the engine to clear the passkey session cookie FIRST (before storeSignOut() drops the engine
-  // client), so a passkey session is genuinely ended server-side and the __Host- cookie is removed, not
-  // just forgotten locally. It is best-effort and fire-and-forget: a token/Access session has no cookie
-  // to clear (the call is a harmless no-op), and a transport failure must never block sign-out. The
-  // Access edge session, if any, is cleared at the edge, not here (the passkey screen states this).
-  const engine = getEngine();
-  // This catch is the one whose silence has a SECURITY consequence, not merely a cosmetic one. The
-  // console clears its own state and navigates away regardless, so the operator sees a completed sign-out; if
-  // the call did not land, the __Host- passkey session cookie was NOT cleared server-side and the session is
-  // still good. Nobody is told, on either side of the wire. The row says the teardown was attempted and did
-  // not come back, which is what turns "I signed out and my session stayed alive" from an unfalsifiable
-  // report into a checkable one.
-  if (engine) void engine.passkeyLogout().catch((err: unknown) => recordReadDegraded("passkey-logout", err));
-  storeSignOut();
-  shell.setCaller(null, false);
-  shell.setEngine({ host: null });
-  // Return to the live sign-in (the passkey login), not the Access-only signed-out end state, so the
-  // operator can sign straight back in with a passkey, Access or the token.
-  router.navigate("/passkey");
-}
 
 // routeToSignIn is where an unauthenticated-but-reachable request lands: a 401 means the engine is up but
 // the caller has NO valid credential (no Access session, no passkey session, no token). That is an

@@ -151,6 +151,10 @@ export type AuditAction =
   | "passkey-credential-revoke"
   // passkey-invite-enrol: a member enrolled a passkey through a registration invite, so a new way in exists.
   | "passkey-invite-enrol"
+  // passkey-recovery-enrol: a passkey was enrolled from a session signed in with a recovery code (target `role`).
+  // passkey-recovery-enrol-notice: whether the other Owners were emailed about it (target `role` with `notice`).
+  | "passkey-recovery-enrol"
+  | "passkey-recovery-enrol-notice"
   // retention-armed-alone: a widening retention edit armed the scheduled prune with no second approver available.
   | "retention-armed-alone"
   // signin-factor-revoke: ONE act, an operator removing every way one
@@ -256,7 +260,8 @@ export type AuditTarget =
   // alone would tell an auditor the recovery is finished while records from the archive are still absent.
   | { readonly kind: "restore-receipt"; readonly runId: string; readonly receiptSha384: string; readonly recordsRestored: number; readonly allVerified: boolean; readonly complete?: boolean; readonly recordsVerified?: number; readonly failures?: number; readonly recordsSkipped?: number }
   // expiresAt (engine 0.3.7 and later): a time-boxed grant's self-revoke moment, in ISO form. Absent on a standing grant.
-  | { readonly kind: "role"; readonly email: string; readonly role: Role; readonly expiresAt?: string }
+  // notice (passkey-recovery-enrol-notice rows only): the Owner-email trace, a closed state and counts, never an address.
+  | { readonly kind: "role"; readonly email: string; readonly role: Role; readonly expiresAt?: string; readonly notice?: { readonly state: "sent" | "partial" | "skipped" | "failed"; readonly reason?: string; readonly owners: number; readonly sent: number; readonly skipped: number; readonly failed: number } }
   | { readonly kind: "grouprole"; readonly group: string; readonly role: Role }
   // affectedGrantCount (DELETE only): how many member and group grants still named this custom role when it
   // was deleted, i.e. how many people the deletion floors to viewer at their next request. A count, never a holder.

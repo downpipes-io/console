@@ -111,12 +111,12 @@ function renderOtlpPushState(ctx: OtlpPushStateCtx): HTMLElement {
   const wrap = h("div");
 
   const state = otlpPushStatePresentation(view);
-  wrap.appendChild(statusWithLabel(state.tone, state.label));
+  wrap.appendChild(statusWithLabel(state.tone, state.label, { wrap: true }));
 
   if (view.present) {
     const detail = otlpPushDetailLine(view);
     const who = view.setBy != null ? ` Set by ${view.setBy}${view.setAt ? ` on ${view.setAt}` : ""}.` : "";
-    wrap.appendChild(h("p", { class: "field__hint", style: "margin-top:var(--space-1)" }, `${detail}${who}`));
+    wrap.appendChild(h("p", { class: "field__hint wrap-anywhere", style: "margin-top:var(--space-1)" }, `${detail}${who}`));
 
     wrap.appendChild(h("p", { class: "field__hint", style: "margin-top:var(--space-2)" }, otlpTrailSummary(view.trail)));
     const lines = otlpTrailLines(view.trail);
@@ -267,7 +267,7 @@ function openOtlpPushForm(opts: OtlpPushFormOpts): void {
     required: true,
     autocomplete: "off",
     placeholder: "https://otlp.datadoghq.com/v1/metrics",
-    value: current?.endpoint ?? "",
+    value: current?.endpointRedacted === true ? "" : (current?.endpoint ?? ""),
     hint: "Your collector's OTLP-JSON metrics endpoint: https only, no embedded credentials, not workers.dev and not a private or cloud-metadata address. Works with Datadog. Dynatrace, Elastic and Splunk Observability reject JSON, so use the Prometheus /metrics endpoint for those.",
     validate: validateOtlpPushEndpoint,
     doc: { href: "https://docs.downpipes.io/day-2/otlp-metrics-push", anchor: "setting-up-the-destination" },

@@ -43,6 +43,10 @@ import type { EngineClient, ConfigChange, PendingChangeLine } from "../api.ts";
 // The route the change-requests inbox owns (the config change-control surface).
 export const ROUTE_CONFIG_CHANGES = "/config/changes";
 
+// Shown on a pending member removal. Once it is applied, the person's sign-in factors are still there.
+export const ROLE_DELETE_REVOKE_HINT =
+  "Removing the role leaves their passkeys, recovery codes and open invites. Once the removal is applied, use Revoke sign-in on the Sign-in factors list (Access, Roles and access).";
+
 export const configChangesScreen: Screen = defineScreen({
   route: ROUTE_CONFIG_CHANGES,
   title: "Config approvals",
@@ -245,6 +249,12 @@ function renderChangeCard(engine: EngineClient, change: ConfigChange, me: string
 
   // The plain-English diff the engine pre-rendered, line by line as text nodes (no markup).
   card.appendChild(renderDiff(change.diff));
+
+  // A queued member removal takes the role and nothing else: the person's passkeys, recovery codes and open
+  // invites stay until somebody revokes them, and the Remove member modal does not revoke ahead of an approval.
+  if (change.kind === "role-delete") {
+    card.appendChild(h("p", { class: "field__hint measure", style: "margin-top:var(--space-2)" }, ROLE_DELETE_REVOKE_HINT));
+  }
 
   card.appendChild(renderChangeActions(engine, change, me, reload));
   return card;

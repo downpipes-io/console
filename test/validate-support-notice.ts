@@ -54,10 +54,10 @@ console.log("-- the decision, on a pinned clock --");
   ok("an unparseable date gives no notice", supportNotice({ verified: true, supportedUntil: "soon", supportStatus: "ending" }, ENDING) === null);
   ok("an unknown status falls back to the date", supportNotice({ verified: true, supportedUntil: UNTIL, supportStatus: "later" as never }, SUPPORTED) === null);
   const line = supportNoticeLine(ended!, "0.3.7");
-  ok("the past line names the version and the date, and says backups keep running", line.includes("Engine 0.3.7 reached its end of support on 2027-01-03 UTC") && line.includes("Backups and restores keep running"));
+  ok("the past line names the version and the date, and says backups keep running", line.includes("Engine 0.3.7 reached its end of support on 3 January 2027") && line.includes("Backups and restores keep running"));
   ok("the past line points to the latest release", line.includes("Update to the latest release."));
   const soon = supportNoticeLine(ending!, "0.3.7");
-  ok("the ending line names the days left and the date", soon.includes("in 30 days") && soon.includes("2027-01-03 UTC"));
+  ok("the ending line names the days left and the date", soon.includes("in 30 days") && soon.includes("3 January 2027"));
   ok("the ending line points to the latest release", soon.includes("Update to the latest release before then."));
 }
 

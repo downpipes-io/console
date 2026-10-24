@@ -13,6 +13,7 @@
 
 import { validateUrl as validateWebhookUrl } from "../notifications/shared.ts";
 import type { StatusTone } from "../../components/status.ts";
+import { ENDPOINT_REDACTED_NOTE, pushFailReasonCopy } from "./push-model.ts";
 import type { OtlpPushDeliveryAttempt, OtlpPushDestinationInput, OtlpPushDestinationView } from "../../api.ts";
 
 // The engine retains the most recent 50 delivery attempts (older entries roll over); this must match
@@ -82,9 +83,12 @@ export function buildOtlpPushSubmission(fields: OtlpPushFormFields, enabled: boo
 // stops going anywhere). The caller routes a null to Replace, which re-collects the endpoint honestly.
 // Pure; exported for the validator.
 export function buildOtlpToggleSubmission(
-  view: Pick<OtlpPushDestinationView, "endpoint" | "authHeaderName">,
+  view: Pick<OtlpPushDestinationView, "endpoint" | "authHeaderName" | "endpointRedacted">,
   enabled: boolean,
 ): OtlpPushDestinationInput | null {
+  // A redacted view carries the endpoint cut to scheme and host; a set rebuilt from it would store the cut
+  // endpoint over the real one.
+  if (view.endpointRedacted === true) return null;
   if (typeof view.endpoint !== "string" || view.endpoint.trim() === "") return null;
   return {
     endpoint: view.endpoint,
@@ -105,7 +109,7 @@ export const OTLP_TOGGLE_UNRECONSTRUCTABLE =
 // Exported (pure) for the validator.
 export function otlpPushStatePresentation(view: OtlpPushDestinationView): { tone: StatusTone; label: string } {
   if (!view.present) return { tone: "neutral", label: "No OTLP push destination configured." };
-  const target = view.endpoint ?? "the configured endpoint";
+  const target = `${view.endpoint ?? "the configured endpoint"}${view.endpointRedacted === true ? ` ${ENDPOINT_REDACTED_NOTE}` : ""}`;
   if (view.enabled !== true) return { tone: "info", label: `Configured for ${target}, disabled: the scheduler tick will not push to it.` };
   return { tone: "ok", label: `Enabled: pushing metrics to ${target} on the scheduler tick.` };
 }
@@ -115,6 +119,15 @@ export function otlpPushStatePresentation(view: OtlpPushDestinationView): { tone
 export function otlpPushDetailLine(view: Pick<OtlpPushDestinationView, "authHeaderName">): string {
   return `header ${view.authHeaderName ?? "Authorization"}.`;
 }
+
+// OTLP_FAIL_REASON_COPY holds the reasons whose push-trail sentence would be untrue for OTLP: the OTLP push
+// keeps no cursor and has no format selector, so each tick sends a fresh snapshot instead of re-sending a
+// held batch. Every other code reuses pushFailReasonCopy.
+const OTLP_FAIL_REASON_COPY: Readonly<Record<string, string>> = {
+  "egress-not-allowlisted": "the endpoint's host is not on the engine's egress allowlist, so nothing was sent. Save an endpoint on a listed host, or ask an owner to extend the allowlist. The next scheduler tick pushes a fresh snapshot once the host is listed",
+  "http-bad-request": "the endpoint rejected the request (400). Check that the endpoint accepts OTLP/HTTP metrics at the path above",
+  "http-rate-limited": "the endpoint is throttling this account or token (429). The next scheduler tick pushes again; the credential is fine",
+};
 
 // otlpAttemptLine renders ONE delivery attempt as a single honest line: a push is named by its
 // downpipe count when the engine reported one (a test-shaped attempt carries none), flagged
@@ -129,7 +142,7 @@ export function otlpAttemptLine(a: OtlpPushDeliveryAttempt): { tone: StatusTone;
   if (a.ok) {
     return { tone: "ok", text: `${a.at}: pushed ${scope}${a.httpStatus !== undefined ? `, HTTP ${a.httpStatus}` : ""}.` };
   }
-  const reason = a.reason ?? (a.httpStatus !== undefined ? `HTTP ${a.httpStatus}` : "no response");
+  const reason = a.reason !== undefined ? (OTLP_FAIL_REASON_COPY[a.reason] ?? pushFailReasonCopy(a.reason)) : (a.httpStatus !== undefined ? `HTTP ${a.httpStatus}` : "no response");
   return { tone: "danger", text: `${a.at}: failed pushing ${scope}: ${reason}.` };
 }
 

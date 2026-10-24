@@ -17,7 +17,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { installDomShim } from "./dom-shim.ts";
 import { engineRoot } from "./engine-root.ts";
-import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
+import { verdictCannotCheck, verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
 
 installDomShim();
 
@@ -346,10 +346,19 @@ resetWorld();
 // SIBLING-SUPPLY: when the engine sibling is present, the constant this console ships must equal the
 // engine's own package.json version, so "the release this console supports" is never a guess. A missing
 // sibling is a property of the checkout (a console-only clone has no engine to compare against) and prints a
-// SKIP rather than a fail, matching every other cross-repo mirror check in this suite.
+// SKIP rather than a fail. Under REQUIRE_ENGINE=1 (npm run validate:workspace) the comparison is mandatory,
+// so a missing engine is CANNOT CHECK, exit 2.
 {
   const root = engineRoot();
   if (root === null) {
+    if (process.env.REQUIRE_ENGINE === "1") {
+      verdictCannotCheck(
+        "validate-training-world: REFUSED, REQUIRE_ENGINE=1 and no engine checkout is reachable.\n" +
+          "  SUPPORTED_ENGINE_VERSION and PREVIOUS_ENGINE_VERSION are graded against the engine's own package.json\n" +
+          "  and CHANGELOG.md, so with no engine neither comparison ran.\n" +
+          "  Point it at one with DOWNPIPES_ENGINE=/path/to/engine and re-run.",
+      );
+    }
     console.log("  SKIP  no sibling engine checkout (set DOWNPIPES_ENGINE to compare SUPPORTED_ENGINE_VERSION against it)");
   } else {
     const enginePkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")) as { version?: string };

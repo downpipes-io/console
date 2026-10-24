@@ -144,12 +144,12 @@ function idpSection(provider: "github" | "entra" | "okta", title: string): HTMLE
   // screens. The anchors are the page's own provider headings; anchor-check.mjs proves they resolve.
   // Explicit, not derived from the card title: deriving it produced "Every GitHub (zero-licence
   // path) step, in full", and a label is read by a person, not assembled for one.
-  const DOC = {
-    github: { anchor: "github", label: "Every GitHub step, in full" },
-    entra: { anchor: "microsoft-entra-id", label: "Every Entra ID step, in full" },
-    okta: { anchor: "okta", label: "Every Okta step, in full" },
-  } as const;
-  body.appendChild(docLink({ href: ACCESS_DOC, anchor: DOC[provider].anchor, label: DOC[provider].label }));
+  // Each provider writes its own link with a plain literal anchor, so the doc-link gate reads every
+  // anchor as written. The three links sit on three lines.
+  if (provider === "github") body.appendChild(docLink({ href: ACCESS_DOC, anchor: "github", label: "Every GitHub step, in full" }));
+  else if (provider === "entra") body.appendChild(docLink({ href: ACCESS_DOC, anchor: "microsoft-entra-id", label: "Every Entra ID step, in full" }));
+  else body.appendChild(docLink({ href: ACCESS_DOC, anchor: "okta", label: "Every Okta step, in full" }));
+  // The links render in the same place, with the same text.
 
   details.appendChild(body);
   return details;

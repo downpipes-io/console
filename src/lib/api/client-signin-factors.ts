@@ -6,19 +6,12 @@
 // one email as ONE audited act, and it had no console caller at all, so the security-critical half of an
 // offboarding was an administrator API call. Customers never run a terminal.
 //
-// GATING, and the one thing a reader must not assume from it. revoke goes through t.gatedFetch, which is the
-// sensitive-action path: on a 401 { stepUpRequired:true } it runs the injected re-auth ceremony and retries
-// once. That is the correct transport for a destructive identity mutation and it is what the sibling
-// destructive writes use. It is not, however, a claim that this route currently asks for a step-up:
-// "/signin-factors/revoke" is absent from the engine's step-up route list (engine/src/admin/router-core.ts),
-// and the gate is a Set membership test on the exact sub, run once before every spoke, with no requireStepUp
-// call of its own inside router-account-session.ts. So the engine answers this POST without ever opening the
-// ceremony. Routing it through gatedFetch anyway is deliberate on two counts: the plain transport cannot
-// raise the prompt even if the engine starts asking, so the plain path would have to be found and changed
-// later by somebody who did not know to look; and a console that told the operator to approve a prompt this
-// path can never show would be describing a ceremony that does not happen. The panel therefore promises no
-// prompt (see the revoke modal's copy), and the day the engine admits the route to its step-up list this
-// call starts satisfying it with no console change.
+// GATING. revoke goes through t.gatedFetch, which is the sensitive-action path: on a 401 { stepUpRequired:true }
+// it runs the injected re-auth ceremony and retries once. "/signin-factors/revoke" is a member of the engine's
+// step-up route list (engine/src/admin/router-core.ts), so a cookie-borne caller without a fresh step-up
+// token is asked to confirm with a passkey before the engine acts. Access and bare-token callers are exempt
+// inside the engine's requireStepUp, as they are for every other member of that list. The plain transport
+// cannot raise the prompt, which is why this write uses the gated one.
 //
 // Redaction: neither call carries a secret in either direction. The read returns counts, timestamps, closed
 // enums and public credential ids; the write takes an email and returns per-store counts.
@@ -48,12 +41,13 @@ export async function listSignInFactors(t: Transport, email?: string): Promise<S
 // revokeSignInFactors closes every way the named person signs in: their passkey credentials, their recovery
 // record, and every registration invite bound to their address, as one audited engine act.
 //
-// IT IS NOT A ROLE DELETE and this function is deliberately not reachable from the role-delete path. Deleting
-// a role row can be a legitimate DEMOTION for somebody who also holds authority through an identity-provider
-// group claim, and the engine says so in its own words: for such a member deleteRole removes only the row and
-// audits it as a role change. Revoking destroys their authenticator and their recovery codes, and recovery
-// codes cannot be re-derived. The engine refused to fold the two together because deleteRole cannot tell which
-// one it is being asked for; the console keeps that separation visible rather than quietly re-joining them.
+// IT IS NOT A ROLE DELETE and the engine keeps the two routes separate. Deleting a role row can be a legitimate
+// DEMOTION for somebody who also holds authority through an identity-provider group claim: for such a member
+// deleteRole removes only the row and audits it as a role change. Revoking destroys their authenticator and
+// their recovery codes, and recovery codes cannot be re-derived. deleteRole cannot tell which one it is being
+// asked for, so the console makes it an explicit choice. The Revoke sign-in control calls this on its own. The
+// Remove member modal calls it before the role delete, only when the operator leaves "Also revoke sign-in"
+// ticked and the removal takes effect at once; a removal that queues for a second approver never calls it.
 //
 // The result is returned WHOLE, including a revoke that closed nothing. `sessionsTerminated:false` with four
 // expired invites swept is a real and unalarming outcome, and the caller renders it as what it was rather

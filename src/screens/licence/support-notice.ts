@@ -14,7 +14,7 @@
 
 import { h } from "../../lib/dom.ts";
 import { banner } from "../../components/feedback.ts";
-import { dateOnly } from "../../lib/format.ts";
+import { longDateUtc } from "../../lib/format.ts";
 import type { UpdateStatus } from "../../api.ts";
 
 // SUPPORT_NOTICE_DAYS is how far ahead of supportedUntil the notice starts.
@@ -48,7 +48,7 @@ export function supportNotice(updates: Pick<UpdateStatus, "verified" | "supporte
 
 // supportNoticeLine is the banner copy for a notice and the running engine version.
 export function supportNoticeLine(n: SupportNotice, version: string): string {
-  const when = dateOnly(n.supportedUntil);
+  const when = longDateUtc(n.supportedUntil);
   if (n.past) {
     return `Engine ${version} reached its end of support on ${when}. It gets no more fixes, including security fixes. Backups and restores keep running. Update to the latest release.`;
   }

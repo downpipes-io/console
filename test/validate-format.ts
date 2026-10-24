@@ -22,6 +22,7 @@ import {
   scheduleSummary,
   groupNumber,
   titleCase,
+  longDateUtc,
 } from "../src/lib/format.ts";
 import { verdictReached } from "./lib/verdict-guard.ts"; // ARMS the completion guard: see test/lib/verdict-guard.ts
 
@@ -230,6 +231,23 @@ eq("undefined -> empty (no throw)", titleCase(undefined as unknown as string), "
 eq("null -> empty (no throw)", titleCase(null as unknown as string), "");
 eq("number -> empty (no throw)", titleCase(42 as unknown as string), "");
 eq("object -> empty (no throw)", titleCase({} as unknown as string), "");
+
+// longDateUtc: the day number, full month name and year of the UTC calendar day, whatever the zone of the browser.
+eq("longDateUtc: day, full month, year", longDateUtc("2026-10-25T00:00:00.000Z"), "25 October 2026");
+eq("longDateUtc: last millisecond of the UTC day", longDateUtc("2026-10-25T23:59:59.999Z"), "25 October 2026");
+eq("longDateUtc: first millisecond of the next UTC day", longDateUtc("2026-10-26T00:00:00.000Z"), "26 October 2026");
+eq("longDateUtc: no zero pad on the day", longDateUtc("2027-01-03T12:00:00.000Z"), "3 January 2027");
+eq("longDateUtc: year end", longDateUtc("2026-12-31T23:59:59.999Z"), "31 December 2026");
+eq("longDateUtc: empty and invalid are empty", longDateUtc("") + longDateUtc("nope") + longDateUtc(null), "");
+{
+  const realTz = process.env.TZ;
+  process.env.TZ = "Australia/Melbourne"; // UTC+11 in October: 23:30Z is already the 26th locally
+  eq("longDateUtc: a zone ahead of UTC does not move the day", longDateUtc("2026-10-25T23:30:00.000Z"), "25 October 2026");
+  process.env.TZ = "America/Los_Angeles"; // UTC-7: 01:00Z is still the 24th locally
+  eq("longDateUtc: a zone behind UTC does not move the day", longDateUtc("2026-10-25T01:00:00.000Z"), "25 October 2026");
+  if (realTz === undefined) delete process.env.TZ;
+  else process.env.TZ = realTz;
+}
 
 // ---------------------------------------------------------------------------
 // Summary

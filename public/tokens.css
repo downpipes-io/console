@@ -519,6 +519,14 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
 /* Readable measures */
 .measure { max-width: var(--measure-prose); }
 .measure-wide { max-width: var(--measure-wide); }
+/* Endpoint, host and bucket text (a destination URL, a webhook target, a bucket label) is one unbroken token.
+   overflow-wrap:anywhere (not break-all, so prose still breaks at spaces) lets it wrap AND lowers the
+   min-content width, so a flex or grid parent shrinks to the viewport instead of scrolling the page sideways.
+   min-width:0 drops the automatic floor in a flex or grid item. */
+.wrap-anywhere { overflow-wrap: anywhere; word-break: normal; min-width: 0; }
+/* A status line whose text may carry an endpoint: the inline-flex wrapper shrinks to its container, the dot keeps its size. */
+.status--wrap { max-width: 100%; min-width: 0; }
+.status--wrap .dot { flex: none; }
 
 /* Small utility: one step below the body size, matching --text-sm. Used for
    secondary values in session cards and similar compact read surfaces. */
@@ -1024,9 +1032,10 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
      rendered at the page BOTTOM (over the demo banner on a phone); giving it a named row seats it under the
      header where it belongs. The header track is auto-min (minmax below 1023) so a WRAPPED context bar grows
      the row instead of overflowing a fixed 56px and painting over the page h1. */
-  grid-template-rows: var(--header-h) auto 1fr;
+  grid-template-rows: var(--header-h) auto auto 1fr;
   grid-template-areas:
     "rail header"
+    "rail update"
     "rail setup"
     "rail main";
   min-height: 100vh;
@@ -1245,7 +1254,7 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
   /* The context bar wraps to 2–3 rows in this band (§20); let the header grid track GROW to fit it (minmax
      floor = the one-line height) so the wrapped bar never overflows a fixed 56px row and paints over the
      page h1. Mirrors the 3-row template above. */
-  .shell { grid-template-rows: minmax(var(--header-h), auto) auto 1fr; }
+  .shell { grid-template-rows: minmax(var(--header-h), auto) auto auto 1fr; }
 }
 
 /* Compact: the rail becomes a focus-trapped slide-over (opened via the toggle).
@@ -1257,6 +1266,7 @@ code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.92em; }
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "header"
+      "update"
       "setup"
       "main";
   }
@@ -4379,7 +4389,7 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
    chrome on full-bleed routes. Locked rail items dim but stay visible and
    clickable (the route gate explains and redirects); the lock is never a trap.
    ========================================================================== */
-.setup-strip {
+.setup-strip, .update-strip {
   grid-area: setup;   /* seat the strip in its own .shell row (under the header), not a trailing implicit row */
   display: flex; align-items: center; gap: var(--space-3);
   padding: var(--space-2) var(--space-6);
@@ -4387,8 +4397,8 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
   background: var(--bg-subtle);
   font-size: var(--text-sm); color: var(--text-muted);
 }
-.setup-strip[hidden] { display: none; }
-[data-chrome="off"] .setup-strip { display: none; }
+.setup-strip[hidden], .update-strip[hidden] { display: none; }
+[data-chrome="off"] .setup-strip, [data-chrome="off"] .update-strip { display: none; }
 .setup-strip__pips { display: inline-flex; gap: var(--space-1); }
 .setup-pip {
   width: 8px; height: 8px; border-radius: 50%;
@@ -4396,14 +4406,31 @@ th[aria-sort="descending"] .dt-sort__caret { border-top: 5px solid currentColor;
 }
 .setup-pip--done { background: var(--ok); border-color: var(--ok); }
 .setup-pip--current { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-subtle-bg); }
-.setup-strip__text { color: var(--text); }
-.setup-strip__go { font-size: var(--text-sm); }
-.setup-strip__dismiss {
+.setup-strip__text, .update-strip__text { color: var(--text); }
+.setup-strip__go, .update-strip__go { font-size: var(--text-sm); }
+.setup-strip__dismiss, .update-strip__dismiss {
   margin-left: auto; border: none; background: transparent; color: var(--text-muted);
   cursor: pointer; font-size: var(--text-sm); line-height: 1; padding: var(--space-1);
   border-radius: var(--radius-sm);
 }
-.setup-strip__dismiss:hover { color: var(--text); background: var(--surface-hover); }
+.setup-strip__dismiss:hover, .update-strip__dismiss:hover { color: var(--text); background: var(--surface-hover); }
+
+/* The update strip (shell/update-banner.ts): the setup strip's look, one row per line, in its own grid row
+   above the setup strip. The inner elements carry their own class names and share the setup strip's rules.
+   The warning and danger tones take the banner tone tokens. Collapses to nothing while hidden, so nothing
+   shifts until a verdict lands. */
+.update-strip { grid-area: update; flex-direction: column; align-items: stretch; gap: var(--space-1); }
+.update-strip__line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.update-strip__line[hidden] { display: none; }
+.update-strip__line .update-strip__text { flex: 1 1 14rem; min-width: 0; }
+.update-strip__line .update-strip__go { flex: none; text-align: left; }
+.update-strip__line .update-strip__dismiss { flex: none; margin-left: auto; }
+.update-strip--warn { background: var(--warn-bg); color: var(--warn-fg); border-bottom-color: var(--warn-border); }
+.update-strip--danger { background: var(--danger-bg); color: var(--danger-fg); border-bottom-color: var(--danger-border); }
+.update-strip--warn .update-strip__text, .update-strip--danger .update-strip__text,
+.update-strip--warn .update-strip__dismiss, .update-strip--danger .update-strip__dismiss,
+.update-strip--warn .update-strip__go, .update-strip--danger .update-strip__go { color: inherit; }
+.update-strip--warn .update-strip__go, .update-strip--danger .update-strip__go { text-decoration: underline; }
 
 .nav-item[data-setup-locked="true"] { opacity: 0.45; }
 .nav-item[data-setup-locked="true"]:hover { opacity: 0.7; }

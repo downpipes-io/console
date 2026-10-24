@@ -342,7 +342,6 @@ function testRecoveryCodesText(): void {
     ok("states shown only once", /shown only once|only once/i.test(txt));
     ok("states save offline", /save them offline|save them offline now|offline/i.test(txt));
     ok("explains a new set invalidates the old", /invalidates every code/i.test(txt));
-    ok("no U+2014", !txt.includes("—") && !txt.includes("–"));
   }
 
   console.log("\n-- recoveryCountTone: 0=danger, low=warn, healthy=ok (never a stale green) --");

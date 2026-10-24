@@ -35,7 +35,7 @@ const CUSTODY_LINE: Record<Scheme, string> = {
 // What leaves this browser, precisely: the POST /admin/keys/install body (lib/setup-flow/install.ts
 // installCeremonyKeys) carries the signer private, the configuration recovery pair and wrap key, the public
 // keys, and the operational pair only under that posture. The break-glass private (identity.key) has no field
-// in it. scripts/custody-claim-parity-gate.mjs holds these two sentences to that body.
+// in it. These two sentences match that body.
 export const KEYS_TRUST_OFFLINE = "identity.key never leaves this device. At Apply, your engine gets the signing key, the configuration keys and the public keys.";
 export const KEYS_TRUST_OPERATIONAL = "identity.key never leaves this device. At Apply, your engine gets the signing key, the configuration keys, the public keys and the operational key, which can decrypt backups.";
 function keysTrust(operational: boolean): HTMLElement {

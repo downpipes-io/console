@@ -110,7 +110,7 @@ export function selfTest() {
 // and the process would exit 0 on THIS module's assertions alone, so the log would read like a pass.
 //
 // Gating on "am I the entry module" instead removes that trap for every importer, present and future,
-// including sibling-read-gate.mjs and custody-claim-parity-gate.mjs, which are one added flag away from
+// including sibling-read-gate.mjs and its other importers, which are one added flag away from
 // it: run this file directly and its self-test runs; import it and it stays a library, whatever flags the
 // entry script was given.
 //

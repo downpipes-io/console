@@ -66,14 +66,18 @@ export function renderRolesPanel(engine: EngineClient): HTMLElement {
       // Rule b: the members table raises the Owner floor to two while dual control is armed, so it needs the
       // live gate state. Read best-effort so a policy-read failure never degrades the
       // table; it falls back to the one-Owner floor and the engine still enforces the real floor server-side.
-      engine.getConfigApprovalPolicy().then((p) => p.requireConfigApproval).catch(() => false),
+      engine.getConfigApprovalPolicy().then((p) => ({ on: p.requireConfigApproval, known: true })).catch(() => ({ on: false, known: false })),
       // The custom-role catalogue, read the same best-effort way, so its absence never degrades the members
       // table. It decides two things there: whether a custom-role grant names a role that still exists (the
       // badge, which needs only the names) and which custom roles the grant picker can offer (which needs the
       // whole record: the label, and the capability set the no-escalation mirror checks against).
       engine.listCustomRoles().catch((): CustomRole[] => []),
+      // The group-to-role mappings, read the same best-effort way (the same read the mapping panel makes). The
+      // Remove member modal adds a line about groups only when the estate maps any. A failed read counts as
+      // none: the modal's option text already says it removes sign-in even if a group still grants access.
+      engine.listGroupRoles().then((g) => g.length).catch(() => 0),
     ])
-      .then(([rows, dualControlOn, customRoles]) => region.replaceChildren(renderRolesTable(engine, rows, load, { dualControlOn, customRoles })))
+      .then(([rows, policy, customRoles, groupMappings]) => region.replaceChildren(renderRolesTable(engine, rows, load, { dualControlOn: policy.on, policyUnknown: !policy.known, customRoles, groupMappings })))
       .catch((err) => {
         if (isUnauthorised(err)) {
           // PAINT FIRST, THEN LEAVE: the members table is a skeleton until this replaces it.

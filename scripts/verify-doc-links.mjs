@@ -4,7 +4,7 @@
 // resolves but lands on a page that defers the answer elsewhere. Pairs with the field census.
 //
 //   node scripts/verify-doc-links.mjs           # gate: exit 1 on any dead/deferring link
-//   node scripts/verify-doc-links.mjs --fix     # drop dead anchors down to valid page-level links
+//   node scripts/verify-doc-links.mjs --fix     # print the proposed edit for each dead anchor; writes nothing
 //   node scripts/verify-doc-links.mjs --require # fail rather than skip when ../docs is absent (CI)
 //
 // --require turns that skip into a FAILURE. CI passes it, because CI checks the sibling out precisely so this
@@ -17,11 +17,13 @@
 //
 // FS-WRITES: none outside this repo
 
-import { readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { findWorkspaceDir } from "./workspace-root.mjs";
+import { scanDocLinks, isSourceFile, isSkippedDir, proposeFix } from "./doc-link-collect.mjs";
+import { CATALOGUE, docsUrl } from "../src/screens/integrations/catalogue.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = join(HERE, "..", "src");
@@ -80,31 +82,46 @@ const headingSlugs = (file) => {
 const walk = (d, acc) => {
   for (const e of readdirSync(d, { withFileTypes: true })) {
     const p = join(d, e.name);
-    if (e.isDirectory()) walk(p, acc);
-    else if (e.name.endsWith(".ts") && !e.name.endsWith(".d.ts")) acc.push(p);
+    if (e.isDirectory()) { if (!isSkippedDir(e.name, d === SRC)) walk(p, acc); }
+    else if (isSourceFile(e.name)) acc.push(p);
   }
   return acc;
 };
-function dropAnchor(relFile, anchor) {
-  const abs = join(SRC, relFile);
-  let t = readFileSync(abs, "utf8");
-  t = t.split(`#${anchor}"`).join('"');
-  t = t.split(`, anchor: "${anchor}"`).join("");
-  t = t.split(`anchor: "${anchor}", `).join("");
-  t = t.split(`anchor: "${anchor}"`).join("");
-  writeFileSync(abs, t);
+// --fix WRITES NOTHING. For a dead anchor it prints, per link, the file:line, the line as it is and the line as
+// it would be with exactly that anchor removed, for a person to apply. A link whose anchor has no recorded
+// span (a template expansion, a link inside prose) gets no proposal and is listed as one to edit by hand.
+function proposeAnchorFix(relFile, url, templateValues) {
+  const text = readFileSync(join(SRC, relFile), "utf8");
+  return proposeFix(text, url, { templateValues }).map((p) => ({ where: `src/${relFile}:${p.line}`, before: p.before, after: p.after }));
 }
 
+// The integrations catalogue builds its docs URL from a template, `https://docs.downpipes.io/integrations/${slug}`
+// (src/screens/integrations/catalogue.ts, docsUrl). The slug is not in the text, so the real function is
+// run over the real catalogue and every URL it returns is graded. Any other template URL with an
+// expression has no value list here and FAILS below, with its file and line.
+const INTEGRATIONS_PREFIX = "https://docs.downpipes.io/integrations/";
+const integrationSlugs = [...new Set(CATALOGUE.map((v) => docsUrl(v)))].map((u) => {
+  if (!u.startsWith(INTEGRATIONS_PREFIX)) {
+    console.error(`[verify-doc-links] FAIL: catalogue docsUrl() returned ${u}, which is outside ${INTEGRATIONS_PREFIX}.`);
+    process.exit(1);
+  }
+  return u.slice(INTEGRATIONS_PREFIX.length);
+});
+const templateValues = { [INTEGRATIONS_PREFIX]: integrationSlugs };
+
 const found = new Map();
+const where = new Map();
+let unresolvedCount = 0;
 for (const f of walk(SRC, [])) {
   const rel = f.replace(`${SRC}/`, "");
-  for (const line of readFileSync(f, "utf8").split("\n")) {
-    const anchorM = /anchor:\s*"([^"]+)"/.exec(line);
-    for (const h of line.matchAll(/href:\s*"(https:\/\/docs\.downpipes\.io\/[^"]+)"/g)) {
-      let url = h[1];
-      if (anchorM && !url.includes("#")) url += `#${anchorM[1]}`;
-      (found.get(url) ?? found.set(url, new Set()).get(url)).add(rel);
-    }
+  const scan = scanDocLinks(readFileSync(f, "utf8"), { templateValues });
+  for (const { url, line } of scan.urls) {
+    (found.get(url) ?? found.set(url, new Set()).get(url)).add(rel);
+    (where.get(url) ?? where.set(url, new Set()).get(url)).add(`${rel}:${line}`);
+  }
+  for (const u of scan.unresolved) {
+    unresolvedCount++;
+    console.log(`  [UNRESOLVED ] src/${rel}:${u.line}\n               ${u.why}`);
   }
 }
 
@@ -124,7 +141,7 @@ if (found.size < 40) {
   process.exit(1);
 }
 
-let bad = 0;
+let bad = unresolvedCount;
 for (const [url, files] of [...found].sort()) {
   const u = new URL(url);
   const anchor = decodeURIComponent(u.hash.replace(/^#/, ""));
@@ -134,19 +151,24 @@ for (const [url, files] of [...found].sort()) {
   const anchorOk = !anchor ? true : exists && headingSlugs(file).has(anchor);
   const defers = exists && DEFER_RE.test(readFileSync(file, "utf8"));
   const status = !exists ? "PAGE 404" : !anchorOk ? "ANCHOR DEAD" : defers ? "DEFERS" : "ok";
-  if (FIX && status === "ANCHOR DEAD") {
-    for (const relFile of files) dropAnchor(relFile, anchor);
-    console.log(`  [FIXED->page] ${url}`);
-    continue;
-  }
   if (status !== "ok") {
     bad++;
-    console.log(`  [${status.padEnd(11)}] ${url}\n               in: ${[...files].join(", ")}`);
+    console.log(`  [${status.padEnd(11)}] ${url}\n               in: ${[...(where.get(url) ?? files)].join(", ")}`);
+    if (FIX && status === "ANCHOR DEAD") {
+      let any = false;
+      for (const relFile of files) {
+        for (const p of proposeAnchorFix(relFile, url, templateValues)) {
+          any = true;
+          console.log(`  [PROPOSED  ] ${p.where}\n               before: ${p.before.trim()}\n               after:  ${p.after.trim()}`);
+        }
+      }
+      if (!any) console.log("  [PROPOSED  ] none: edit this link by hand (nothing was written)");
+    }
   }
 }
 
 if (bad) {
-  console.error(`\n[verify-doc-links] FAIL: ${bad} dead or deferring link(s) of ${found.size}. Fix the anchor/page, or run --fix to drop dead anchors to page-level links.`);
+  console.error(`\n[verify-doc-links] FAIL: ${bad} dead, deferring or unresolvable link(s) among ${found.size} graded. Fix the anchor/page, write the URL as one plain string, or run --fix to print the proposed edits.`);
   process.exit(1);
 }
 console.log(`[verify-doc-links] OK: all ${found.size} console doc links resolve, anchors valid, none defer.`);

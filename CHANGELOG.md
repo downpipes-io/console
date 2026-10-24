@@ -12,6 +12,72 @@ versioned independently in the `downpipe` repository's archive format specificat
 identifier is a key-derivation label rather than a name, so a stale copy of it here does
 not misname anything, it describes keys that derive to different bytes.
 
+## [0.2.10] - 2026-10-25
+
+### Added
+
+- One line under the context bar, on every screen, announces an available release and links to the screen
+  where it is applied. It names the recommended engine release, console release or both. For an engine
+  whose support is ending, it names the running engine version and the date its support ends, and
+  after that date it says that version is past its end of support. The line can be dismissed for the
+  browser session, and it shows again when the recommended release or its severity changes.
+- A second line in the same strip reads "No alert destination is set, so alerts reach nobody", or "No alert
+  destination is enabled" when every channel is switched off, and links to Notifications. It refreshes when a
+  channel is saved or removed, and stays hidden while the channel list cannot be read.
+- Remove member offers "Also revoke sign-in (passkeys, recovery codes, open invites)". It is ticked when the
+  removal takes effect at once, revokes the sign-in first, then removes the role, and says which steps ran
+  if one fails. The option is locked, with the reason, for your own row, for a removal that waits for a
+  second approver and when the approval policy cannot be read. When the estate maps identity-provider groups
+  to roles, the modal tells you to untick it if the person keeps access through a group.
+- A pending member removal on Approvals says that the person's passkeys, recovery codes and open invites
+  remain until Revoke sign-in is used after the removal is applied.
+- The audit log names two actions: "Passkey enrolled from a recovery code" and
+  "Other Owners told of a recovery enrolment". Both sit in the Identity and sign-in group. The second row
+  shows whether the other Owners were emailed, with the counts sent, skipped and failed and never an address.
+- A push or OTLP endpoint that the engine cuts to its scheme and host for a reader without the Owner
+  capability carries the note "(scheme and host only; an Owner sees the full endpoint)". The edit form
+  leaves the endpoint field empty for that reader, and the enable and disable toggle asks for the endpoint
+  again instead of saving the shortened one.
+- Support packs file two Cloudflare rediscovery refusals in classes of their own: the engine reading only
+  its own account until an Owner stores a discovery token, and a zone that is not a zone of the source's
+  account.
+
+### Changed
+
+- The console supports engine 0.3.9. The demo names 0.3.8 as the engine release before it.
+- Console 0.2.10 needs engine 0.3.9 or newer. Applied together with engine 0.3.9, it installs once the engine
+  reaches that version. Applied on its own to an older engine, it is refused with that reason.
+- After an engine release is applied, the console verifies it once the new engine version answers. While
+  the old version still answers, the screen says the new version is not answering yet and that the console
+  checks every 20 seconds.
+- Sign-out asks the engine to end the passkey session and completes in this console at once. When the
+  engine does not confirm within 3 seconds, a warning says the session can stay valid until it expires and
+  how to end it now. The passkey session card describes this.
+- The console refuses a plaintext http request on a non-loopback host. A GET or HEAD redirects (308) to the
+  https form of the same URL, and any other method, including the licence claim-code POST, is refused with
+  400, so a claim code always travels encrypted.
+- The restore form trims and lower-cases a pasted Cloudflare account, zone or media account id, accepts
+  exactly 32 hexadecimal characters and sends the lower-cased id.
+- A push or OTLP delivery refused because the destination host is not on the engine's egress allowlist
+  explains the reason in words in both delivery trails, with the remedy: save a destination on a listed host
+  or ask an Owner to extend the allowlist. The OTLP trail also words the 400 and 429 refusals.
+- When account discovery returns nothing, the source wizard says the discovery token could not read any
+  account this engine may use.
+- Endpoint, host and bucket text wraps on push and OTLP push panels, destination cards and the destination
+  drawer, and notification channel rows, so those screens stay inside the viewport at any width.
+- The end-of-support notice writes the date in full, for example "25 October 2026".
+- The one-shot deploy token field on the rollback screen says to add Secrets Store edit to the token when
+  the engine binds a Secrets Store secret as a backup source, because the upload-version step needs it.
+- The release SBOM comes from @cyclonedx/cyclonedx-npm 4.2.1 with reproducible output, so two builds of one
+  commit give the same SBOM bytes.
+- `SHA256SUMS.txt` names the console bundle by its file name alone, the same name as the release download
+  and the SLSA provenance subject. `sha256sum -c --ignore-missing SHA256SUMS.txt` run on the download prints
+  `console-X.Y.Z.json: OK`.
+
+### Dependencies
+
+- Vite 8.1.6 in the build tooling, set through an npm `overrides` entry, and vitest 4.1.12.
+
 ## [0.2.9] - 2026-10-11
 
 ### Added
@@ -639,6 +705,7 @@ Its changes ship in the 0.2.6 release.
 - Stray `coverage/` output that had been tracked in version control despite the ignore
   rule.
 
+[0.2.10]: https://github.com/downpipes-io/console/releases/tag/v0.2.10
 [0.2.9]: https://github.com/downpipes-io/console/releases/tag/v0.2.9
 [0.2.8]: https://github.com/downpipes-io/console/releases/tag/v0.2.8
 [0.2.6]: https://github.com/downpipes-io/console/releases/tag/v0.2.6

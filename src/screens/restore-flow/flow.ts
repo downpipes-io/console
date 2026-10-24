@@ -17,7 +17,6 @@ import { banner } from "../../components/feedback.ts";
 import { type Field, field, validateForm } from "../../components/field.ts";
 import { wholeNumberAtLeast } from "../../components/field-bounds.ts";
 import { confirmModal } from "../../components/modal.ts";
-import { HEX_ID_PATTERN } from "../../lib/add-source.ts";
 import { recordIntentDropped } from "../../lib/client-diag/ring.ts";
 import { h, svgIcon } from "../../lib/dom.ts";
 import { loadDraft, saveDraft } from "../../lib/draft.ts";
@@ -138,13 +137,15 @@ export function renderRestoreFlow(
   // used once for this restore and never stored; the account (and zone for zone-scoped surfaces) name where
   // the snapshot belongs. Empty leaves cf-config records out of band.
   const cfTokenField = field({ id: "rs-cf-token", label: "Cloudflare edit token (optional)", type: "password", value: "", hint: "A scoped Cloudflare API token with edit access to the config you are restoring. Used once for this restore, never stored or logged.", doc: { href: "https://docs.downpipes.io/operations/cloudflare-config-backup-restore" } });
-  // Optional-hex validator for the Cloudflare ids below: empty stays valid (the whole context is
-  // optional), anything typed must be a hex id. Same HEX_ID_PATTERN the add-source path enforces,
-  // so the restore path can no longer accept an id shape the source path would have refused.
+  // Optional Cloudflare-id validator for the ids below: empty stays valid (the whole context is
+  // optional); anything typed is trimmed and lower-cased (Cloudflare shows ids in lower case) and must
+  // then be exactly 32 hexadecimal characters, the shape the engine accepts. cfId() is the one
+  // normaliser, shared with the request body so an accepted input always meets the engine's rule.
+  const cfId = (v: string): string => v.trim().toLowerCase();
   const optionalHexId = (label: string) => (v: string): string | null =>
-    v === "" || HEX_ID_PATTERN.test(v)
+    cfId(v) === "" || /^[0-9a-f]{32}$/.test(cfId(v))
       ? null
-      : `The ${label} must be hexadecimal (0-9, a-f) only, 8 to 64 characters. Paste the id exactly as Cloudflare shows it.`;
+      : `The ${label} must be 32 hexadecimal characters (0-9, a-f). Paste the id exactly as Cloudflare shows it.`;
   const cfAccountField = field({ id: "rs-cf-account", label: "Cloudflare account id", value: "", placeholder: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", hint: "The 32-character account id the config was backed up from (dash.cloudflare.com, the Account ID in the right column).", validate: optionalHexId("account id"), doc: { href: "https://docs.downpipes.io/operations/cloudflare-config-backup-restore" } });
   const cfZoneField = field({ id: "rs-cf-zone", label: "Cloudflare zone id (zone surfaces)", value: "", placeholder: "f1e2d3c4b5a6978869504132a1b2c3d4", hint: "The 32-character zone id, required for zone-scoped surfaces (DNS, page rules); leave empty for account-only config.", validate: optionalHexId("zone id"), doc: { href: "https://docs.downpipes.io/operations/cloudflare-config-backup-restore" } });
 
@@ -408,9 +409,9 @@ export function renderRestoreFlow(
     // are given, idempotent Cloudflare-config surfaces re-apply. Set before the recordName early-return so
     // it applies on both the single-record and whole-run paths. The token is sent for this request only.
     const cfToken = cfTokenField.value().trim();
-    const cfAccount = cfAccountField.value().trim();
+    const cfAccount = cfId(cfAccountField.value());
     if (cfToken !== "" && cfAccount !== "") {
-      const cfZone = cfZoneField.value().trim();
+      const cfZone = cfId(cfZoneField.value());
       req.cfConfig = { token: cfToken, accountId: cfAccount, ...(cfZone !== "" ? { zoneId: cfZone } : {}) };
     } else if (cfToken !== "" || cfAccount !== "") {
       // HALF A PAIR: one of the two was typed and the other left blank, so the whole cf-config section is
@@ -426,7 +427,7 @@ export function renderRestoreFlow(
     // (a named record that happens to be a media record still re-uploads; a named data record simply
     // never reads this context). The token is sent for this request only, never stored.
     const mediaToken = mediaTokenField.value().trim();
-    const mediaAccount = mediaAccountField.value().trim();
+    const mediaAccount = cfId(mediaAccountField.value());
     if (mediaToken !== "" && mediaAccount !== "") {
       req.mediaRestore = { token: mediaToken, accountId: mediaAccount };
     } else if (mediaToken !== "" || mediaAccount !== "") {

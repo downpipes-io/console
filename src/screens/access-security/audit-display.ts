@@ -24,7 +24,7 @@ export const AUDIT_ACTION_GROUPS: Array<{ group: string; actions: AuditAction[] 
   { group: "Downpipes and runs", actions: ["downpipe-create", "downpipe-delete", "downpipe-roster-reconcile", "run-trigger", "run-failed", "sources-attached", "sources-detached", "retention-prune", "retention-armed-alone", "retention-prune-request", "retention-prune-approve", "retention-prune-reject"] },
   { group: "Notifications", actions: ["notify-channel-change", "notify-rule-change"] },
   { group: "Roles and access", actions: ["role-change", "group-role-change", "custom-role-change", "access-policy-change-intent", "posture-override-set", "posture-override-withdrawn"] },
-  { group: "Identity and sign-in", actions: ["idp-connection-change", "idp-sign-in", "authn-failure", "denied-overflow", "recovery-codes-generated", "recovery-codes-staged", "recovery-code-used", "passkey-credential-revoke", "passkey-invite-enrol", "signin-factor-revoke", "session-terminate", "bootstrap-consumed", "break-glass-token-retired"] },
+  { group: "Identity and sign-in", actions: ["idp-connection-change", "idp-sign-in", "authn-failure", "denied-overflow", "recovery-codes-generated", "recovery-codes-staged", "recovery-code-used", "passkey-credential-revoke", "passkey-invite-enrol", "passkey-recovery-enrol", "passkey-recovery-enrol-notice", "signin-factor-revoke", "session-terminate", "bootstrap-consumed", "break-glass-token-retired"] },
   { group: "Approvals and change control", actions: ["config-change-propose", "config-change-approve", "config-change-reject", "config-change-supersede", "config-policy-change", "owner-action-propose", "owner-action-approve", "owner-action-execute", "owner-action-reject", "change-recorded"] },
   { group: "Keys", actions: ["key-ceremony-intent", "keys-installed", "config-secrets-rewrapped", "key-install-failed", "break-glass-rotated", "operational-added", "config-recovery-added", "operational-removed", "key-removal-failed", "posture-acknowledged", "custody-share-emailed", "secret-rotation-confirmed", "runlog-handover", "runlog-resigned", "runlog-resumed", "runlog-floor-reset", "runlog-relinked"] },
   { group: "Attested verification", actions: ["attest-session-started", "attest-session-proven", "attest-run-verified", "attest-session-aborted"] },
@@ -125,6 +125,8 @@ const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "session-terminate": "Sessions ended",
   "passkey-credential-revoke": "Passkey revoked",
   "passkey-invite-enrol": "Passkey enrolled from an invite",
+  "passkey-recovery-enrol": "Passkey enrolled from a recovery code",
+  "passkey-recovery-enrol-notice": "Other Owners told of a recovery enrolment",
   "signin-factor-revoke": "Sign-in revoked for a member",
   "support-credential-grant": "Support credential granted",
   "support-credential-revoke": "Support credential revoked",
@@ -228,6 +230,13 @@ function describeTargetKind(t: AuditTarget): HTMLElement {
       const wrap = h("span", { class: "mono" }, `${t.email} → ${t.role}`);
       // A time-boxed grant's self-revoke moment, so the row says until when the elevation runs.
       if (typeof t.expiresAt === "string") wrap.appendChild(h("span", { class: "field__hint" }, ` until ${t.expiresAt}`));
+      // A recovery-enrolment notice row says whether the other Owners were emailed: the state, the reason
+      // when the engine gives one (a closed set of hyphenated words), and the counts. Never an address.
+      const n = t.notice;
+      if (n !== undefined) {
+        const why = typeof n.reason === "string" ? `, ${n.reason.replace(/-/g, " ")}` : "";
+        wrap.appendChild(h("span", { class: "field__hint" }, ` Owners emailed: ${n.state}${why} (${n.sent} sent of ${n.owners}, ${n.skipped} skipped, ${n.failed} failed)`));
+      }
       return wrap;
     }
     case "grouprole":

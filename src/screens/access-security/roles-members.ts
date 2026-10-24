@@ -19,9 +19,10 @@ import { isPendingResult } from "../../lib/api/types/config-changes.ts";
 import { emptyState } from "../../components/feedback.ts";
 import { relativeTime, absoluteTime, titleCase } from "../../lib/format.ts";
 import { ICON_EXTERNAL, ICON_INFO, ICON_PLUS } from "../../lib/icons.ts";
-import type { EngineClient, RoleEntry, Role, CustomRole } from "../../api.ts";
+import type { EngineClient, RoleEntry, Role, CustomRole, SignInFactorRevokeResult } from "../../api.ts";
 import { inviteStateOf, inviteTokenOf, inviteNoticeOf } from "../../api.ts";
 import { roleOrCustomRoleBadge } from "./shared.ts";
+import { SELF_REVOKE_REASON, revokeSummary } from "./signin-factors.ts";
 import { errorDetail } from "../../components/error-view.ts";
 import {
   BUILTIN_ROLE_NAME,
@@ -43,7 +44,13 @@ export function activeOwnerCount(rows: RoleEntry[], now: number = Date.now()): n
   return rows.filter((r) => r.role === "owner" && (!r.expiresAt || Date.parse(r.expiresAt) > now)).length;
 }
 
-export function renderRolesTable(engine: EngineClient, rows: RoleEntry[], reload: () => void, opts: { dualControlOn?: boolean; customRoles?: readonly CustomRole[] } = {}): HTMLElement {
+// effectiveOwner is the engine's own test for "this row is an Owner": the Owner role with any expiry applied. An
+// expired Owner grant is not an Owner to the engine, so it neither queues a removal nor blocks a revoke.
+export function effectiveOwner(r: RoleEntry, now: number = Date.now()): boolean {
+  return r.role === "owner" && (!r.expiresAt || Date.parse(r.expiresAt) > now);
+}
+
+export function renderRolesTable(engine: EngineClient, rows: RoleEntry[], reload: () => void, opts: { dualControlOn?: boolean; customRoles?: readonly CustomRole[]; groupMappings?: number; policyUnknown?: boolean } = {}): HTMLElement {
   const wrap = h("div", { class: "stack", style: "display:grid;gap:var(--space-3)" });
   // The custom-role catalogue is read best-effort beside this table (roles.ts). It feeds two things: the
   // badge, which needs only the names to tell a live custom-role grant from one naming a deleted role, and
@@ -117,7 +124,7 @@ export function renderRolesTable(engine: EngineClient, rows: RoleEntry[], reload
         header: "Actions",
         srOnlyHeader: true,
         width: "1px",
-        render: (r) => rowActions(engine, r, { canManageRoles, me, ownerCount, dualControlOn, customRoles }, reload),
+        render: (r) => rowActions(engine, r, { canManageRoles, me, ownerCount, dualControlOn, customRoles, groupMappings: opts.groupMappings ?? 0, policy: opts.policyUnknown === true ? "unknown" : dualControlOn ? "on" : "off" }, reload),
       },
     ],
   });
@@ -157,7 +164,7 @@ const OWNER_ROW_REASON = "Only an Owner may change or remove another Owner.";
 function rowActions(
   engine: EngineClient,
   entry: RoleEntry,
-  ctx: { canManageRoles: boolean; me: string | null; ownerCount: number; dualControlOn: boolean; customRoles: readonly CustomRole[] },
+  ctx: { canManageRoles: boolean; me: string | null; ownerCount: number; dualControlOn: boolean; customRoles: readonly CustomRole[]; groupMappings: number; policy: ApprovalPolicy },
   reload: () => void,
 ): HTMLElement {
   const wrap = h("div", { style: "display:grid;gap:var(--space-1);justify-items:end" });
@@ -195,7 +202,7 @@ function rowActions(
   } else if (ownerRowLocked) {
     refuseWithReason(removeBtn, OWNER_ROW_REASON);
   } else {
-    removeBtn.addEventListener("click", () => openOffboardModal(engine, entry.email, entry.role === "owner", ctx.me, reload));
+    removeBtn.addEventListener("click", () => openOffboardModal(engine, entry.email, { ownerRemovalQueues: effectiveOwner(entry) && caller()?.method !== "token", me: ctx.me, policy: ctx.policy, groupMappings: ctx.groupMappings }, reload));
   }
   btnRow.appendChild(removeBtn);
   wrap.appendChild(btnRow);
@@ -228,50 +235,127 @@ export function offboardToast(email: string, idpConfirmed: boolean, intentRecord
   };
 }
 
+// What the Remove member modal knows about the person and the estate before anything is sent.
+export interface OffboardContext {
+  // True when the engine will queue this removal for a second Owner: the target's EFFECTIVE role is Owner (an
+  // expired Owner grant is not) and the caller is not the bare ADMIN_TOKEN, which the engine exempts.
+  ownerRemovalQueues: boolean;
+  me: string | null;
+  // The approval policy as the table read it: "unknown" when the read failed.
+  policy: ApprovalPolicy;
+  // How many IdP group-to-role mappings the estate holds (0 when none, or when the read did not answer).
+  groupMappings: number;
+}
+
+export type ApprovalPolicy = "on" | "off" | "unknown";
+
+export const OFFBOARD_REVOKE_LABEL = "Also revoke sign-in (passkeys, recovery codes, open invites)";
+export const OFFBOARD_REVOKE_DETAIL =
+  "This deletes their passkeys, recovery codes and open invites, and ends their sessions, even if they still have access through a group. Recovery codes cannot be restored.";
+export const OFFBOARD_GROUP_HINT = "This estate maps IdP groups to roles. Untick this if the person keeps access through a group.";
+export const OFFBOARD_QUEUED_REASON = "Sign-in factors remain until the removal is approved; recovery codes cannot be restored.";
+export const OFFBOARD_UNKNOWN_REASON = "The console could not read the approval policy, so it does not revoke sign-in in this step. Sign-in factors remain; recovery codes cannot be restored.";
+export const OFFBOARD_SKIPPED_ON = "Sign-in was not revoked: removals now need approval, and the removal waits for a second approver. Revoke sign-in after the removal is applied.";
+export const OFFBOARD_SKIPPED_ON_APPLIED = "Sign-in was not revoked: removals needed approval when the console checked. Use Revoke sign-in on the Sign-in factors list.";
+export const OFFBOARD_SKIPPED_UNKNOWN = "Sign-in was not revoked: the console could not read the approval policy. Use Revoke sign-in on the Sign-in factors list.";
+const OFFBOARD_QUEUED_POINTER = "After the removal is applied, use Revoke sign-in on the Sign-in factors list further down this tab.";
+
+export type OffboardRevokePlan = { locked: false } | { locked: true; reason: string; kind: "self" | "queued" | "unknown" };
+
+// offboardRevokePlan decides BEFORE any call whether the revoke option is offered. The 202 that says a delete
+// was queued only arrives after the delete is sent, so the console works it out from what it already knows.
+//   - Yourself: the engine refuses to revoke your own sign-in factors. The removal still works.
+//   - Dual control on: the delete queues for a second approver, whoever the target is.
+//   - An Owner target whose removal queues (ownerRemovalQueues): the engine queues the removal of an effective
+//     Owner while two or more Owners exist, whatever the dual-control setting, and refuses to revoke that Owner.
+//   - The approval policy could not be read: the console cannot know whether the delete will queue, so it
+//     does not revoke. An unknown is never read as "off".
+// A locked option is unticked and disabled, and nothing is revoked.
+export function offboardRevokePlan(email: string, ctx: OffboardContext): OffboardRevokePlan {
+  if (ctx.me !== null && email === ctx.me) return { locked: true, reason: SELF_REVOKE_REASON, kind: "self" };
+  if (ctx.policy === "on" || ctx.ownerRemovalQueues) return { locked: true, reason: OFFBOARD_QUEUED_REASON, kind: "queued" };
+  if (ctx.policy === "unknown") return { locked: true, reason: OFFBOARD_UNKNOWN_REASON, kind: "unknown" };
+  return { locked: false };
+}
+
+// offboardFailureToast says which half of a two-step removal ran. "revoke" failed first, so nothing was
+// deleted; "delete-after-revoke" means the sign-in is already gone and the role is still there.
+export function offboardFailureToast(stage: "revoke" | "delete-after-revoke" | "delete", email: string, detail: string): { message: string; tone: "warn" } {
+  if (stage === "revoke") return { message: `Could not revoke the sign-in of ${email}, so nothing was removed. Their role and their sign-in are unchanged. ${detail}`, tone: "warn" };
+  if (stage === "delete-after-revoke") return { message: `Revoked the sign-in of ${email}, but could not remove the member. Their role is unchanged. ${detail}`, tone: "warn" };
+  return { message: `Could not remove the member. ${detail}`, tone: "warn" };
+}
+
+// offboardEffectNote is the paragraph under the revoke option. It follows the box: ticked, it says what the
+// removal takes; unticked or locked, it says what survives and where to finish the job.
+function offboardEffectNote(revoking: boolean, plan: OffboardRevokePlan): string {
+  if (revoking) return "Their passkeys, recovery codes and open invites are removed first. Then their role is removed.";
+  const survives =
+    "Removing the role does not remove their passkey, their recovery codes or any unexpired invite. A passkey or a recovery code still signs them in. A recovery code or an invite can enrol a new passkey only if the engine cannot read the role table, or finds it empty.";
+  // Your own row cannot be revoked from the Sign-in factors list (it refuses your own row), so it names who can.
+  const finish =
+    plan.locked && plan.kind === "self"
+      ? "Another admin can revoke your sign-in with Revoke sign-in on the Sign-in factors list."
+      : plan.locked && plan.kind === "queued"
+        ? OFFBOARD_QUEUED_POINTER
+        : "To remove these, use Revoke sign-in on the Sign-in factors list further down this tab.";
+  return `${survives} ${finish}`;
+}
+
 // openOffboardModal is the SINGLE member-removal ceremony (the roles-table Remove is the only
 // entry point; the Sessions and fallback tab links here). It always offers the IdP-cleanup
 // confirmation and, when ticked, records it as an audit intent, so the record never depends on
-// which path the owner happened to use. The awaited delete runs INSIDE the modal's busy onClick
-// (the role-save pattern), so the busyLabel covers the network call and a double fire is
+// which path the owner happened to use. It also offers to revoke the person's sign-in (ticked by default
+// when the removal takes effect at once). The awaited calls run INSIDE the modal's busy onClick
+// (the role-save pattern), so the busyLabel covers the network calls and a double fire is
 // impossible (the modal disables its buttons for the duration).
-function openOffboardModal(engine: EngineClient, email: string, isOwnerTarget: boolean, me: string | null, onRemoved: () => void): void {
+function openOffboardModal(engine: EngineClient, email: string, ctx: OffboardContext, onRemoved: () => void): void {
   const idpConfirm = h("input", { type: "checkbox", id: "offboard-idp", style: "margin-top:3px;flex:none" }) as HTMLInputElement;
   const confirmBody = h("div", { style: "display:grid;gap:var(--space-3)" });
   // Removing an Owner is reachable here only while another Owner exists (the floor lock above refuses it
   // otherwise), and the engine queues that removal for a second Owner's approval whatever the Require
   // Approver setting. Removing any other member stays tied to that setting.
-  const effectSentence = isOwnerTarget
+  const effectSentence = ctx.ownerRemovalQueues
     ? "This is audited. It waits for another Owner's approval. It does not end their Cloudflare Access session. The IdP step is yours."
     : "This is audited. It takes effect at once, unless approval for config changes is required; then it waits for a second approver. It does not end their Cloudflare Access session. The IdP step is yours.";
   confirmBody.appendChild(h("p", { style: "color:var(--text)" }, `Remove ${email} from the in-app role table? ${effectSentence} If you tick the confirmation below and the removal takes effect at once, the console asks the engine to record it in the audit trail. If the engine does not record it, you see a warning. A removal that waits for a second approver records no confirmation.`));
-  // The modal states this fact because removing a role row touches none of
-  // the three sign-in stores: their passkey credentials, their banked recovery codes and any unexpired
-  // registration invite all survive it. A passkey and a recovery code still sign the person in. Neither a
-  // code nor an invite can enrol a fresh passkey for an address off the roster: recovery sign-in answers
-  // enrolPasskey:false and the self-add and invite routes refuse (engine rosterRefusesEnrolment). That check
-  // fails open, so a code or an invite still enrols one when the engine cannot read the role table, or reads
-  // it and finds it empty: classifyRosterMembership treats a roster of zero rows as unreadable, not as a
-  // departure. That needs the table to be empty after this removal, for example an actor on the bare token
-  // who holds no role row removing the last one.
-  // Naming only the Access session would read as "the role plus the identity provider closes the door",
-  // which is not true.
+
+  // THE REVOKE OPTION. Removing a role row touches none of the three sign-in stores: the passkey credentials,
+  // the banked recovery codes and any unexpired registration invite all survive it, and a passkey or a
+  // recovery code still signs the person in. The engine keeps role delete and revoke as two routes because a
+  // member can also hold a role through an IdP group, where the delete is only a demotion; the option below
+  // therefore says plainly that it removes sign-in whatever a group grants, and the admin can untick it.
   //
-  // This states the fact and points at the control; it deliberately does NOT revoke as part of the removal.
-  // Removing a role can be a legitimate demotion for somebody who keeps authority through an identity-provider
-  // group, and revoking destroys an authenticator and recovery codes irreversibly. The operator decides which
-  // one they are doing; the engine keeps the two routes separate for the same reason.
+  // The decision to offer it is made before any call (offboardRevokePlan). A removal that will queue never
+  // revokes ahead of the approval, and the rows the engine refuses to revoke are locked with the reason.
+  // When it runs, revoke goes FIRST: after the delete the target resolves as Viewer and the engine's Owner
+  // floor no longer applies (the SCIM deprovision orders the two calls the same way).
+  const plan = offboardRevokePlan(email, ctx);
+  const revokeBox = h("input", { type: "checkbox", id: "offboard-revoke", style: "margin-top:3px;flex:none" }) as HTMLInputElement;
+  revokeBox.checked = !plan.locked;
+  if (plan.locked) revokeBox.disabled = true;
+  const effectNote = h("p", { class: "field__hint measure" }, offboardEffectNote(revokeBox.checked, plan));
+  // What the option deletes is said only while it is ticked; a locked or unticked option deletes nothing.
+  const detailNote = h("p", { class: "field__hint measure" }, revokeBox.checked ? OFFBOARD_REVOKE_DETAIL : "");
+  detailNote.hidden = !revokeBox.checked;
+  revokeBox.addEventListener("change", () => {
+    effectNote.replaceChildren(offboardEffectNote(revokeBox.checked, plan));
+    detailNote.replaceChildren(revokeBox.checked ? OFFBOARD_REVOKE_DETAIL : "");
+    detailNote.hidden = !revokeBox.checked;
+  });
+  const revokeRow = h("label", { for: "offboard-revoke", style: "display:flex;gap:var(--space-2);align-items:flex-start;font-size:var(--text-base)" });
+  revokeRow.appendChild(revokeBox);
+  revokeRow.appendChild(h("span", OFFBOARD_REVOKE_LABEL));
+  confirmBody.appendChild(revokeRow);
+  confirmBody.appendChild(detailNote);
+  if (!plan.locked && ctx.groupMappings > 0) confirmBody.appendChild(h("p", { class: "field__hint measure" }, OFFBOARD_GROUP_HINT));
+  if (plan.locked) confirmBody.appendChild(h("p", { class: "field__hint measure" }, plan.reason));
+  confirmBody.appendChild(effectNote);
   confirmBody.appendChild(
     h(
       "p",
       { class: "field__hint measure" },
-      "Removing the role does not remove their passkey, their recovery codes or any unexpired invite. A passkey or a recovery code still signs them in. A recovery code or an invite can enrol a new passkey only if the engine cannot read the role table, or finds it empty. To remove these too, use Revoke sign-in on the Sign-in factors list further down this tab. It is a separate, irreversible action, so it is not done for you here.",
-    ),
-  );
-  confirmBody.appendChild(
-    h(
-      "p",
-      { class: "field__hint measure" },
-      "You may be asked to confirm with your own passkey before this runs. If you dismiss that prompt, or it fails, nothing is removed and you can start again from this row.",
+      "You may be asked to confirm with your own passkey before each step. If you dismiss the first prompt, or it fails, nothing changes. If a later step fails or is dismissed, the console says which steps ran.",
     ),
   );
   const idpRow = h("label", { for: "offboard-idp", style: "display:flex;gap:var(--space-2);align-items:flex-start;font-size:var(--text-base)" });
@@ -298,6 +382,38 @@ function openOffboardModal(engine: EngineClient, email: string, isOwnerTarget: b
         variant: "danger",
         busyLabel: "Removing",
         onClick: async () => {
+          // Step one, only when the box is ticked and unlocked. A failure here deletes nothing. The approval
+          // policy is read again just before the revoke: the table can be minutes old, and another Owner can
+          // switch approval on in between. On or unreadable, the revoke is skipped and only the role removal
+          // is sent, so a delete that queues never follows a revoke.
+          let revoked: SignInFactorRevokeResult | null = null;
+          let skipped: ApprovalPolicy | null = null;
+          if (!plan.locked && revokeBox.checked) {
+            let fresh: ApprovalPolicy;
+            try {
+              fresh = (await engine.getConfigApprovalPolicy()).requireConfigApproval ? "on" : "off";
+            } catch (err) {
+              if (isUnauthorised(err)) {
+                goSignedOut();
+                return true;
+              }
+              fresh = "unknown";
+            }
+            if (fresh !== "off") {
+              skipped = fresh;
+            } else {
+              try {
+                revoked = await engine.revokeSignInFactors(email);
+              } catch (err) {
+                if (isUnauthorised(err)) {
+                  goSignedOut();
+                  return true;
+                }
+                toast(offboardFailureToast("revoke", email, errorDetail(err)));
+                return false;
+              }
+            }
+          }
           try {
             const res = await engine.deleteRole(email);
             if (isPendingResult(res)) {
@@ -305,8 +421,14 @@ function openOffboardModal(engine: EngineClient, email: string, isOwnerTarget: b
               // approver and the member KEEPS their grant. Reading that 202 as a success would toast "Removed"
               // and drop the row while the member's access persisted. Surface the queued state with the same
               // helper the queued custom-role delete uses (so the two cannot drift), leave the row in place,
-              // and record no offboarding attestation for a change that has not taken effect.
+              // and record no offboarding attestation for a change that has not taken effect. Usually no revoke
+              // ran ahead of it: a locked option never revokes, and the policy was read again before the revoke,
+              // so a skipped revoke is reported here. One window remains: approval can switch on AFTER that
+              // re-read, so the revoke ran and the delete queued. Then the sign-in is already gone and the role
+              // waits for a second approver, and the operator is told exactly that.
               surfacePendingChange("member removal");
+              if (revoked !== null) toast({ message: `Revoked the sign-in of ${email}. The role removal waits for a second approver.`, tone: "warn" });
+              else if (skipped !== null) toast({ message: skipped === "on" ? OFFBOARD_SKIPPED_ON : OFFBOARD_SKIPPED_UNKNOWN, tone: "warn" });
               return true;
             }
             // Record the operator's IdP confirmation as an intent marker if confirmed
@@ -338,8 +460,11 @@ function openOffboardModal(engine: EngineClient, email: string, isOwnerTarget: b
                 recordAdminWrite("idp-cleanup-attest", st === null ? "unreachable" : writeOutcomeForStatus(st));
               }
             }
-            toast(offboardToast(email, idpConfirm.checked, intentRecorded));
-            if (me && email === me) await refreshIdentity();
+            const removed = offboardToast(email, idpConfirm.checked, intentRecorded);
+            const addendum = revoked !== null ? revokeSummary(email, revoked).message : skipped === "on" ? OFFBOARD_SKIPPED_ON_APPLIED : skipped === "unknown" ? OFFBOARD_SKIPPED_UNKNOWN : "";
+            const tone = skipped !== null ? ("warn" as const) : removed.tone;
+            toast(addendum === "" ? removed : { message: `${removed.message} ${addendum}`, ...(tone !== undefined ? { tone } : {}) });
+            if (ctx.me && email === ctx.me) await refreshIdentity();
             onRemoved();
             return true;
           } catch (err) {
@@ -350,7 +475,7 @@ function openOffboardModal(engine: EngineClient, email: string, isOwnerTarget: b
             // The engine may refuse (last-Owner guard server-side): errorDetail carries its reason
             // through the shared classifyError pipeline, wrapped as customer copy rather than the raw
             // "<verb>: <reason>: <status>" throw.
-            toast({ message: `Could not remove the member. ${errorDetail(err)}`, tone: "warn" });
+            toast(offboardFailureToast(revoked === null ? "delete" : "delete-after-revoke", email, errorDetail(err)));
             return false;
           }
         },

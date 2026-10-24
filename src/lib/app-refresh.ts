@@ -4,12 +4,14 @@
 // strip. No polling loop lives here: every helper runs only when called from a real navigation,
 // a focus event, or an identity resolution.
 
-import { getEngine } from "./store.ts";
+import { getEngine, onSessionCleared } from "./store.ts";
 import { channelReasonClassFor, recordReadDegraded, recordUpdateChannelUnverified } from "./client-diag/ring.ts";
 import { setupCelebrated, markSetupCelebrated, type SetupView } from "./setup-state.ts";
 import { readSetupView } from "./setup-read.ts";
 import { consoleVersion } from "./console-version.ts";
+import { onAlertSinkRefresh } from "./alert-sink-signal.ts";
 import { consoleUpdateAvailable } from "../screens/licence/shared.ts";
+import { updateBannerModel, sinkStateFrom, type SinkState, type UpdateBannerModel } from "../shell/update-banner.ts";
 import type { UpdateStatus } from "../api.ts";
 import type { Shell } from "../shell/app-shell.ts";
 import type { UpdateChipView } from "../shell/chrome.ts";
@@ -153,6 +155,62 @@ export function updateChipView(upd: UpdateStatus, ownConsoleVersion: string | nu
   return { components };
 }
 
+// ---- the update strip's two inputs ------------------------------------------------------------
+
+// The strip's update line and alert destination state live here, so either input can change on its own: the
+// update verdict refreshes at most every 15 minutes, and the destination state also refreshes the moment a
+// channel is saved or removed in Notifications (lib/alert-sink-signal.ts).
+let bannerUpdate: UpdateBannerModel | null = null;
+let bannerSink: SinkState | null = null;
+
+// A sign-out clears the strip's inputs, so the next sign-in starts from no verdict.
+onSessionCleared(() => {
+  bannerUpdate = null;
+  bannerSink = null;
+});
+
+function pushBanner(shell: Shell): void {
+  shell.setUpdateBanner({ update: bannerUpdate, sink: bannerSink });
+}
+
+// SINK_READ_TIMEOUT_MS bounds the channel read. A read that has not answered by then is unknown, and the
+// strip shows no destination line.
+export const SINK_READ_TIMEOUT_MS = 5000;
+
+// refreshSinkState reads the notify channels and hands the strip the state. A failed or late read leaves the
+// state unknown (null): the console never claims there is no destination from a read that did not answer.
+export async function refreshSinkState(shell: Shell, fetchChannels: () => Promise<ReadonlyArray<{ enabled?: boolean }>>, timeoutMs: number = SINK_READ_TIMEOUT_MS): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const channels = await Promise.race([
+      fetchChannels(),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+    bannerSink = sinkStateFrom(channels);
+  } catch (err) {
+    bannerSink = null;
+    recordReadDegraded("update-chip", err);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+  pushBanner(shell);
+}
+
+// wireSinkRefresh connects the Notifications screen's channel-changed signal to the strip (called once, at boot).
+export function wireSinkRefresh(shell: Shell): void {
+  onAlertSinkRefresh(() => refreshSinkNow(shell));
+}
+
+// refreshSinkNow is the Notifications screen's "a channel just changed": re-read the list at once, with or
+// without an update line (the destination line stands alone, so it needs no update line).
+export function refreshSinkNow(shell: Shell): void {
+  const engine = getEngine();
+  if (!engine) return;
+  void refreshSinkState(shell, () => engine.listNotifyChannels());
+}
+
 // refreshUpdateChip reads the update verdict and reflects it on the shell's chip (appear or
 // disappear, no reload). The fetcher is injectable for the validators; fail-open like every
 // refresh here: a transient read failure leaves the current chip state untouched (no flicker,
@@ -161,6 +219,8 @@ export async function refreshUpdateChip(
   shell: Shell,
   fetchUpdates: () => Promise<UpdateStatus>,
   ownConsoleVersion: string | null,
+  fetchChannels: () => Promise<ReadonlyArray<{ enabled?: boolean }>>,
+  sinkTimeoutMs: number = SINK_READ_TIMEOUT_MS,
 ): Promise<void> {
   try {
     const upd = await fetchUpdates();
@@ -171,7 +231,13 @@ export async function refreshUpdateChip(
     //
     // The honest comparison is the RUNNING bundle against WHAT THE ORIGIN SERVES, both from the same repo and
     // the same release, and it lives at boot (recordServedBundleSkew, app.ts) where no engine read is needed.
-    shell.setUpdateAvailable(updateChipView(upd, ownConsoleVersion));
+    const view = updateChipView(upd, ownConsoleVersion);
+    shell.setUpdateAvailable(view);
+    // The full-width update strip rides on the same verdict and appears at the same moment as the chip. Its
+    // alert-destination line waits for the notify channel read, which is bounded by SINK_READ_TIMEOUT_MS, so a
+    // slow or hung read holds nothing back.
+    bannerUpdate = updateBannerModel(view, upd);
+    pushBanner(shell);
   } catch (err) {
     // Transient/absent updates read: leave the chip as-is (fail-open; hidden stays hidden).
     //
@@ -180,6 +246,8 @@ export async function refreshUpdateChip(
     // nothing anywhere records that it did.
     recordReadDegraded("update-chip", err);
   }
+  // The destination line does not depend on the update verdict, so its read runs either way.
+  await refreshSinkState(shell, fetchChannels, sinkTimeoutMs);
 }
 
 // UPDATE_CHIP_TTL_MS is the chip's refresh floor. GET /admin/updates has the engine consult the
@@ -200,7 +268,7 @@ export function maybeRefreshUpdateChip(shell: Shell): void {
   const now = Date.now();
   if (now - updateChipFetchedAt < UPDATE_CHIP_TTL_MS) return;
   updateChipFetchedAt = now;
-  void refreshUpdateChip(shell, () => engine.updates(), consoleVersion());
+  void refreshUpdateChip(shell, () => engine.updates(), consoleVersion(), () => engine.listNotifyChannels());
 }
 
 // primeUpdateChipRefresh clears the coalesce window so the NEXT nav/focus refresh refetches.
