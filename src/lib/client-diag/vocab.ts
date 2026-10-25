@@ -1955,6 +1955,13 @@ export type ClientDiagRejectOutcome = (typeof CLIENT_DIAG_REJECT_OUTCOMES)[numbe
 //   cf-rediscover-out-of-scope the downpipe's account is no longer in the owner's selected discovery scope, so the
 //                             engine refuses to probe it. Remedy: the OWNER re-selects the account. Nobody but the
 //                             owner can fix it, which is why it must not share a row with the token being absent.
+//   cf-rediscover-env-only-scope
+//                             no Owner discovery token is stored, so the engine lists and permits only its own
+//                             Cloudflare account and the downpipe names another. No Owner selection is involved. Remedy: an Owner stores a discovery token under Sources, or the downpipe
+//                             names the engine's own account.
+//   cf-rediscover-zone-not-in-account
+//                             the downpipe's zone is not a zone of its account. Remedy: an Owner corrects the
+//                             zone under Sources.
 //   cf-rediscover-denied      THE ENGINE ITSELF refused the rediscover with a 403 whose body is one of its own
 //                             refusal shapes (forbiddenClass engine-capability / engine-authz / engine-csrf)
 //                             though the console offered the button: a role that changed under a long-lived tab,
@@ -2005,6 +2012,8 @@ export const CLIENT_DIAG_CATALOGUE_CLASSES = [
   "cf-rediscover-not-an-engine",
   "cf-rediscover-transport",
   "cf-rediscover-failed",
+  "cf-rediscover-env-only-scope",
+  "cf-rediscover-zone-not-in-account",
 ] as const;
 export type ClientDiagCatalogueClass = (typeof CLIENT_DIAG_CATALOGUE_CLASSES)[number];
 

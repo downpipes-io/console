@@ -289,6 +289,9 @@ export function buildToggleSubmission(view: PushDestinationView, enabled: boolea
   // toggle reads as an unexplained failure) or, worse, stores an empty endpoint over a working one, so
   // the audit-log drain silently stops going anywhere. Refuse to reconstruct instead: null routes the
   // caller to Replace, which re-collects the endpoint honestly.
+  // A redacted view carries the endpoint cut to scheme and host: a set rebuilt from it would store the cut
+  // endpoint over the real one, so it is a broken view for this purpose too.
+  if (view.endpointRedacted === true) return null;
   if (typeof view.endpoint !== "string" || view.endpoint.trim() === "") return null;
   return {
     format,
@@ -304,17 +307,22 @@ export function buildToggleSubmission(view: PushDestinationView, enabled: boolea
 // pushDestinationTargetLabel is the redaction-safe, human-readable target of the destination, per sink: the
 // http endpoint, the s3 bucket + host + prefix, or the syslog host:port. NEVER any credential. Pure;
 // exported for the validator.
-export function pushDestinationTargetLabel(view: Pick<PushDestinationView, "sink" | "endpoint" | "s3" | "syslog">): string {
+// ENDPOINT_REDACTED_NOTE follows an endpoint the engine cut to scheme and host (endpointRedacted: true on the
+// view, sent to a reader without the Owner capability). The cut endpoint is never shown as the full one.
+export const ENDPOINT_REDACTED_NOTE = "(scheme and host only; an Owner sees the full endpoint)";
+
+export function pushDestinationTargetLabel(view: Pick<PushDestinationView, "sink" | "endpoint" | "s3" | "syslog" | "endpointRedacted">): string {
   const sink = view.sink ?? "http";
+  const note = view.endpointRedacted === true ? ` ${ENDPOINT_REDACTED_NOTE}` : "";
   if (sink === "s3" && view.s3) {
     const host = hostOf(view.s3.endpoint);
     const prefix = view.s3.prefix ? `, prefix ${view.s3.prefix}` : "";
-    return `the s3 bucket ${view.s3.bucket}${host ? ` at ${host}` : ""}${prefix}`;
+    return `the s3 bucket ${view.s3.bucket}${host ? ` at ${host}` : ""}${prefix}${note}`;
   }
   if (sink === "syslog-tls" && view.syslog) {
     return `${view.syslog.host}:${view.syslog.port} over syslog (TLS)`;
   }
-  return view.endpoint ?? "the configured endpoint";
+  return `${view.endpoint ?? "the configured endpoint"}${note}`;
 }
 
 // pushDestinationDetailLine is the second state line: the format + how it is delivered (the auth header, the
@@ -387,6 +395,7 @@ const PUSH_FAIL_REASON_COPY: Readonly<Record<string, string>> = {
   "http-4xx": "the endpoint refused the request. Check the path in the endpoint above",
   "http-5xx": "the endpoint itself is erroring. This is at the vendor's end",
   "internal-sink-blocked": "the endpoint resolves to a private or internal address, which is refused by default",
+  "egress-not-allowlisted": "the destination host is not on the engine's egress allowlist, so nothing was sent. Save a destination on a listed host, or ask an owner to extend the allowlist. The batch is held and re-sent",
   "url-invalid": "the stored endpoint did not parse when the send was attempted",
   "credential-undecryptable": "the stored credential could not be decrypted, so nothing was sent. Re-enter it",
   "syslog-tls-untrusted": "the receiver's TLS certificate was not trusted, so the handshake failed and nothing was written",

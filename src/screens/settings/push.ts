@@ -154,7 +154,7 @@ function renderPushState(ctx: PushStateCtx): HTMLElement {
 
   if (owned) {
     const s = pushStatePresentation(view);
-    wrap.appendChild(statusWithLabel(s.tone, s.label));
+    wrap.appendChild(statusWithLabel(s.tone, s.label, { wrap: true }));
   } else {
     wrap.appendChild(statusWithLabel("neutral", vendorName ? `${vendorName} is not set up` : "Not set up"));
     if (otherActive) {
@@ -166,7 +166,7 @@ function renderPushState(ctx: PushStateCtx): HTMLElement {
   if (owned) {
     const detail = pushDestinationDetailLine(view);
     const who = view.setBy != null ? ` Set by ${view.setBy}${view.setAt ? ` on ${view.setAt}` : ""}.` : "";
-    wrap.appendChild(h("p", { class: "field__hint", style: "margin-top:var(--space-1)" }, `${detail}${who}`));
+    wrap.appendChild(h("p", { class: "field__hint wrap-anywhere", style: "margin-top:var(--space-1)" }, `${detail}${who}`));
 
     const lag = pushLagPresentation(view);
     wrap.appendChild(h("div", { style: "margin-top:var(--space-2)" }, statusWithLabel(lag.tone, lag.label)));
@@ -407,7 +407,7 @@ function openPushForm(opts: PushFormOpts): void {
     required: true,
     autocomplete: "off",
     placeholder: "https://http-intake.logs.example.com/api/v2/logs",
-    value: current?.endpoint ?? "",
+    value: current?.endpointRedacted === true ? "" : (current?.endpoint ?? ""),
     hint: "An https URL for your SIEM's HTTP intake, not a workers.dev or private address, with no credentials in it. A certificate that does not chain to a public root is refused as a TLS failure.",
     validate: validatePushEndpoint,
     doc: { href: "https://docs.downpipes.io/day-2/audit-log-push", anchor: "setting-up-the-push-destination" },
@@ -503,7 +503,7 @@ function openPushForm(opts: PushFormOpts): void {
     required: true,
     autocomplete: "off",
     placeholder: "https://s3.ap-southeast-2.amazonaws.com",
-    value: current?.s3?.endpoint ?? "",
+    value: current?.endpointRedacted === true ? "" : (current?.s3?.endpoint ?? ""),
     hint: "The S3-compatible endpoint your SIEM's bucket lives on, for example AWS S3 or Cloudflare R2. https only, and a private or cloud-metadata address is refused.",
     validate: validatePushEndpoint,
     doc: { href: "https://docs.downpipes.io/day-2/audit-log-push", anchor: "setting-up-the-s3-sink" },

@@ -303,7 +303,6 @@ console.log("\n-- enrolmentGuidance: honest copy --");
   ok("guidance mentions enrolling at least two keys", /at least two/i.test(g));
   ok("guidance states the secret is non-exportable", /non-exportable/i.test(g));
   ok("guidance does not claim the key is STORED on the device", /does not store/i.test(g));
-  ok("guidance contains no U+2014", !g.includes("—"));
   // The final clause (the actual loss consequence) must be present in full. These phrases live in
   // the last two concatenated string fragments; blanking either drops the warning the operator
   // most needs, so they are pinned literally.

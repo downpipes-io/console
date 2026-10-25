@@ -32,6 +32,9 @@ export interface OtlpPushDeliveryAttempt {
 export interface OtlpPushDestinationView {
   present: boolean;
   endpoint?: string;
+  // endpointRedacted is true when the engine cut the endpoint to scheme and host for a reader without the
+  // Owner capability (the path, query or fragment can carry a vendor credential). Absent for an Owner reader.
+  endpointRedacted?: boolean;
   authHeaderName?: string;
   enabled?: boolean;
   setBy?: string | null;

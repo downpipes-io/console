@@ -410,18 +410,18 @@ console.log("-- update chip: the /licence deep link + the Updates-section reveal
 console.log("-- update chip: the fail-open refresh + the low-frequency floor --");
 {
   const seen: Array<UpdateChipView | null> = [];
-  const shellStub = { setUpdateAvailable: (v: UpdateChipView | null) => { seen.push(v); } } as unknown as Shell;
+  const shellStub = { setUpdateAvailable: (v: UpdateChipView | null) => { seen.push(v); }, setUpdateBanner: () => {} } as unknown as Shell;
   const avail: UpdateStatus = { configured: true, verified: true, currentVersion: "0.1.2", updateAvailable: true, recommendedVersion: "0.2.0" };
   const current: UpdateStatus = { configured: true, verified: true, currentVersion: "0.2.0", updateAvailable: false, recommendedVersion: "0.2.0" };
 
   // A verdict lands on the shell chip; the next refresh can take it away again (no reload).
-  await refreshUpdateChip(shellStub, async () => avail, "0.1.0");
+  await refreshUpdateChip(shellStub, async () => avail, "0.1.0", async () => [{}]);
   ok("a refresh with an available update SHOWS the chip via the shell handle", seen.length === 1 && seen[0] !== null && seen[0]!.components.includes("engine"));
-  await refreshUpdateChip(shellStub, async () => current, "0.1.0");
+  await refreshUpdateChip(shellStub, async () => current, "0.1.0", async () => [{}]);
   ok("a refresh back to up-to-date HIDES the chip (appear/disappear with the cache)", seen.length === 2 && seen[1] === null);
 
   // Fail-open: a transient read failure leaves the chip exactly as it was (no flicker, no zeroing).
-  await refreshUpdateChip(shellStub, async () => { throw new Error("channel unreachable"); }, "0.1.0");
+  await refreshUpdateChip(shellStub, async () => { throw new Error("channel unreachable"); }, "0.1.0", async () => [{}]);
   ok("a failing updates read leaves the chip untouched (fail-open)", seen.length === 2);
 
   // The refresh floor is the promise the shell makes to the vendor channel host: at most one live

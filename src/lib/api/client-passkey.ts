@@ -95,9 +95,10 @@ export async function passkeyLoginFinish(t: Transport, challengeId: string, cred
 
 // passkeyLogout clears the engine session cookie (a no-DO, clear-only call the engine honours from any
 // origin). It is a no-op when no passkey session exists, so it is always safe to call on sign-out before
-// returning to the login. The browser drops the __Host- cookie; the next /admin call carries no session.
-export async function passkeyLogout(t: Transport): Promise<{ ok: boolean }> {
-  const r = await engineFetch(`${t.base}/admin/auth/logout`, { method: "POST", headers: { "content-type": "application/json" }, credentials: "include" });
+// returning to the login. The optional signal lets the caller abort a request that never answers. The
+// browser drops the __Host- cookie; the next /admin call carries no session.
+export async function passkeyLogout(t: Transport, signal?: AbortSignal): Promise<{ ok: boolean }> {
+  const r = await engineFetch(`${t.base}/admin/auth/logout`, { method: "POST", headers: { "content-type": "application/json" }, credentials: "include", ...(signal ? { signal } : {}) });
   return t.parseJson<{ ok: boolean }>(r, "passkey logout");
 }
 

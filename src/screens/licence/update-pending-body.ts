@@ -32,7 +32,7 @@ import {
   type RecordedSettleOutcome,
   type UpdateBodyEnv,
 } from "./shared.ts";
-import { STAGE_PROVING, STAGE_PROVING_SUBLINE, STALL_EXHAUSTED_LINE } from "./update-outcome-copy.ts";
+import { STAGE_PROVING, STAGE_PROVING_SUBLINE, STALL_EXHAUSTED_LINE, STALL_INCONCLUSIVE_LINE } from "./update-outcome-copy.ts";
 import { terminalLineForOutcome } from "./update-outcome-render.ts";
 import { buildProgressRegion } from "./update-progress.ts";
 import { pollUntilDefinitive, type RetryHooks, rampSettleWithBudget, readRecordedStatusWithRetry, type SettleLadderOutcome, settleWithBudget } from "./update-retry.ts";
@@ -216,7 +216,7 @@ async function doSettleNow(
     const recorded = await readRecordedStatusWithRetry(engine, hooks);
     const outcome = recordedSettleOutcome(recorded);
     region.detail(h("p", { style: "color:var(--text)" }, recordedSettleOutcomeLine(outcome)));
-    region.setTerminal(terminalLineForDisplay(outcome));
+    region.setTerminal(run.kind === "unresolved" && run.inconclusive === true && outcome.kind === "pending" ? STALL_INCONCLUSIVE_LINE : terminalLineForDisplay(outcome));
 
     if (outcome.kind === "applied") {
       const version = outcome.recommendedVersion ?? null;
@@ -253,6 +253,7 @@ async function doSettleNow(
       },
       () => region.setTerminal(STALL_EXHAUSTED_LINE),
       hooks,
+      { token },
     );
     reenable();
     return;

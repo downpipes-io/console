@@ -73,7 +73,7 @@ export function cfConfigWithheldReason(found: SourceDiscovery, cfConfigAdded: bo
     return "Cloudflare configuration (DNS, WAF, zone and account settings) is not on offer because it has not been added as a source yet. Add it under Sources, then return here.";
   }
   if (accountCount === 0) {
-    return "Cloudflare configuration is supported by this engine, but the discovery token could not read any account, so there is nothing to scope a configuration backup to. Give the token account read access under Sources.";
+    return "Cloudflare configuration is supported by this engine, but the discovery token could not read any account this engine may use, so there is nothing to scope a configuration backup to. Give the token account read access under Sources.";
   }
   return "Cloudflare configuration is not on offer at the moment. Check the discovery token under Sources.";
 }

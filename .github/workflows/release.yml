@@ -96,7 +96,9 @@ jobs:
           VERSION: ${{ steps.facts.outputs.version }}
         run: |
           set -euo pipefail
-          sha256sum "dist/console-${VERSION}.json" release-facts.json sbom.cdx.json > SHA256SUMS.txt
+          # Each line names its file as the release publishes it: the bare file name, with no folder.
+          (cd dist && sha256sum "console-${VERSION}.json") > SHA256SUMS.txt
+          sha256sum release-facts.json sbom.cdx.json >> SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Export subject hashes for SLSA
         id: hash

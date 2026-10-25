@@ -195,6 +195,7 @@ import {
   STAGE_PROVING_SUBLINE,
   STAGE_UPDATING_CONSOLE,
   STALL_LINE,
+  STALL_INCONCLUSIVE_LINE,
   STALL_EXHAUSTED_LINE,
   EXPIRED_CLEARED_LINE,
   appliedTerminalLine,
@@ -1592,6 +1593,8 @@ installDomShim();
 interface FlowCalls {
   apply: Array<Record<string, unknown>>;
   settleTokens: string[];
+  // settleComponents is the component list each settle call carried (undefined = none on the wire).
+  settleComponents: Array<UpdateComponentId[] | undefined>;
   // rampSettleTokens is the SIBLING-SITE LEDGER. The pending card has TWO settle call sites now, and the whole
   // defect was that one pending shape was being driven into the wrong one, so the fixture counts BOTH and every
   // assertion below states which ledger moved AND that the other did not.
@@ -1601,7 +1604,7 @@ interface FlowCalls {
   log: string[];
 }
 function newCalls(): FlowCalls {
-  return { apply: [], settleTokens: [], rampSettleTokens: [], rollbacks: [], statusReads: 0, log: [] };
+  return { apply: [], settleTokens: [], settleComponents: [], rampSettleTokens: [], rollbacks: [], statusReads: 0, log: [] };
 }
 function flowEngine(
   calls: FlowCalls,
@@ -1625,8 +1628,9 @@ function flowEngine(
       calls.log.push("apply");
       return Promise.resolve(typeof spec.apply === "function" ? spec.apply() : spec.apply);
     },
-    settleUpdate: (token: string) => {
+    settleUpdate: (token: string, components?: UpdateComponentId[]) => {
       calls.settleTokens.push(token);
+      calls.settleComponents.push(components);
       calls.log.push("settle");
       // The client now returns the DISCRIMINATED UpdateApplyResult (the applyUpdate/rampUpdate shape), so the
       // fixture wraps its plain SettleResult stub in the "result" arm and serves the "queued" arm from
@@ -2168,6 +2172,98 @@ function readLastToastMsg(): string {
   eq("24k5 NEGATIVE CONTROL: an atomic card off the page keeps the stall line", progressLine(atomicOff.out), STALL_LINE);
   const rampOff = await exhaust(rampPendingState(), false);
   eq("24k5 NEGATIVE CONTROL: a ramp card off the page keeps the stall line", progressLine(rampOff.out), STALL_LINE);
+}
+
+// 24k6. AN INCONCLUSIVE SETTLE RESOLVES ITSELF. The engine answers every attempt of the first ladder
+// "inconclusive" (the old version still answers), so the card says the new version is not answering yet and
+// the background poll waits. While the status read comes from the old version it sends no settle; once the
+// read says the new version answered, it sends one with the SAME token, and the section reloads on the
+// recorded result with no click. The pending card's own button does the same with its token.
+{
+  const makeCase = () => {
+    const calls = newCalls();
+    let reads = 0;
+    let settleCalls = 0;
+    const pending = (running: string): UpdateStatusRecord => ({ pending: { fromVersion: "a", toVersion: "0.2.0", recommendedVersion: "0.2.0", promotedAt: Date.now() - 1000, promotedBy: null }, last: null, runningVersion: running });
+    const engine = flowEngine(calls, {
+      apply: okPromote(),
+      settle: () => {
+        settleCalls++;
+        return settleCalls <= 4 ? settle("inconclusive", { toVersion: "0.2.0", fromVersion: "0.1.2", runningVersion: "0.1.2" }) : settle("applied", { toVersion: "0.2.0", fromVersion: "0.1.2" });
+      },
+      status: () => {
+        reads++;
+        if (settleCalls > 4) return lastRec({ outcome: "applied", toVersion: "0.2.0", recommendedVersion: "0.2.0", at: AT, by: "o@e.co" });
+        return pending(reads <= 6 ? "0.1.2" : "0.2.0");
+      },
+    });
+    return { calls, engine, settleCount: () => settleCalls };
+  };
+
+  const { calls, engine, settleCount } = makeCase();
+  const { env, counters } = flowEnv(engine);
+  markConnected(env.out);
+  await runLiveApplyFlow(env, "tok-k6", ["engine"], null, ZERO_HOOKS);
+  eq("24k6 the card says the new version is not answering yet", progressLine(env.out), STALL_INCONCLUSIVE_LINE);
+  await flushAsync(60);
+  eq("24k6 the poll sent exactly one more settle, after the ladder's four", settleCount(), 5);
+  eq("24k6 with the same token", calls.settleTokens.every((t) => t === "tok-k6"), true);
+  eq("24k6 and the same component list, on the poll's settle as on the ladder's", calls.settleComponents.map((c) => (c ?? []).join(",")).join("|"), "engine|engine|engine|engine|engine");
+  eq("24k6 and the section reloaded on the recorded result", counters.reloads, 1);
+  eq("24k6 the line is the applied sentence", progressLine(env.out), appliedTerminalLine("0.2.0", { confirmationPending: false }));
+}
+
+// 24k7. The pending card's verify button hands the poll its token too, so the same hand-off works after a
+// reload that left the operator with the card.
+{
+  const calls = newCalls();
+  const out = document.createElement("div");
+  const { env, counters } = pendingEnv(out);
+  markConnected(out);
+  let settleCalls = 0;
+  const engine = flowEngine(calls, {
+    apply: okPromote(),
+    settle: () => (++settleCalls <= 4 ? settle("inconclusive", { runningVersion: "0.1.2" }) : settle("applied", { toVersion: "0.2.0", fromVersion: "0.1.2" })),
+    status: () => (settleCalls > 4
+      ? lastRec({ outcome: "applied", toVersion: "0.2.0", recommendedVersion: "0.2.0", at: AT, by: "o@e.co" })
+      : { pending: { fromVersion: "a", toVersion: "0.2.0", recommendedVersion: "0.2.0", promotedAt: Date.now() - 1000, promotedBy: null }, last: null, runningVersion: "0.2.0" }),
+  });
+  const body = pendingUpdateBody(engine, pendingState(), env, ZERO_HOOKS);
+  (qs(body, "#update-settle-token") as unknown as { value: string }).value = "tok-k7";
+  (qsa(body, "button")[0] as unknown as { click: () => void }).click();
+  await flushAsync(80);
+  eq("24k7 the pending card's poll sent one more settle", settleCalls, 5);
+  eq("24k7 with the card's token", calls.settleTokens.every((t) => t === "tok-k7"), true);
+  eq("24k7 and the section reloaded", counters.reloads, 1);
+}
+
+// 24k8. THE "NOT ANSWERING YET" LINE SHOWS ONLY OVER THE STATE IT DESCRIBES. It needs both that the settle
+// ladder's last answer was inconclusive AND that the record is still pending. Each half is held by a case
+// that has the other half true. Neither case lets the poll run (the output is off the page), so the line is
+// the one set right after the ladder.
+{
+  const pendingNow = (): UpdateStatusRecord => ({ pending: { fromVersion: "a", toVersion: "0.2.0", recommendedVersion: "0.2.0", promotedAt: Date.now() - 1000, promotedBy: null }, last: null, runningVersion: "0.1.2" });
+  const inconclusiveSettle = (): SettleResult => settle("inconclusive", { toVersion: "0.2.0", fromVersion: "0.1.2", runningVersion: "0.1.2" });
+  const cases: Array<{ what: string; settle: (() => SettleResult) | undefined; status: () => UpdateStatusRecord; want: string }> = [
+    { what: "inconclusive answers over a pending record show the new line", settle: inconclusiveSettle, status: pendingNow, want: STALL_INCONCLUSIVE_LINE },
+    { what: "inconclusive answers over a record that does not say pending keep the stall line", settle: inconclusiveSettle, status: () => ({ pending: null, last: null }), want: STALL_LINE },
+    { what: "a settle that never answered over a pending record keeps the stall line", settle: undefined, status: pendingNow, want: STALL_LINE },
+  ];
+  for (const c of cases) {
+    const flowCalls = newCalls();
+    const flow = flowEnv(flowEngine(flowCalls, { apply: okPromote(), ...(c.settle ? { settle: c.settle } : {}), status: c.status }));
+    await runLiveApplyFlow(flow.env, "tok", null, null, ZERO_HOOKS);
+    eq(`24k8 apply flow: ${c.what}`, progressLine(flow.env.out), c.want);
+
+    const cardCalls = newCalls();
+    const out = document.createElement("div");
+    const { env } = pendingEnv(out);
+    const card = pendingUpdateBody(flowEngine(cardCalls, { apply: okPromote(), ...(c.settle ? { settle: c.settle } : {}), status: c.status }), pendingState(), env, ZERO_HOOKS);
+    (qs(card, "#update-settle-token") as unknown as { value: string }).value = "tok";
+    (qsa(card, "button")[0] as unknown as { click: () => void }).click();
+    await flushAsync(40);
+    eq(`24k8 pending card: ${c.what}`, progressLine(out), c.want);
+  }
 }
 
 // 24l. THE THIRD FIRST-CLASS OUTCOME: applied WITH CONFIRMATION PENDING -- the engine kept the
@@ -2861,6 +2957,15 @@ async function openConfirmSurface(): Promise<HTMLElement | null> {
   const rollBtn = surface ? buttonsOf(surface).find((b) => b.text === "Roll back") : undefined;
   rollBtn?.click();
   eq("still resolves true on confirm (never blocked by the failed plan read)", await decision, true);
+}
+
+// 31c2. The standalone rollback token hint carries the Secrets Store caveat the apply flow carries: the engine's
+// 10220 second route uploads the older code as a new version, and that upload needs Secrets Store edit.
+{
+  const engine = {} as unknown as EngineClient;
+  const card = rollbackControl(engine, { urgent: false }, () => {});
+  const text = textOf(card);
+  ok("the rollback token hint names the Secrets Store edit caveat", text.includes("add Secrets Store edit to the token as well: the upload-version step refuses without it"));
 }
 
 // 31d. The standalone rollback CONTROL wires confirmEngineRollback in (an end-to-end proof, not just the

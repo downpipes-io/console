@@ -225,6 +225,11 @@ export interface ComponentApplyResult {
 //   "rolled-back"     the canary did not sing (or the gate could not confirm health); the engine re-deployed
 //                     the recorded prior version. `reason` says why; nothing was lost (data + recovery were
 //                     never at risk), so the console frames this calmly, not as a failure of the platform.
+//   "inconclusive"    the old version still answered this settle, so nothing was decided and the pending
+//                     stays armed (reason "old-version-answering"). `runningVersion` is the version that
+//                     answered. Not in the engine's SettleResult union (the engine returns it from the guard
+//                     in router-updates.ts), so test/validate-update-outcome-vocabulary.ts checks its
+//                     strings against the engine's exported constants instead.
 //   "rollback-failed" the canary did not sing AND the rollback deploy itself failed, so the engine is still
 //                     serving the rejected build. The engine's own SettleResult (update-apply.ts) declares
 //                     it. Before this union named it, each reader compared through a string cast, and a
@@ -234,8 +239,10 @@ export interface ComponentApplyResult {
 // compared against.
 export interface SettleResult {
   phase: "settle";
-  outcome: "applied" | "rolled-back" | "rollback-failed";
+  outcome: "applied" | "rolled-back" | "rollback-failed" | "inconclusive";
   recommendedVersion: string;
+  // runningVersion (ADDITIVE): present on an "inconclusive" answer; the version that answered the settle.
+  runningVersion?: string;
   fromVersion: string;
   toVersion: string;
   canaryBaseline?: CanaryLiveness;
@@ -438,12 +445,18 @@ export interface UpdateSettledOutcome {
 }
 
 export interface UpdateStatusRecord {
+  // runningVersion (ADDITIVE): the version of the code that answered this read. While a settle is
+  // inconclusive, the stall poll settles again once this equals the pending's recommendedVersion. Absent
+  // on an engine before this field, and then the poll only reads.
+  runningVersion?: string;
   pending: null | {
     fromVersion: string;
     toVersion: string;
     recommendedVersion: string;
     canaryBaseline?: CanaryLiveness;
-    promotedAt: string;
+    // The engine writes epoch milliseconds (a number); older fixtures carry an ISO string. The stall poll's
+    // re-settle reads it only when it is a number.
+    promotedAt: string | number;
     promotedBy: string | null;
     // percentage is THE DISCRIMINATOR BETWEEN THE TWO SETTLE ROUTES. The engine writes it onto a pending
     // record ONLY from the opt-in gradual ramp (never from the atomic apply, see engine

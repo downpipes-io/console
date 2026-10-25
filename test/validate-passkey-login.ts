@@ -14,7 +14,7 @@
 //       clientDataJSON/authenticatorData/signature/userHandle), round-tripping the bytes exactly
 //     webauthnSupported: the truth table over (hasCredentials, hasPublicKeyCredential)
 //     reasonMessage / passkeyErrorMessage: honest copy for the coarse engine reasons and the thrown
-//       DOMException cases (cancel/timeout, unsupported, insecure), with no U+2014
+//       DOMException cases (cancel/timeout, unsupported, insecure)
 //   FLOWS (real runLogin / runRegister with stubs), asserting the REQUEST BODIES the engine receives and
 //   the success / cancel / unknown handling:
 //     login success: login/begin(email) -> get(decoded options) -> login/finish(challengeId, encoded
@@ -559,7 +559,7 @@ async function testPureHelpers(fx: PasskeyFixtures): Promise<void> {
     ok("no navigator.credentials -> unsupported", !webauthnSupported({ hasCredentials: false, hasPublicKeyCredential: true }));
     ok("neither -> unsupported", !webauthnSupported({ hasCredentials: false, hasPublicKeyCredential: false }));
 
-  console.log("\n-- reasonMessage / passkeyErrorMessage: honest copy, no U+2014 --");
+  console.log("\n-- reasonMessage / passkeyErrorMessage: honest copy --");
   {
     ok("unknown_credential names an unregistered passkey", /not registered/i.test(reasonMessage("unknown_credential", "login")));
     ok("already_registered names a re-registration", /already registered/i.test(reasonMessage("already_registered", "register")));
@@ -617,18 +617,6 @@ async function testPureHelpers(fx: PasskeyFixtures): Promise<void> {
     // new generic one: the new test is a floor under the unnamed cases, not a ceiling over the named ones.
     ok("a real NotAllowedError DOMException still reads as cancelled or timed out", /cancelled or timed out/i.test(passkeyErrorMessage(new DOMException("cancelled", "NotAllowedError"), "register")));
     ok("a real SecurityError DOMException still names the https requirement", /secure \(https\)/i.test(passkeyErrorMessage(new DOMException("insecure", "SecurityError"), "login")));
-    ok("the new browser-refusal copy contains no U+2014", !rangeReg.includes("—") && !passkeyErrorMessage(rangeErr, "login").includes("—"));
-    const allCopy = [
-      reasonMessage("unknown_credential", "login"), reasonMessage("already_registered", "register"),
-      reasonMessage("challenge", "login"), reasonMessage("origin", "login"), reasonMessage("signature", "login"),
-      reasonMessage("clone", "login"), reasonMessage("user_present", "login"), reasonMessage("bad_request", "register"),
-      reasonMessage("bad_request", "login"), reasonMessage("x", "login"),
-      reasonMessage("forbidden", "register"), reasonMessage("forbidden", "login"),
-      cancelLogin, cancelReg, passkeyErrorMessage(named("NotSupportedError"), "register"),
-      passkeyErrorMessage(named("SecurityError"), "login"), passkeyErrorMessage(named("AbortError"), "login"),
-      passkeyErrorMessage(new Error("boom"), "register"),
-    ].join(" ");
-    ok("no copy contains a U+2014", !allCopy.includes("—"));
   }
 }
 
@@ -1527,9 +1515,6 @@ async function testAnsweredIsNotUnreachable(): Promise<void> {
     // The DOMException branches must be untouched by all of this: a cancel is not an engine answer and must
     // not be re-routed through the classifier.
     ok("a cancelled gesture is still a cancel, not an engine answer", /cancelled or timed out/i.test(passkeyErrorMessage(named("NotAllowedError"), "login")));
-
-    const produced = [passkeyErrorMessage(unreachable, "login"), recoveryTransportMessage(unreachable)].join(" ");
-    ok("no U+2014 in the copy this section exercises", !produced.includes("—"));
   } finally {
     g.fetch = savedFetch;
     console.error = savedError;

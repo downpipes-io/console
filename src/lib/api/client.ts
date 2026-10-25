@@ -247,7 +247,7 @@ export class EngineClient {
   passkeyRegisterFinish(email: string, credential: PasskeyAttestationCredential, displayName?: string, inviteToken?: string): Promise<PasskeyFinish> { return passkey.passkeyRegisterFinish(this.t, email, credential, displayName, inviteToken); }
   passkeyLoginBegin(email?: string): Promise<PasskeyLoginBegin> { return passkey.passkeyLoginBegin(this.t, email); }
   passkeyLoginFinish(challengeId: string, credential: PasskeyAssertionCredential): Promise<PasskeyFinish> { return passkey.passkeyLoginFinish(this.t, challengeId, credential); }
-  passkeyLogout(): Promise<{ ok: boolean }> { return passkey.passkeyLogout(this.t); }
+  passkeyLogout(signal?: AbortSignal): Promise<{ ok: boolean }> { return passkey.passkeyLogout(this.t, signal); }
   bootstrapSendLink(): Promise<{ ok: boolean }> { return passkey.bootstrapSendLink(this.t); }
 
   // ---- Session management --------------------------------------------------------------------------

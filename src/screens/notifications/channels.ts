@@ -115,7 +115,7 @@ function renderChannelsTable(engine: EngineClient, rows: NotifyChannel[], reload
         },
       },
       { key: "kind", header: "Kind", sortable: true, sortValue: (c) => c.kind, render: (c) => kindBadge(c.kind) },
-      { key: "target", header: "Destination", render: (c) => h("span", { class: "mono field__hint", style: "overflow-wrap:anywhere" }, channelTargetDisplay(c)) },
+      { key: "target", header: "Destination", render: (c) => h("span", { class: "mono field__hint wrap-anywhere" }, channelTargetDisplay(c)) },
       { key: "created", header: "Added", sortable: true, sortValue: (c) => c.createdAt, render: (c) => h("span", { title: absoluteTime(c.createdAt) }, relativeTime(c.createdAt)) },
       {
         key: "actions",

@@ -63,18 +63,18 @@ export function rollbackControl(engine: EngineClient, mode: RollbackControlMode,
   // The one-shot token field, collected exactly like the apply flow (the rollback re-deploys the prior version,
   // which needs the deploy token). Held only in the local `token` for the call; never stored.
   //
-  // Deliberately NO Secrets Store caveat here, unlike update-pending-body.ts/update-available-body.ts/
-  // update-ramp.ts/update-components-advanced.ts: a rollback never calls the engine's uploadVersion (which
-  // re-sends the whole binding set and is what needs the extra scope). It only calls deployVersion against
-  // an ALREADY-uploaded version id (engine/src/admin/cf-deploy.ts), a plain POST .../deployments carrying no
-  // binding metadata at all, so the template's Workers Scripts: Edit is genuinely enough even when the
-  // engine binds a Secrets Store secret elsewhere.
+  // The Secrets Store caveat applies here as it does to the apply flow.
+  // The engine's rollback first deploys the older version id (engine/src/admin/update-rollback-deploy.ts).
+  // When Cloudflare refuses that with 10220, the engine uploads the older code as a new version
+  // that keeps the current bindings (uploadVersion with keep_bindings), checks it, then deploys it.
+  // That upload needs Secrets Store edit when the engine binds a Secrets Store secret,
+  // so the token hint carries the same caveat as the apply flow's token hint.
   const tokenField = field({
     id: mode.urgent ? "update-rollback-token-urgent" : "update-rollback-token",
     label: "One-shot deploy token",
     type: "password",
     placeholder: "Paste your Cloudflare API token",
-    hint: "A Cloudflare API token from the \"Edit Cloudflare Workers\" template, needed to re-deploy the previous version. Used once and discarded; never stored, never logged, never sent to the vendor.",
+    hint: "A Cloudflare API token from the \"Edit Cloudflare Workers\" template, needed to re-deploy the previous version. If your engine binds a Secrets Store secret as a backup source, add Secrets Store edit to the token as well: the upload-version step refuses without it. Used once and discarded; never stored, never logged, never sent to the vendor.",
     doc: { href: "https://docs.downpipes.io/operations/update-channel-trust-and-rollback", anchor: "the-standalone-rollback" },
     autocomplete: "off",
     validate: (v) => (v.length >= 1 ? null : "Paste the deploy token to roll back."),

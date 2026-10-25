@@ -540,6 +540,18 @@ async function testInboxScreen(): Promise<void> {
   }
 
   {
+    // A queued member removal takes the role only. Its card points at Revoke sign-in for after the removal is
+    // applied; a card of any other kind says nothing about sign-in.
+    const removal = makeChange({ id: "chg_rm", kind: "role-delete", diff: [diffLine("Remove member leaver@example.com")] });
+    const other = makeChange({ id: "chg_oth", kind: "downpipe-upsert" });
+    const withRemoval = textOf(await renderInbox("checker@example.com", "owner", [removal]));
+    ok("a pending member removal points at Revoke sign-in for after it is applied", withRemoval.includes("Once the removal is applied, use Revoke sign-in on the Sign-in factors list"));
+    ok("the pending member removal says the passkeys, recovery codes and invites remain", withRemoval.includes("Removing the role leaves their passkeys, recovery codes and open invites."));
+    const withoutRemoval = textOf(await renderInbox("checker@example.com", "owner", [other]));
+    ok("a pending change of another kind carries no Revoke sign-in pointer", !withoutRemoval.includes("Revoke sign-in"));
+  }
+
+  {
     // THE INBOX RENDERS ONLY WHAT THE ENGINE SERVES. listPendingChanges (engine scheduler-do-change-control.ts)
     // returns pending records only, so the decided-card branches, the "Decided requests" section and the
     // "Nothing is awaiting approval." line could never be reached against a real engine. A non-pending record

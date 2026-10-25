@@ -157,7 +157,7 @@ function presentAccess(v: AccessVerdict): AccessPresentation {
         glyph: ICON_SHIELD_CHECK,
         title: v.email ? `Passkey session as ${v.email}` : "Passkey session",
         body:
-          "You signed in with a passkey; the engine verified that signature once, then issued this browser a session cookie. Every request since, including this one, is checked against the cookie's signature and expiry, not your authenticator, so your password manager can stay locked and this stays true. Sign out ends the session immediately; signing back in needs the passkey again.",
+          "You signed in with a passkey; the engine verified that signature once, then issued this browser a session cookie. Every request since, including this one, is checked against the cookie's signature and expiry, not your authenticator, so your password manager can stay locked and this stays true. Sign out asks the engine to end every session under your email. If the engine does not confirm, this session can stay valid until it expires, and the console tells you so. Signing back in needs the passkey again.",
         caveat:
           "Want a stricter posture? Put Cloudflare Access in front of the engine (IP allowlisting, SSO factor policy); the two run together.",
       };

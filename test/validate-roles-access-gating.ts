@@ -110,16 +110,24 @@ const CUSTOM_ROLE_CALLER: Caller = {
   customRole: CUSTOM_ROLE, customCapabilities: ["access.policy", "roles.write", "downpipe.write"],
 };
 
-function fakeMemberEngine(): { engine: EngineClient; deleteRoleCalls: string[] } {
+function fakeMemberEngine(): { engine: EngineClient; deleteRoleCalls: string[]; revokeCalls: string[] } {
   const deleteRoleCalls: string[] = [];
+  const revokeCalls: string[] = [];
   const engine = {
+    async getConfigApprovalPolicy() {
+      return { requireConfigApproval: false };
+    },
+    async revokeSignInFactors(email: string) {
+      revokeCalls.push(email);
+      return { revoked: { passkeyCredentials: 0, recovery: false, invitesLive: 0, invitesExpired: 0 }, sessionsTerminated: false };
+    },
     async deleteRole(email: string) {
       deleteRoleCalls.push(email);
       // deleteRole now resolves to a MutationResult (applied vs the change-control-queued 202).
       return { status: "applied", value: { deleted: true } };
     },
   } as unknown as EngineClient;
-  return { engine, deleteRoleCalls };
+  return { engine, deleteRoleCalls, revokeCalls };
 }
 
 async function main(): Promise<void> {
@@ -388,7 +396,7 @@ async function main(): Promise<void> {
   // ------------------------------------------------------------------------
   {
     setCaller(ACCESS_ADMIN);
-    const { engine, deleteRoleCalls } = fakeMemberEngine();
+    const { engine, deleteRoleCalls, revokeCalls } = fakeMemberEngine();
     const el = renderRolesTable(engine, memberRows, () => undefined);
     const row = rowFor(el, "teammate@example.com");
     ok("access-admin: the operator row renders", row !== undefined);
@@ -402,18 +410,30 @@ async function main(): Promise<void> {
     const surface = qs(document.body, ".dialog--modal");
     const confirmBtn = surface ? findButtonByText(surface, "Remove member") : undefined;
     ok("access-admin: the remove-member confirm modal opens", confirmBtn !== undefined);
-    // The modal's claim about what survives the removal must match the engine. A recovery code still signs
-    // the person in, but it enrols a passkey for an off-roster address only when the roster read fails or
-    // returns no rows (classifyRosterMembership treats an empty roster as unreadable):
+    // The modal offers to revoke sign-in, ticked by default for a removal that takes effect at once.
+    const revokeBox = surface ? qsa(surface, "input").find((i) => i.getAttribute("id") === "offboard-revoke") : undefined;
+    ok("offboard modal: offers 'Also revoke sign-in', ticked by default", revokeBox !== undefined && (revokeBox as unknown as { checked: boolean }).checked === true);
+    // With the option unticked the modal's claim about what survives the removal must match the engine. A
+    // recovery code still signs the person in, but it enrols a passkey for an off-roster address only when the
+    // roster read fails or returns no rows (classifyRosterMembership treats an empty roster as unreadable):
     // recovery sign-in answers enrolPasskey:false and the self-add and invite routes refuse (engine
     // rosterRefusesEnrolment, which fails open). So the modal must not say codes "on their own are enough
     // to enrol a fresh passkey".
+    if (revokeBox) {
+      (revokeBox as unknown as { checked: boolean }).checked = false;
+      revokeBox.dispatchEvent(makeEvent({ type: "change", bubbles: true }));
+    }
     const modalText = surface ? textOf(surface) : "";
     ok("offboard modal: does not say recovery codes alone enrol a passkey", !modalText.includes("on their own are enough to enrol"));
-    ok("offboard modal: says a passkey or recovery code still signs them in", modalText.includes("A passkey or a recovery code still signs them in."));
-    ok("offboard modal: says enrolment needs the role table to be unreadable or empty", modalText.includes("can enrol a new passkey only if the engine cannot read the role table, or finds it empty"));
+    ok("offboard modal: unticked, says a passkey or recovery code still signs them in", modalText.includes("A passkey or a recovery code still signs them in."));
+    ok("offboard modal: unticked, says enrolment needs the role table to be unreadable or empty", modalText.includes("can enrol a new passkey only if the engine cannot read the role table, or finds it empty"));
+    if (revokeBox) {
+      (revokeBox as unknown as { checked: boolean }).checked = true;
+      revokeBox.dispatchEvent(makeEvent({ type: "change", bubbles: true }));
+    }
     if (confirmBtn) click(confirmBtn);
     await flushAsync();
+    eq("access-admin: engine.revokeSignInFactors fired for the operator before the delete", revokeCalls, ["teammate@example.com"]);
     eq("access-admin: engine.deleteRole actually fired for the operator", deleteRoleCalls, ["teammate@example.com"]);
     ok("access-admin: the confirm modal closes afterwards", qs(document.body, ".dialog--modal") === null);
   }

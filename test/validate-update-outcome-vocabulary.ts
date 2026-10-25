@@ -196,6 +196,67 @@ function settleOutcomeUnion(src: string, where: string): Set<string> | null {
   }
 }
 
+// ---- 1c. the inconclusive settle answer and the poll ceiling ----------------------------------------
+// The engine's guard answers a settle "inconclusive" while the old version still answers. That outcome is
+// returned from router-updates.ts and is NOT in the SettleResult union read above, so the console's copy of
+// it is checked here, by the engine's exported constant names (never by line). The console's stall poll must
+// also end inside the engine's wait window: a poll that ran past SETTLE_VERSION_WAIT_MS would settle after
+// the guard had lifted and take the ordinary path on an old version.
+{
+  const routerPath = resolve(root, "src/admin/router-updates.ts");
+  const routerSrc = readFileSync(routerPath, "utf8");
+  const constOf = (src: string, name: string): string | null => src.match(new RegExp(`export const ${name}(?::[^=]+)?\\s*=\\s*([^;]+);`))?.[1]?.trim() ?? null;
+  const literal = (expr: string | null): string | null => {
+    const m = expr?.match(/^"([^"]*)"$/);
+    return m === null || m === undefined ? null : (m[1] ?? null);
+  };
+  // A product of integer literals (underscores allowed), which is all these durations are.
+  const product = (expr: string | null): number | null => {
+    if (expr === null || !/^[\d_]+(\s*\*\s*[\d_]+)*$/.test(expr)) return null;
+    return expr.split("*").reduce((acc, f) => acc * Number(f.replace(/_/g, "")), 1);
+  };
+  const refuse = (what: string): never => {
+    console.error(`validate-update-outcome-vocabulary: REFUSED, could not read ${what}.`);
+    return verdictCannotCheck();
+  };
+  const engineWait = product(constOf(routerSrc, "SETTLE_VERSION_WAIT_MS"));
+  const engineOutcome = literal(constOf(routerSrc, "SETTLE_INCONCLUSIVE_OUTCOME"));
+  const engineReason = literal(constOf(routerSrc, "SETTLE_INCONCLUSIVE_REASON"));
+  if (engineWait === null) refuse(`SETTLE_VERSION_WAIT_MS in ${routerPath}`);
+  if (engineOutcome === null) refuse(`SETTLE_INCONCLUSIVE_OUTCOME in ${routerPath}`);
+  if (engineReason === null) refuse(`SETTLE_INCONCLUSIVE_REASON in ${routerPath}`);
+  ok(`read the engine's settle guard constants: wait ${engineWait} ms, outcome "${engineOutcome}", reason "${engineReason}"`);
+
+  const retrySrc = readFileSync(resolve(HERE, "../src/screens/licence/update-retry.ts"), "utf8");
+  const pollMs = product(constOf(retrySrc, "DEFAULT_STALL_POLL_MS"));
+  const pollAttempts = product(constOf(retrySrc, "MAX_STALL_POLL_ATTEMPTS"));
+  if (pollMs === null) refuse("DEFAULT_STALL_POLL_MS in src/screens/licence/update-retry.ts");
+  if (pollAttempts === null) refuse("MAX_STALL_POLL_ATTEMPTS in src/screens/licence/update-retry.ts");
+  const ceiling = (pollMs ?? 0) * (pollAttempts ?? 0);
+  if (ceiling < (engineWait ?? 0)) ok(`the console poll ceiling (${ceiling} ms) is inside the engine's wait window (${engineWait} ms)`);
+  else fail(`the console poll ceiling (${ceiling} ms) is not below the engine's SETTLE_VERSION_WAIT_MS (${engineWait} ms), so a late re-settle would reach the engine after the guard lifted`);
+
+  const consoleWait = product(constOf(retrySrc, "SETTLE_VERSION_WAIT_MS"));
+  const margin = product(constOf(retrySrc, "RESETTLE_CLOCK_MARGIN_MS"));
+  if (consoleWait === null) refuse("SETTLE_VERSION_WAIT_MS in src/screens/licence/update-retry.ts");
+  if (margin === null) refuse("RESETTLE_CLOCK_MARGIN_MS in src/screens/licence/update-retry.ts");
+  if (consoleWait === engineWait) ok(`the console's SETTLE_VERSION_WAIT_MS equals the engine's (${engineWait} ms)`);
+  else fail(`the console's SETTLE_VERSION_WAIT_MS is ${consoleWait} and the engine's is ${engineWait}, so the console would stop re-settling at the wrong time`);
+  if ((margin ?? 0) > 0 && (margin ?? 0) < (consoleWait ?? 0) - ceiling) ok(`the clock margin (${margin} ms) is positive and leaves the poll ceiling inside the cut-off`);
+  else fail(`the clock margin (${margin} ms) must be positive and below the wait less the poll ceiling`);
+
+  const consoleOutcome = literal(constOf(retrySrc, "SETTLE_INCONCLUSIVE_OUTCOME"));
+  const consoleReason = literal(constOf(retrySrc, "SETTLE_INCONCLUSIVE_REASON"));
+  if (consoleOutcome === engineOutcome) ok(`the console's inconclusive outcome equals the engine's ("${engineOutcome}")`);
+  else fail(`the console's SETTLE_INCONCLUSIVE_OUTCOME is ${JSON.stringify(consoleOutcome)} and the engine's is ${JSON.stringify(engineOutcome)}`);
+  if (consoleReason === engineReason) ok(`the console's inconclusive reason equals the engine's ("${engineReason}")`);
+  else fail(`the console's SETTLE_INCONCLUSIVE_REASON is ${JSON.stringify(consoleReason)} and the engine's is ${JSON.stringify(engineReason)}`);
+
+  const consoleSettle = settleOutcomeUnion(readFileSync(WIRE_TYPES, "utf8"), "src/lib/api/types/updates.ts");
+  if (consoleSettle !== null && engineOutcome !== null && consoleSettle.has(engineOutcome)) ok(`SettleResult.outcome declares the guard's "${engineOutcome}"`);
+  else fail(`the engine's settle guard returns "${engineOutcome}" and the console's SettleResult.outcome does not declare it`);
+}
+
 // ---- 2 and 3. the two readers that decide what an operator is told --------------------------------
 const sharedSrc = readFileSync(LICENCE_SHARED, "utf8");
 

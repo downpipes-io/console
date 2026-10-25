@@ -333,7 +333,31 @@ export async function runRestoreFlows(
     const plan = makePlan({ isLatest: true, plannedWrites: 1, bytes: 64 });
     lastDryRunReq = null;
     const payload = await driveRequestPanel(plan, { runId: "RUN-H3", cfConfig: { token: "cf-secret-token", accountId: "acc-123" } }, "non-hex account id");
-    ok("6h3: a non-hex account id blocks the dry-run with the inline hex error", payload === null && lastDryRunReq === null && textOf(lastRoot).includes("must be hexadecimal"));
+    ok("6h3: a non-hex account id blocks the dry-run with the inline hex error", payload === null && lastDryRunReq === null && textOf(lastRoot).includes("32 hexadecimal characters (0-9, a-f)"));
+  }
+
+  // 6h3b. The engine refuses a cfConfig / mediaRestore id that is not exactly 32 lower-case hex, so the
+  // console trims and lower-cases the paste, then requires 32 hex characters, and sends the normalised value.
+  {
+    const MSG = "32 hexadecimal characters (0-9, a-f)";
+    const plan = makePlan({ isLatest: true, plannedWrites: 1, bytes: 64 });
+    for (const [name, id] of [["31-character", "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d"], ["64-character", "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6".repeat(2)], ["non-hex", "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5dz"]] as const) {
+      lastDryRunReq = null;
+      const payload = await driveRequestPanel(plan, { runId: "RUN-H3B", cfConfig: { token: "cf-secret-token", accountId: id } }, `${name} account id`);
+      ok(`6h3b: a ${name} account id is refused with the 32-character message`, payload === null && lastDryRunReq === null && textOf(lastRoot).includes(MSG));
+    }
+    lastDryRunReq = null;
+    const upper = await driveRequestPanel(plan, { runId: "RUN-H3B", cfConfig: { token: "cf-secret-token", accountId: "A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6", zoneId: "  F1E2D3C4B5A6978869504132A1B2C3D4  " } }, "upper-case ids");
+    const cf = (lastDryRunReq as { cfConfig?: { accountId?: string; zoneId?: string } } | null)?.cfConfig;
+    ok("6h3b: an upper-case account id is accepted and sent lower-cased", upper !== null && cf?.accountId === "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6");
+    ok("6h3b: a padded upper-case zone id is trimmed and sent lower-cased", cf?.zoneId === "f1e2d3c4b5a6978869504132a1b2c3d4");
+    lastDryRunReq = null;
+    const media = await driveRequestPanel(plan, { runId: "RUN-H3B", mediaRestore: { token: "cf-media-token", accountId: " A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6 " } }, "padded media account id");
+    const mr = (lastDryRunReq as { mediaRestore?: { accountId?: string } } | null)?.mediaRestore;
+    ok("6h3b: a padded upper-case media account id is trimmed and sent lower-cased", media !== null && mr?.accountId === "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6");
+    lastDryRunReq = null;
+    const empty = await driveRequestPanel(plan, { runId: "RUN-H3B" }, "no ids");
+    ok("6h3b: empty optional id fields are still accepted", empty !== null);
   }
 
   // 6h4. CONFIG-ONLY and MEDIA-ONLY restores must reach the confirm gate, not the "nothing to apply"

@@ -78,6 +78,17 @@ export function dateOnly(input: string | number | null | undefined): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} UTC`;
 }
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// longDateUtc formats an absolute date as the day number, the full month name and the year. It reads the UTC
+// calendar day, so the day never shifts with the browser's time zone. Returns "" for an empty or invalid input.
+export function longDateUtc(input: string | number | null | undefined): string {
+  const ms = toMs(input);
+  if (ms === null) return "";
+  const d = new Date(ms);
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 function toMs(input: string | number | null | undefined): number | null {
   if (input === null || input === undefined || input === "") return null;
   if (typeof input === "number") return Number.isFinite(input) ? input : null;

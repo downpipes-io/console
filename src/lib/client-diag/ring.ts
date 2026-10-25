@@ -1416,6 +1416,11 @@ export function recordCatalogueDegraded(catalogueClass: ClientDiagCatalogueClass
   push({ kind: "catalogue-degraded", screen: currentScreen(), catalogueClass, count: 0, firstMs: elapsedMs(), lastMs: elapsedMs() });
 }
 
+const ENGINE_REFUSAL_ENV_ONLY_SCOPE =
+  "this downpipe's account is outside the discovery scope: with only the environment discovery token a source may name only the engine's own cloudflare account (cf_account_id, or the account the engine has verified); an owner discovery token under sources adds other accounts";
+const ENGINE_REFUSAL_OWNER_SCOPE = "this downpipe's account is no longer in the discovery scope; ask the owner to re-select it under sources";
+const ENGINE_REFUSAL_ZONE_NOT_IN_ACCOUNT = "this downpipe's zone is not a zone of its account; ask the owner to correct the zone under sources";
+
 // cfRediscoverRefusalClass maps the engine's REFUSAL of POST /downpipes/cf-config/rediscover to a closed member.
 // It is a CLASSIFIER in this codebase's strict sense: it reads the ENGINE'S OWN SENTENCE (a frozen string chosen
 // by the route, never a customer value and never a Cloudflare message) to SELECT a member, and returns the
@@ -1428,7 +1433,16 @@ export function recordCatalogueDegraded(catalogueClass: ClientDiagCatalogueClass
 export function cfRediscoverRefusalClass(error: unknown): ClientDiagCatalogueClass {
   const e = typeof error === "string" ? error.toLowerCase() : "";
   if (e.includes("no discovery token")) return "cf-rediscover-no-token";
-  if (e.includes("discovery scope")) return "cf-rediscover-out-of-scope";
+  // Matched on the engine's EXACT sentences (engine ec550250), lower-cased:
+  //   admin/router-discovery.ts:314 no Owner discovery config, so only the engine's own account is permitted:
+  //     "this downpipe's account is outside the discovery scope: " + ENV_ONLY_SCOPE_REFUSAL (sched/config-validate.ts:475)
+  //   admin/router-discovery.ts:314 an Owner discovery config that no longer selects the account:
+  //     "this downpipe's account is no longer in the discovery scope; ask the owner to re-select it under Sources"
+  //   admin/router-discovery.ts:323 the zone is not a zone of the account:
+  //     "this downpipe's zone is not a zone of its account; ask the owner to correct the zone under Sources"
+  if (e === ENGINE_REFUSAL_ENV_ONLY_SCOPE) return "cf-rediscover-env-only-scope";
+  if (e === ENGINE_REFUSAL_OWNER_SCOPE) return "cf-rediscover-out-of-scope";
+  if (e === ENGINE_REFUSAL_ZONE_NOT_IN_ACCOUNT) return "cf-rediscover-zone-not-in-account";
   return "cf-rediscover-failed";
 }
 

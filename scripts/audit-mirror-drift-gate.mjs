@@ -32,6 +32,66 @@ import { execFileSync } from "node:child_process";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
+// stripComments removes // line comments and /* */ block comments from TypeScript source while leaving any
+// double-quoted string whole, so a "//" inside a string survives and quoted text inside a comment cannot be
+// counted as a member. The engine lists several members on one line and trails comments after them
+// (`"a", "b", "c", // a: ... "quoted" ...`), so the parse below reads every quoted member in a slice, never
+// the first on each line.
+function stripComments(src) {
+  let out = "";
+  for (let i = 0; i < src.length; ) {
+    const c = src[i];
+    if (c === '"') {
+      let j = i + 1;
+      while (j < src.length && src[j] !== '"' && src[j] !== "\n") j += src[j] === "\\" ? 2 : 1;
+      out += src.slice(i, j + 1);
+      i = j + 1;
+    } else if (c === "/" && src[i + 1] === "/") {
+      while (i < src.length && src[i] !== "\n") i++;
+    } else if (c === "/" && src[i + 1] === "*") {
+      const end = src.indexOf("*/", i + 2);
+      i = end === -1 ? src.length : end + 2;
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out;
+}
+
+// The member patterns, one place, used by the extractors below AND the self-test. None is anchored to a line
+// start: each takes every match in its slice, so a line holding several members is read in full.
+const RE_ENGINE_ACTION = /"([a-z0-9-]+)"/g;
+const RE_CONSOLE_ACTION = /"([a-z0-9-]+)"/g;
+const RE_LABEL = /"([a-z0-9-]+)"\s*:/g;
+const RE_CASE = /\bcase\s+"([a-z-]+)"\s*:/g;
+const RE_STATE_LABEL = /"([a-zA-Z-]+)"\s*:/g;
+
+// selfTest proves the reader takes every member on a line. It runs before anything is compared, so a reader
+// that regresses to first-member-only fails here with its own name rather than passing a comparison quietly.
+function selfTest() {
+  const fails = [];
+  const check = (what, got, want) => {
+    if (JSON.stringify(got) !== JSON.stringify(want)) fails.push(`${what}: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+  };
+  // Each fixture plants several members on ONE line, then reads it with the SAME pattern the gate applies to
+  // the real source, so a pattern that goes back to one member per line fails here.
+  const all = (text, re) => [...stripComments(text).matchAll(re)].map((m) => m[1]);
+  check("engine actions: several members on one line", all('  "a", "b", "c", // x\n  "d",\n', RE_ENGINE_ACTION), ["a", "b", "c", "d"]);
+  check("engine actions: quoted text in a comment is not a member", all('  "a", // see "not-a-member" here\n  /* "nor-this" */ "b",\n', RE_ENGINE_ACTION), ["a", "b"]);
+  check("engine actions: a // inside a string does not hide the members after it", all('  "a", "x//y", "b",\n', RE_ENGINE_ACTION), ["a", "b"]);
+  check("console union: several members on one line", all('  | "a" | "b"\n  | "c"\n', RE_CONSOLE_ACTION), ["a", "b", "c"]);
+  check("labels: several keys on one line", all('  "a": "A", "b": "B",\n  "c": "C",\n', RE_LABEL), ["a", "b", "c"]);
+  check("describeTarget: fall-through case labels on one line", all('  case "a": case "b":\n    return 1;\n  case "c":\n', RE_CASE), ["a", "b", "c"]);
+  check("engine-state labels: several keys on one line", all('  "a": "A", "b-c": "B",\n', RE_STATE_LABEL), ["a", "b-c"]);
+  if (fails.length > 0) {
+    console.error("AUDIT MIRROR DRIFT GATE: FAIL -- the member reader no longer reads every member on a line (self-test):");
+    for (const f of fails) console.error(`  - ${f}`);
+    process.exit(1);
+  }
+}
+selfTest();
+
 // The engine repo: an explicit override, then the unified worktree, then the merged repo. The worktree wins
 // while a build is in flight, because it IS the engine that will ship. Same resolution as the client-diag gate.
 // The cast is comment-only. `.filter(Boolean)` drops the undefined DOWNPIPES_ENGINE at runtime but does not
@@ -96,7 +156,7 @@ function slice(src, startAnchor, endAnchor, what) {
 }
 
 function members(text, re) {
-  return [...text.matchAll(re)].map((m) => m[1]);
+  return [...stripComments(text).matchAll(re)].map((m) => m[1]);
 }
 
 // The floors are PARSE-SANITY floors, not coverage floors: they catch a regex that has stopped matching
@@ -112,20 +172,20 @@ function assertFound(list, what, atLeast) {
 }
 
 // ---- ENGINE side (the source of truth) ------------------------------------------------------------------
-const engineActions = assertFound(members(slice(engineSrc, "export const AUDIT_ACTIONS = [", "] as const;", "the engine's AUDIT_ACTIONS"), /^\s*"([a-z0-9-]+)",/gm), "engine actions", 50);
+const engineActions = assertFound(members(slice(engineSrc, "export const AUDIT_ACTIONS = [", "] as const;", "the engine's AUDIT_ACTIONS"), RE_ENGINE_ACTION), "engine actions", 50);
 const engineTargetBlock = slice(engineSrc, "export type AuditTarget =", "\n\n", "the engine's AuditTarget union");
 const engineTargetKinds = assertFound([...new Set(members(engineTargetBlock, /kind: "([a-z-]+)"/g))], "engine target kinds", 15);
 const engineStateFields = assertFound(members(slice(engineSrc, '"engine-state"; field:', "detail: string", "the engine's engine-state field union"), /"([a-zA-Z-]+)"(?=\s*[|;])/g), "engine-state fields", 2);
 
 // ---- CONSOLE side (the mirror) --------------------------------------------------------------------------
-const consoleActions = assertFound(members(slice(consoleTypes, "export type AuditAction =", "export type AuditOutcome", "the console's AuditAction union"), /^\s*\|\s*"([a-z0-9-]+)"/gm), "console actions", 5);
+const consoleActions = assertFound(members(slice(consoleTypes, "export type AuditAction =", "export type AuditOutcome", "the console's AuditAction union"), RE_CONSOLE_ACTION), "console actions", 5);
 const consoleTargetBlock = slice(consoleTypes, "export type AuditTarget =", "export interface AuditEvent", "the console's AuditTarget union");
 const consoleTargetKinds = assertFound([...new Set(members(consoleTargetBlock, /readonly kind: "([a-z-]+)"/g))], "console target kinds", 5);
 const consoleStateFields = assertFound(members(slice(consoleTargetBlock, '"engine-state"; readonly field:', "readonly detail", "the console's engine-state field union"), /"([a-zA-Z-]+)"(?=\s*[|;])/g), "console engine-state fields", 1);
-const actionLabels = assertFound(members(slice(consoleDisplay, "const AUDIT_ACTION_LABELS", "};", "AUDIT_ACTION_LABELS"), /^\s*"([a-z0-9-]+)":/gm), "action labels", 5);
+const actionLabels = assertFound(members(slice(consoleDisplay, "const AUDIT_ACTION_LABELS", "};", "AUDIT_ACTION_LABELS"), RE_LABEL), "action labels", 5);
 const groupedActions = assertFound(members(slice(consoleDisplay, "export const AUDIT_ACTION_GROUPS", "\n];", "AUDIT_ACTION_GROUPS"), /"([a-z0-9-]+)"/g).filter((a) => engineActions.includes(a) || !a.includes(" ")), "grouped actions", 5);
-const describedKinds = assertFound([...new Set(members(slice(consoleDisplay, "export function describeTarget", "export function outcomeStatus", "describeTarget"), /^\s*case "([a-z-]+)":/gm))], "described target kinds", 5);
-const stateFieldLabels = assertFound(members(slice(consoleShared, "export const ENGINE_STATE_FIELD_LABELS", "};", "ENGINE_STATE_FIELD_LABELS"), /^\s*"([a-zA-Z-]+)":/gm), "engine-state field labels", 1);
+const describedKinds = assertFound([...new Set(members(slice(consoleDisplay, "export function describeTarget", "export function outcomeStatus", "describeTarget"), RE_CASE))], "described target kinds", 5);
+const stateFieldLabels = assertFound(members(slice(consoleShared, "export const ENGINE_STATE_FIELD_LABELS", "};", "ENGINE_STATE_FIELD_LABELS"), RE_STATE_LABEL), "engine-state field labels", 1);
 
 const failures = [];
 function compare(what, engine, consoleSide, missingWhy, surplusWhy) {

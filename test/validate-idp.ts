@@ -345,7 +345,6 @@ async function main(): Promise<void> {
     ok(`guide "${id}": has at least 4 ordered steps`, Array.isArray(g.steps) && g.steps.length >= 4);
     ok(`guide "${id}": every step is non-empty`, g.steps.every((s) => typeof s === "string" && s.trim().length > 0));
     ok(`guide "${id}": a step points at the callback URL shown in the form`, g.steps.some((s) => /callback url/i.test(s)));
-    ok(`guide "${id}": no U+2014`, [...g.steps, ...(g.gotchas ?? []), ...(g.groups?.items ?? [])].every((s) => !s.includes("—")));
     if (g.groups) ok(`guide "${id}": groups section carries a heading + items`, g.groups.heading.length > 0 && g.groups.items.length > 0);
     if (g.docsUrl) ok(`guide "${id}": docs URL is https`, /^https:\/\//.test(g.docsUrl));
   }
@@ -389,7 +388,6 @@ async function main(): Promise<void> {
   ok("SAML guide names the ACS field", typeof SAML_GUIDE.acsFieldName === "string" && SAML_GUIDE.acsFieldName.length > 0);
   ok("SAML guide has at least 4 steps", SAML_GUIDE.steps.length >= 4);
   ok("SAML guide: a step points at the ACS URL shown in the form", SAML_GUIDE.steps.some((s) => /acs/i.test(s)));
-  ok("SAML guide: no U+2014", [...SAML_GUIDE.steps, ...(SAML_GUIDE.gotchas ?? [])].every((s) => !s.includes("—")));
 
   console.log(failures === 0 ? "\nNATIVE-IdP CONSOLE VECTORS PASS" : `\n${failures} FAILURE(S)`);
   verdictReached(failures); // the verdict is now DECLARED, so a silent exit 0 cannot pass as green

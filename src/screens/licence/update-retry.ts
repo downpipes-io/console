@@ -28,6 +28,21 @@ export const DEFAULT_STALL_POLL_MS = 20_000;
 // reopening the screen always re-derives the pending state fresh regardless: the pending card is the resume
 // surface, independent of this poll.
 export const MAX_STALL_POLL_ATTEMPTS = 30;
+// The engine's guard answers a settle "inconclusive" while the old version still answers, for at most
+// 15 minutes from the promote. The poll above (20s * 30 = 10 minutes) ends inside that window.
+// test/validate-update-outcome-vocabulary.ts checks all of these against the engine's own constants:
+// SETTLE_VERSION_WAIT_MS, SETTLE_INCONCLUSIVE_OUTCOME and SETTLE_INCONCLUSIVE_REASON.
+export const SETTLE_VERSION_WAIT_MS = 15 * 60 * 1000;
+// The engine counts its wait from the promote (pending.promotedAt), not from this poll, so a verify pressed
+// late has less of the window left than the poll's ceiling suggests. The poll stops re-settling this long
+// before the window ends: both clocks are read from different machines, and a settle sent on the edge would
+// reach the engine after the guard lifted. A pending with no promotedAt is never re-settled.
+export const RESETTLE_CLOCK_MARGIN_MS = 60_000;
+export const SETTLE_INCONCLUSIVE_OUTCOME = "inconclusive";
+export const SETTLE_INCONCLUSIVE_REASON = "old-version-answering";
+// The most settles one stall poll sends by itself. A status read and a settle that keep landing on different
+// versions cannot loop past this; the poll then goes on reading only.
+export const MAX_STALL_RESETTLES = 3;
 
 // RetryHooks are the injectable seams for the validators ONLY (drive the whole ladder with a zeroed clock).
 // Production callers pass {} and get the real production numbers.
@@ -37,6 +52,14 @@ export interface RetryHooks {
   statusRetries?: number;
   statusBackoffMs?: readonly number[];
   stallPollMs?: number;
+}
+
+// ResettleOptions lets the stall poll settle again by itself. `token` is the one the screen already holds
+// (a reloaded tab has none, so it passes no options and the poll only reads); `components` is the list the
+// first settle sent.
+export interface ResettleOptions {
+  token: string;
+  components?: UpdateComponentId[] | undefined;
 }
 
 // LadderRun is what one full grace-plus-retry run saw. `definitive` is the outcome the caller can act on;
@@ -76,6 +99,11 @@ async function runSettleLadder<T>(attemptOnce: () => Promise<T>, isDefinitive: (
   }
 }
 
+// isDefinitiveSettle is the four outcomes a settle can conclude with (see settleWithBudget below).
+function isDefinitiveSettle(kind: string): boolean {
+  return kind === "applied" || kind === "rolled-back" || kind === "rollback-failed" || kind === "applied-unconfirmed";
+}
+
 // SettleLadderOutcome is what a whole settle ladder run means to the caller. "settled" is the definitive
 // SettleResult it can act on; "unresolved" is the budget spent without one (the caller falls back to
 // readRecordedStatusWithRetry); "queued" is the engine's owner-action 202, which is NEITHER, and is the case
@@ -85,7 +113,10 @@ async function runSettleLadder<T>(attemptOnce: () => Promise<T>, isDefinitive: (
 // gated (engine router-updates.ts), so the engine answers 202 { ownerActionQueued } and settles nothing until
 // a second owner approves. Retrying that answer is wrong: it will not change until a human approves, so the
 // run stops on the first queued answer and the flow says so.
-export type SettleLadderOutcome = { kind: "settled"; settle: SettleResult } | { kind: "queued"; id: string } | { kind: "unresolved" };
+//
+// `inconclusive` rides on "unresolved" only: the engine answered, and its last answer was "inconclusive"
+// (the old version still answers), so the card can say the new version is not answering yet.
+export type SettleLadderOutcome = { kind: "settled"; settle: SettleResult } | { kind: "queued"; id: string } | { kind: "unresolved"; inconclusive?: boolean };
 
 // settleWithBudget runs the ladder over engine.settleUpdate, the ATOMIC (non-ramp) settle. Returns the
 // definitive SettleResult, the owner-action queue, or "unresolved" when the whole ladder is spent without
@@ -117,7 +148,10 @@ export async function settleWithBudget(
     hooks,
   );
   const d = run.definitive;
-  if (d === null) return { kind: "unresolved" };
+  if (d === null) {
+    const last = run.lastSeen;
+    return last !== null && last.status === "result" && last.value.outcome === SETTLE_INCONCLUSIVE_OUTCOME ? { kind: "unresolved", inconclusive: true } : { kind: "unresolved" };
+  }
   return d.status === "queued" ? { kind: "queued", id: d.id } : { kind: "settled", settle: d.value };
 }
 
@@ -190,12 +224,27 @@ export async function readRecordedStatusWithRetry(engine: EngineClient, hooks: R
 // render target is still live. Without it the poll stopped in silence and the stall line went on saying the
 // screen was checking when nothing was. The caller swaps that line for STALL_EXHAUSTED_LINE, so the words
 // on screen stop claiming a check the moment the check stops.
+//
+// `resettle` (optional) lets a tick settle as well as read. The engine answers a settle "inconclusive" while
+// the old version still answers, and nothing the screen holds says when the new one takes over; the status
+// read does: it carries `runningVersion`, the version that answered it. When the record is still pending and
+// that equals the pending's recommendedVersion, the poll sends ONE settle with the same token, at most
+// MAX_STALL_RESETTLES times in all. A definitive answer is not rendered from the settle itself: the engine
+// has written its record, so the poll re-reads it and renders that (persistence-first, like the first
+// ladder). "inconclusive", a queued 202 or any error leaves the poll reading. A status read without
+// `runningVersion` (an engine before this field) never re-settles. The engine's window runs from the
+// promote, so the poll also stops re-settling once the pending is within RESETTLE_CLOCK_MARGIN_MS of
+// SETTLE_VERSION_WAIT_MS old, and never re-settles a pending that carries no promotedAt.
+// Only "inconclusive" leads to another settle. A queued 202 (the engine recorded an owner approval, and
+// another settle could record a duplicate the customer never pressed), a thrown error or any other answer
+// ends re-settling for the stall; the poll goes on reading.
 export function pollUntilDefinitive(
   engine: EngineClient,
   isLive: () => boolean,
   onSettled: (outcome: RecordedSettleOutcome, rec: UpdateStatusRecord) => void,
   onExhausted: () => void,
   hooks: RetryHooks = {},
+  resettle?: ResettleOptions,
 ): void {
   const intervalMs = hooks.stallPollMs ?? DEFAULT_STALL_POLL_MS;
   let attempt = 0;
@@ -204,6 +253,26 @@ export function pollUntilDefinitive(
     if (intervalMs > 0) window.setTimeout(tick, intervalMs);
     else void Promise.resolve().then(tick);
   };
+  let resettles = 0;
+  let resettleEnded = false;
+  // concluded hands a definitive record to the caller and reports whether it did.
+  const concluded = (rec: UpdateStatusRecord): boolean => {
+    const outcome = recordedSettleOutcome(rec);
+    if (outcome.kind === "applied" || outcome.kind === "rolled-back" || outcome.kind === "rollback-failed" || outcome.kind === "applied-unconfirmed" || outcome.kind === "expired-cleared") {
+      onSettled(outcome, rec);
+      return true;
+    }
+    return false;
+  };
+  const shouldResettle = (rec: UpdateStatusRecord): boolean =>
+    resettle !== undefined &&
+    !resettleEnded &&
+    resettles < MAX_STALL_RESETTLES &&
+    rec.pending != null &&
+    typeof rec.pending.promotedAt === "number" &&
+    Date.now() - rec.pending.promotedAt < SETTLE_VERSION_WAIT_MS - RESETTLE_CLOCK_MARGIN_MS &&
+    typeof rec.runningVersion === "string" &&
+    rec.runningVersion === rec.pending.recommendedVersion;
   const tick = (): void => {
     if (!isLive()) return;
     if (attempt >= MAX_STALL_POLL_ATTEMPTS) {
@@ -213,12 +282,26 @@ export function pollUntilDefinitive(
     attempt++;
     void engine
       .updateStatus()
-      .then((rec) => {
+      .then(async (rec) => {
         if (!isLive()) return;
-        const outcome = recordedSettleOutcome(rec);
-        if (outcome.kind === "applied" || outcome.kind === "rolled-back" || outcome.kind === "rollback-failed" || outcome.kind === "applied-unconfirmed" || outcome.kind === "expired-cleared") {
-          onSettled(outcome, rec);
-          return;
+        if (concluded(rec)) return;
+        if (resettle !== undefined && shouldResettle(rec)) {
+          resettles++;
+          try {
+            const res = await engine.settleUpdate(resettle.token, resettle.components);
+            if (!isLive()) return;
+            if (res.status !== "result" || res.value.outcome !== SETTLE_INCONCLUSIVE_OUTCOME) {
+              resettleEnded = true;
+              if (res.status === "result" && isDefinitiveSettle(res.value.outcome)) {
+                const after = await engine.updateStatus();
+                if (!isLive()) return;
+                if (concluded(after)) return;
+              }
+            }
+          } catch {
+            // A settle fault ends re-settling and keeps the poll reading, exactly like a status fault.
+            resettleEnded = true;
+          }
         }
         reschedule();
       })

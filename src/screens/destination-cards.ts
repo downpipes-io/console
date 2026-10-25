@@ -123,7 +123,7 @@ function destinationTable(engine: EngineClient, list: DestinationList, reload: (
           "span",
           { class: "dp-name" },
           h("span", { class: "linklike" }, st.label ?? "The archive bucket"),
-          st.bucket ? h("span", { class: "dp-name__sub mono" }, st.bucket) : null,
+          st.bucket ? h("span", { class: "dp-name__sub mono wrap-anywhere" }, st.bucket) : null,
         ),
     },
     {
@@ -143,7 +143,7 @@ function destinationTable(engine: EngineClient, list: DestinationList, reload: (
           ? h(
               "span",
               { class: "dp-name" },
-              h("span", { class: "mono" }, st.endpointHost),
+              h("span", { class: "mono wrap-anywhere" }, st.endpointHost),
               st.region ? h("span", { class: "dp-name__sub mono" }, st.region) : null,
             )
           : h("span", { class: "field__hint" }, "not reported"),
@@ -420,7 +420,7 @@ function openDestinationDrawer(engine: EngineClient, st: DestinationStatus, relo
 
   const handle = openDetailDrawer({
     title: st.label ?? "The archive bucket",
-    ...(st.bucket ? { meta: h("span", { class: "mono" }, st.bucket) } : {}),
+    ...(st.bucket ? { meta: h("span", { class: "mono wrap-anywhere" }, st.bucket) } : {}),
     badges,
     body,
     // Keyed the same way the row's own dataTable identifies it (rowKey above): this drawer is
@@ -550,8 +550,8 @@ function renderPostureRows(engine: EngineClient, st: DestinationStatus, reload: 
   // The posture rows: names the owner set, never a credential (the status endpoint is
   // redaction-safe by construction). An absent field reads "not reported", never a guess.
   const rows = h("div", { class: "stack-sm" });
-  rows.appendChild(kvLine("Bucket", st.bucket ? h("span", { class: "mono" }, st.bucket) : "not reported"));
-  rows.appendChild(kvLine("Endpoint", st.endpointHost ? h("span", { class: "mono" }, st.endpointHost) : "not reported"));
+  rows.appendChild(kvLine("Bucket", st.bucket ? h("span", { class: "mono wrap-anywhere" }, st.bucket) : "not reported"));
+  rows.appendChild(kvLine("Endpoint", st.endpointHost ? h("span", { class: "mono wrap-anywhere" }, st.endpointHost) : "not reported"));
   rows.appendChild(kvLine("Region", st.region ? h("span", { class: "mono" }, st.region) : "not reported"));
   // Authentication posture: shown for the two NOTABLE readings, since a stored long-lived key is the
   // unremarkable default. Honest on both: STS still stores a long-lived principal key scoped to

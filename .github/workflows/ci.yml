@@ -419,7 +419,10 @@ jobs:
       - name: gitleaks (binary, full history)
         run: |
           VERSION=8.30.0
+          # The digest from the release's gitleaks_8.30.0_checksums.txt. Change it with VERSION.
+          SHA256=79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e
           curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tgz
+          echo "${SHA256}  /tmp/gitleaks.tgz" | sha256sum -c -
           tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
           /tmp/gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1
 

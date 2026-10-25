@@ -23,6 +23,7 @@ import { type LogFields, log } from "./log.ts";
 // is import-free and DOM-free, so the worker bundle takes nothing else with it.
 import { ENGINE_BINDING_ABSENT, ENGINE_BINDING_ABSENT_HEADER, CONSOLE_ORIGIN_FAULT, CONSOLE_ORIGIN_FAULT_HEADER } from "./lib/errors.ts";
 import { connectionSpecificHeaderRefusal } from "./lib/connection-specific-guard.ts";
+import { plaintextRedirectResponse, plaintextRefusedResponse, plaintextVerdict } from "./lib/plaintext-guard.ts";
 
 // Minimal binding type so this DOM-typed project does not need to pull in the full
 // Worker type set just for the assets fetcher.
@@ -349,7 +350,12 @@ export default {
           }),
         );
       }
-      const pathname = new URL(req.url).pathname;
+      // A request that arrived over plaintext http is refused (non-GET) or redirected to https (GET/HEAD) before
+      // any route sees it, so the claim code never rides a clear connection (lib/plaintext-guard.ts).
+      const reqUrl = new URL(req.url);
+      const plaintext = plaintextVerdict(req.method, reqUrl);
+      if (plaintext !== null) return withSecurityHeaders(plaintext === "refuse" ? plaintextRefusedResponse() : plaintextRedirectResponse(reqUrl));
+      const pathname = reqUrl.pathname;
       // The topology declaration: the SPA reads this at boot and, when proxied, adopts
       // its own origin as the engine URL automatically (overriding any remembered split
       // hostname), so an operator is never asked for an engine address that is, by

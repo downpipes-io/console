@@ -26,7 +26,7 @@
 // ../harness carries one: a named member may be excused from gating if it has a written reason and an
 // owner. Console has no chain-level equivalent to port it onto. Every exemption mechanism in this repo
 // sits INSIDE a single gate and speaks only for that gate's own population: the per-file allowlists in
-// innerhtml-sink-gate.mjs and capability-copy-gate.mjs, the burndown in field-bounds-gate.mjs, the EXEMPT
+// innerhtml-sink-gate.mjs and the other per-file gates, the burndown in field-bounds-gate.mjs, the EXEMPT
 // map in validator-reachability-gate.mjs, and the eight *_ALLOW_STALE environment overrides. Not one of
 // them is consulted between a member finishing and its exit code being read, which is the only position
 // from which the harness defect below can occur.

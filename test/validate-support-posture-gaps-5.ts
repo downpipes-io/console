@@ -574,6 +574,33 @@ async function g243(): Promise<void> {
   );
   eq("the residual refusal is counted, never dropped", cfRediscoverRefusalClass("unknown downpipe"), "cf-rediscover-failed");
 
+  // B-301. The engine's other two scope refusals, copied verbatim from the engine at ec550250:
+  //   router-discovery.ts:314 `this downpipe's account is outside the discovery scope: ${ENV_ONLY_SCOPE_REFUSAL}`
+  //   (config-validate.ts:475 holds ENV_ONLY_SCOPE_REFUSAL) when no Owner discovery config is stored;
+  //   router-discovery.ts:323 the zone-owner refusal.
+  const envOnly =
+    "this downpipe's account is outside the discovery scope: with only the environment discovery token a source may name only the engine's own Cloudflare account (CF_ACCOUNT_ID, or the account the engine has verified); an Owner discovery token under Sources adds other accounts";
+  const zoneOwner = "this downpipe's zone is not a zone of its account; ask the owner to correct the zone under Sources";
+  eq("the env-only scope refusal is NOT the Owner taking the account out of scope", cfRediscoverRefusalClass(envOnly), "cf-rediscover-env-only-scope");
+  eq("the zone-owner refusal has its own class", cfRediscoverRefusalClass(zoneOwner), "cf-rediscover-zone-not-in-account");
+  eq(
+    "the Owner-config refusal stays in cf-rediscover-out-of-scope",
+    cfRediscoverRefusalClass("this downpipe's account is no longer in the discovery scope; ask the owner to re-select it under Sources"),
+    "cf-rediscover-out-of-scope",
+  );
+  {
+    const { readFileSync } = await import("node:fs");
+    const vocab = readFileSync(new URL("../src/lib/client-diag/vocab.ts", import.meta.url), "utf8");
+    const remedy = (cls: string): string => {
+      const i = vocab.indexOf(`//   ${cls}`);
+      const j = vocab.indexOf("\n//   cf-", i + 5);
+      return i < 0 ? "" : vocab.slice(i, j < 0 ? i + 800 : j).replace(/\n\/\/\s*/g, " ");
+    };
+    ok("the env-only remedy says the engine is limited to its own account until an Owner stores a discovery token", /own (Cloudflare )?account/.test(remedy("cf-rediscover-env-only-scope")) && /Owner stores/.test(remedy("cf-rediscover-env-only-scope")));
+    ok("the env-only remedy does not claim the Owner took the account out of scope", remedy("cf-rediscover-env-only-scope").length > 50 && !/took|narrowed|no longer/.test(remedy("cf-rediscover-env-only-scope")));
+    ok("the zone remedy names the zone, corrected by the Owner under Sources", /zone/.test(remedy("cf-rediscover-zone-not-in-account")) && /Owner corrects/.test(remedy("cf-rediscover-zone-not-in-account")));
+  }
+
   // THE THROWN HALF IS DRIVEN THROUGH THE REAL TRANSPORT, NOT HAND-WRITTEN: hand-building `new Error("rediscover:
   // 429")` or `new TypeError("Failed to fetch")` would assert the classifier against an error the test composed
   // rather than the one client-transport.ts actually composes. Everything below is the error the console

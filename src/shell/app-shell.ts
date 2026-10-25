@@ -43,12 +43,13 @@ import {getStoredViewMode,
   type ViewMode,
 } from "../lib/view-mode.ts";
 import { chargeRailMark } from "./charge.ts";
-import { applyUpdateChip, buildEngineChip, renderAccount, type UpdateChipView } from "./chrome.ts";
+import { applyUpdateChip, buildEngineChip, renderAccount, UPDATE_CHIP_ROUTE, type UpdateChipView } from "./chrome.ts";
 import { buildShellDom } from "./dom.ts";
 import { wireGlobalKeys, wireRailToggle } from "./keyboard.ts";
 import { applyNavCount } from "./nav-links.ts";
 import { applyActiveRoute, renderRail, renderSetupStrip, setViewModeControl } from "./rail.ts";
 import type { ShellInternals } from "./types.ts";
+import { buildUpdateStrip, type UpdateBannerState, type UpdateStrip } from "./update-banner.ts";
 
 // The handles the shell exposes to main.ts / the router.
 export interface Shell {
@@ -93,6 +94,9 @@ export interface Shell {
   // naming the recommended version when the channel said one. Clicking it navigates to the Updates
   // section on /licence.
   setUpdateAvailable(view: UpdateChipView | null): void;
+  // Show or hide the full-width update strip (shell/update-banner.ts) from the same cached verdict plus the
+  // engine's support status and whether any alert channel exists. update null = hidden.
+  setUpdateBanner(state: UpdateBannerState): void;
   // The handlers main.ts wires (so the shell stays free of app wiring).
   onNavigate(fn: (route: string) => void): void;
   onOpenPalette(fn: () => void): void;
@@ -132,6 +136,16 @@ export function mountShell(host: Element): Shell {
     skip, shellEl, mainRegion, mainInner, railToggle, navEl, railFooter, scrim, setupStrip,
     updateChip, engineChip, accountSlot, viewModeToggle, viewExecBtn, viewTechBtn, navAnnounce,
   } = dom;
+
+  // The update strip sits between the context bar and the setup strip (shell/update-banner.ts). It is built
+  // here and seated in the shell element, so the static scaffold in dom.ts stays as it is.
+  const updateStrip = buildUpdateStrip({
+    navigate: (route) => handlers.navigate(route),
+    updateRoute: UPDATE_CHIP_ROUTE,
+    tour: isTourMode,
+    focusMain: () => mainRegion.focus({ preventScroll: true }),
+  });
+  shellEl.insertBefore(updateStrip.el, setupStrip);
 
   host.replaceChildren(skip, shellEl);
 
@@ -173,7 +187,7 @@ export function mountShell(host: Element): Shell {
   // contract main.ts + the router consume; they are built in buildShellHandles (below) from the
   // live DOM + internals + the handler record, so mountShell stays the assembler.
   return buildShellHandles({
-    internals, mainInner, mainRegion, navAnnounce, engineChip, updateChip, refreshViewToggle, handlers, closeRail,
+    internals, mainInner, mainRegion, navAnnounce, engineChip, updateChip, updateStrip, refreshViewToggle, handlers, closeRail,
   });
 }
 
@@ -199,6 +213,7 @@ interface ShellHandleDeps {
   // The "Update available" chip. Never replaced (applyUpdateChip patches it in place), so the
   // direct reference stays live for the whole session.
   updateChip: HTMLButtonElement;
+  updateStrip: UpdateStrip;
   refreshViewToggle: (mode?: ViewMode) => void;
   handlers: ShellHandlers;
   closeRail: () => void;
@@ -208,7 +223,7 @@ interface ShellHandleDeps {
 // kept separate from mountShell so the entry stays the assembler; the methods read the shell
 // state through deps.
 function buildShellHandles(deps: ShellHandleDeps): Shell {
-  const { internals, mainInner, mainRegion, navAnnounce, engineChip, updateChip, refreshViewToggle, handlers, closeRail } = deps;
+  const { internals, mainInner, mainRegion, navAnnounce, engineChip, updateChip, updateStrip, refreshViewToggle, handlers, closeRail } = deps;
   return {
     setMain(node: Node, measure: "prose" | "wide" | "full" = "wide", opts?: { quiet?: boolean }): void {
       // The bare content swap, shared by the quiet path and a real navigation: clear the region, set
@@ -337,6 +352,9 @@ function buildShellHandles(deps: ShellHandleDeps): Shell {
       // Patch the standing chip in place (show/hide + version text), so a cache refresh updates the
       // chrome without a rebuild or a reload; hidden is the only state until a real verdict lands.
       applyUpdateChip(updateChip, view);
+    },
+    setUpdateBanner(state: UpdateBannerState): void {
+      updateStrip.apply(state);
     },
     closeRail(): void {
       closeRail();

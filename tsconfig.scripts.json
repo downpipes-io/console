@@ -54,5 +54,5 @@
   // and it arrived the same way: it had no .d.mts until test/validate-sealed-export-unseal.ts imported
   // blankComments, and the declaration that made tsconfig.test.json able to check that import is exactly
   // what would have hidden the implementation from this one. The gate named it on the next run.
-  "files": ["scripts/source-text.mjs", "scripts/workspace-root.mjs"]
+  "files": ["scripts/doc-link-collect.mjs", "scripts/source-text.mjs", "scripts/workspace-root.mjs"]
 }

@@ -12,6 +12,7 @@
 import { probeCallOutcome, recordProbeOutcome } from "../client-diag/ring.ts";
 import { engineFetch } from "./engine-fetch.ts";
 import type { Transport } from "./client-transport.ts";
+import { requestAlertSinkRefresh } from "../alert-sink-signal.ts";
 import type {
   MutationResult,
   NotifyChannel,
@@ -37,7 +38,10 @@ export async function upsertNotifyChannel(t: Transport, channel: NotifyChannelIn
   // a stale-ambient-cookie action with no visible effect and no undo, which is why the engine gates both
   // directions, set as well as delete.
   const r = await t.gatedFetch("/admin/notify/channels", { method: "POST", headers: t.headers(), credentials: "include", body: JSON.stringify(channel) }, { adminOp: "notify-channel-upsert" });
-  return t.parseJsonOrPending<NotifyChannel>(r, "save notify channel");
+  const res = await t.parseJsonOrPending<NotifyChannel>(r, "save notify channel");
+  // The shell's update strip asks for an alert destination while none is enabled: tell it the list changed.
+  requestAlertSinkRefresh();
+  return res;
 }
 
 // deleteNotifyChannel removes a channel by id (POST-to-delete, consistent with the other deletes). It is
@@ -53,7 +57,9 @@ export async function deleteNotifyChannel(t: Transport, id: string): Promise<Mut
   // a stale-ambient-cookie action with no visible effect and no undo, which is why the engine gates both
   // directions, set as well as delete.
   const r = await t.gatedFetch("/admin/notify/channels/delete", { method: "POST", headers: t.headers(), credentials: "include", body: JSON.stringify({ id }) }, { adminOp: "notify-channel-delete" });
-  return t.parseJsonOrPending<{ deleted: boolean }>(r, "delete notify channel");
+  const res = await t.parseJsonOrPending<{ deleted: boolean }>(r, "delete notify channel");
+  requestAlertSinkRefresh();
+  return res;
 }
 
 // listNotifyRules returns every routing rule, global and per-downpipe (any authenticated role).

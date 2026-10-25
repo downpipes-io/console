@@ -64,6 +64,10 @@ export interface PushSyslogTarget {
 export interface PushDestinationView {
   present: boolean;
   endpoint?: string; // http sink only
+  // endpointRedacted is true when the engine cut the http endpoint, or the s3 endpoint, to scheme and host for a
+  // reader without the Owner capability (the path, query or fragment can carry a vendor credential). Absent for
+  // an Owner reader.
+  endpointRedacted?: boolean;
   format?: PushFormat;
   authHeaderName?: string; // http sink only
   enabled?: boolean;

@@ -187,7 +187,7 @@ security review can quickly locate the relevant source.
 (`src/worker.ts`). It makes no authentication decisions itself: the engine
 authenticates every admin API call. The engine accepts a Cloudflare Access JWT, its
 own signed session cookie (minted after a passkey sign-in or a native OIDC or SAML
-sign-in), or the bootstrap-only `ADMIN_TOKEN` bearer. The console attaches the bearer
+sign-in), or the `ADMIN_TOKEN` break-glass bearer, valid until retired. The console attaches the bearer
 only in the `authorization` HTTP header, never in a URL or query string.
 
 **Key ceremony.** The break-glass private key is generated in-browser using
