@@ -212,14 +212,12 @@ jobs:
       # into passing, this line still blocks. That is worth five seconds on the one tree that has no
       # acknowledgement path anywhere.
       #
-      # THREE OUTCOMES OUT OF A COMMAND THAT HAS TWO, and this step was the one line above until the
-      # engine repository paid for it. `npm audit` exits 1 both when it finds an advisory at or above
+      # THREE OUTCOMES OUT OF A COMMAND THAT HAS TWO. `npm audit` exits 1 both when it finds an advisory at or above
       # --audit-level and when it never reached the advisory endpoint at all, so the exit code alone
-      # cannot say which happened. Engine run 31266196222 logged `read ECONNRESET` against
-      # registry.npmjs.org and `npm error audit endpoint returned an error`, exited 1, and reddened main
-      # with a dependency verdict it had not formed. This repository ran the identical line, so it
-      # carried the identical defect; what follows is a port of engine `a87f7408`, byte-identical in the
-      # step body and rewritten around it with this repository's own numbers.
+      # cannot say which happened. A transport fault logs `read ECONNRESET` against
+      # registry.npmjs.org and `npm error audit endpoint returned an error`, exits 1, and would redden main
+      # with a dependency verdict it had not formed. The step body is the engine repository's, byte for byte,
+      # with this repository's own numbers around it.
       #
       # The transport case is separated from the finding, and NEITHER of them may exit 0. A retry
       # survives one reset. A registry unreachable on every attempt REFUSES, non-zero and by name,
@@ -346,8 +344,7 @@ jobs:
       # undetected while the step ahead of it was red. The same shape sat here
       # unfixed. A step's default condition is success(), so when the step above exited 1 on a transport
       # fault this gate was SKIPPED, and the run that reported a security failure had graded neither
-      # tree. Measured, not argued: engine run 31266196222 read `skipped` on the equivalent step and
-      # `success` in each of the 38 runs around it. This is not a softening: the step's own exit code
+      # tree. This is not a softening: the step's own exit code
       # still decides the job, and the two steps now fail independently rather than the first one being
       # able to suppress the second.
       #
