@@ -10,7 +10,7 @@
 // --require turns that skip into a FAILURE. CI passes it, because CI checks the sibling out precisely so this
 // can run, and a gate that quietly opts out when it cannot check reads as a pass. The plain skip stays for a
 // single-repo developer checkout, where blocking would make the gate unrunnable for anyone editing this repo
-// alone. That is the same posture the cross-repo `workspace` job in .github/workflows/ci.yml already takes.
+// alone.
 //
 // Needs the docs repo checked out as a sibling (../docs). When it is absent (a console-only
 // checkout) the gate SKIPS with a note and exits 0, so it never breaks a build that cannot see docs.
@@ -132,7 +132,7 @@ for (const f of walk(SRC, [])) {
 // carries on the order of a hundred distinct docs.downpipes.io URLs, and the floor of 40 sits well under
 // that, so tidying a batch of links does not trip it and a collapse cannot pass.
 //
-// It sits AFTER the ../docs skip above, deliberately. On the --require path (the workspace job, where the
+// It sits AFTER the ../docs skip above, deliberately. On the --require path (where the
 // sibling exists) it always applies. On the plain path it applies whenever the gate actually ran, and
 // never converts the single-repo skip into a failure, because that branch has already exited.
 if (found.size < 40) {

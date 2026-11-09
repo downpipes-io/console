@@ -7,7 +7,7 @@
 # two names, and test/validate-bundle.ts, which compares the file-name set first, reads STALE against a
 # bundle that is not stale. Measured on macOS: five working directories gave five
 # different chunk names, chunk content sha256/16 b2e6f578c00c26b8 in every one, and app.js byte-identical
-# once the two hashed names are normalised. scripts/stamp-build.mjs now pins that input (it chdirs to the
+# once the two hashed names are normalised. scripts/stamp-build.mjs pins that input (it chdirs to the
 # package root, refuses a node_modules that resolves outside it, and refuses any bundled module the
 # metafile records outside it), so `npm run build` on any platform reproduces the committed bytes.
 #
@@ -59,7 +59,7 @@ jobs:
 
       # State what was produced, so the log alone settles which artefact a downloaded zip corresponds to.
       # The content-hashed names matter most: a chunk renamed without a byte changing is the failure shape
-      # stamp-build now pins against, and printing the names next to the digests makes it readable here.
+      # stamp-build pins against, and printing the names next to the digests makes it readable here.
       - name: State the built artefacts and their digests
         run: |
           cd /tmp/bundle

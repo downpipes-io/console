@@ -21,10 +21,10 @@
 //
 // FIELD CATALOGUE. Every control here is a plain <button> (or a non-interactive <span> for a day with
 // nothing to pick): no <select>, no typeable input, no radio, no aria-pressed/aria-checked/role=radio/
-// role=switch toggle. field-census.mjs only counts a button as a catalogue control under those last four
-// conditions (field-census.mjs:191-193), so this whole surface adds zero field-catalogue rows -- it only
+// role=switch toggle. The field census only counts a button as a catalogue control under those last four
+// conditions, so this whole surface adds zero field-catalogue rows -- it only
 // grows the action catalogue. The day cells use role="gridcell" + aria-selected (the ARIA grid pattern's
-// OWN selection attribute), which field-census.mjs does not treat as a widget trigger, so the grid stays
+// OWN selection attribute), which the field census does not treat as a widget trigger, so the grid stays
 // field-free while still describing its selection state honestly to assistive technology.
 
 import type { DownpipeState, EngineClient, RunHistoryEntry } from "../../api.ts";
@@ -369,7 +369,7 @@ function buildGrid(grid: CalendarDay[], monthAnchorMs: number, selectedDay: stri
 // renderDayCell: an "empty" or "beyond-ring" day is a plain, non-interactive gridcell (nothing to pick,
 // so nothing is clickable); "available" and "failed-only" are buttons carrying role="gridcell" +
 // aria-selected (the grid-pattern's own selection attribute, NOT aria-pressed/aria-checked/role=radio/
-// role=switch, which field-census.mjs would count as a field-catalogue control -- see the module header).
+// role=switch, which the field census would count as a field-catalogue control -- see the module header).
 // The callback is named onSelectDay (not "onPick"): the hook census derives a control's key from the
 // identifier its click handler calls, and run-picker.ts's runPickerRow already owns "onPick".
 function renderDayCell(d: CalendarDay, selectedDay: string | null, onSelectDay: (day: string) => void): HTMLElement {

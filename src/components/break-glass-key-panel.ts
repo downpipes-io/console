@@ -61,7 +61,7 @@ export interface BreakGlassKeyPanel {
   setVisible: (visible: boolean) => void;
 }
 
-// THE FILE INPUT'S id IS A LITERAL HERE, DELIBERATELY, and it is not a caller option. scripts/field-census.mjs
+// THE FILE INPUT'S id IS A LITERAL HERE, DELIBERATELY, and it is not a caller option. The field census
 // derives a control's declaration site by reading literal id strings out of the source, so an `id: opts.inputId`
 // would make a CATALOGUED control invisible to the census: the field-catalogue gate would then report it
 // uncatalogued at the caller and orphaned at the panel. A single stable id is also correct on its own terms,

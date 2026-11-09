@@ -15,7 +15,7 @@
 const TRAINING_FLAG = "training";
 
 // TRAINING_HOSTS are the hostnames that serve the public training walk: training.downpipes.io, free for
-// everyone, deployed via wrangler.training.toml with the tour's own zero-server posture: nothing lives
+// everyone, deployed from its own Worker configuration with the tour's own zero-server posture: nothing lives
 // behind the hostname, the demo world is in the visitor's tab. Custom domains only, never a
 // *.workers.dev address.
 const TRAINING_HOSTS: ReadonlySet<string> = new Set(["training.downpipes.io"]);

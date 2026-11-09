@@ -110,7 +110,7 @@ pulling and deploying fixes within the SLA window above.
 ### Detection
 
 Two automated mechanisms run on every push and pull request against `main`
-(`.github/workflows/ci.yml`), and a third runs weekly:
+(`.github/workflows/ci.yml`):
 
 1. **`npm audit --omit=dev --audit-level=high`** (the `security` job) scans
    production dependencies and fails the build on any High or Critical advisory.
@@ -128,11 +128,6 @@ Two automated mechanisms run on every push and pull request against `main`
    The gate prints the acknowledged advisories in full, and the questions it does
    not answer in full, on every run whatever the verdict.
 
-3. **Dependabot** (`.github/dependabot.yml`) opens weekly pull requests for both
-   `npm` packages and GitHub Actions pins, keeping the supply chain current. It is
-   the only one of these three that sees the GitHub Actions ecosystem: `npm audit`
-   reads `package-lock.json` and cannot see a pinned action.
-
 The `step-security/harden-runner` action is pinned to a full commit SHA in every
 workflow job that checks out code, and `actions/checkout` is run with
 `persist-credentials: false`, so the checkout token is not left in the git
@@ -141,7 +136,7 @@ configuration for a later step to read.
 **Repository settings, measured.** In this public repository,
 `.github/workflows/dependency-review.yml` runs on every pull request to `main`, and GitHub
 secret scanning with push protection is on. The `secret-scan` job also runs gitleaks
-over the full history and blocks on a finding. What the three mechanisms above do not
+over the full history and blocks on a finding. What the two mechanisms above do not
 cover, with the measurement behind each line, is the `notCovered` block of
 `.github/dependency-advisories.json`, which the gate prints on every run.
 
@@ -160,9 +155,7 @@ cover, with the measurement behind each line, is the `notCovered` block of
   bundles and deploys the shipped Worker runs, which is why its advisories are
   recorded rather than filtered out.
 - **Medium and below** advisories in the production tree do not block CI but are
-  reviewed in the weekly Dependabot sweep and remediated within the SLA above.
-- Dependabot PRs for security advisories are reviewed and merged within the
-  applicable SLA window. Non-security version bumps are reviewed weekly.
+  reviewed and remediated within the SLA above.
 
 ### Crypto dependencies
 

@@ -1,6 +1,6 @@
 // GENERATED FILE. Do not edit by hand.
 // The canonical open-source bill of materials for the downpipes product, the
-// source for the "open-source licences" view. Regenerate with: node scripts/gen-sbom.mjs
+// source for the "open-source licences" view.
 // Generated.
 
 export interface SbomDependency {

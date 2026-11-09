@@ -2,7 +2,7 @@
 # the recipient envelope, the WebAuthn PRF path). A full mutation run is slow, so this is a SCHEDULED
 # gating job rather than a per-pull-request gate: it runs weekly and on demand, and FAILS when the
 # mutation score drops below the stryker.config.json break threshold (the project standard of 90 per
-# cent; high 95). Reaching the score is the tracked test-writing campaign. This keeps the crypto
+# cent; high 95). This keeps the crypto
 # mutation gate enforced without adding minutes to every pull request.
 name: Mutation
 

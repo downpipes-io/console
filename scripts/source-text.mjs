@@ -14,8 +14,7 @@
 // COMMENTS ONLY, DELIBERATELY. Several console gates read things that legitimately live INSIDE string
 // literals: an import specifier, a hardcoded sibling path, a CSP origin, a doc URL. Blanking strings as well
 // would blind those gates to the very thing they police, so this blanks comments and leaves strings intact.
-// A gate that must also ignore string contents should parse (scripts/field-census.mjs and
-// scripts/hook-lib.mjs both take that route with the @typescript/typescript6 devDependency already present).
+// A gate that must also ignore string contents should parse the source (the @typescript/typescript6 devDependency is present).
 //
 // BLANKED, NOT REMOVED. Every comment byte becomes a space and every newline is kept, so the result has the
 // same length and the same line breaks as the original: an offset or a line number taken from the blanked

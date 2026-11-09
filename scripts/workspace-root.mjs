@@ -4,10 +4,10 @@
 // found by trying known LOCATIONS, while the workspace root is found by stepping OUT of whatever nesting
 // this checkout sits in, and the two rule sets do not usefully merge.
 //
-// WHY IT IS ONE FILE. Keeping this logic once, rather than duplicated across functional-catalogue-gate.mjs,
-// functional-census.mjs and non-form-handler-census.mjs, means a single edit cannot lose the same guard in
-// three places at once: duplicated logic buys no redundancy against a shared mistake, only more places for
-// one to hide. test/validate-r30-workspace-resolution.ts holds the test for this single copy.
+// WHY IT IS ONE FILE. Keeping this logic once, rather than duplicated across the checks that need it,
+// means a single edit cannot lose the same guard in
+// several places at once: duplicated logic buys no redundancy against a shared mistake, only more places for
+// one to hide.
 //
 // THE TWO RULES, and both are load-bearing.
 //

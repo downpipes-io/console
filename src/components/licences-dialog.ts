@@ -1,6 +1,6 @@
 // The open-source "thank you" / SBOM dialog for the console. It opens the same
-// canonical bill of materials the public website shows (src/data/sbom.ts, generated
-// by tools/gen-sbom.mjs) in a focus-trapped modal, reached from a quiet link in the
+// canonical bill of materials the public website shows (src/data/sbom.ts, a generated
+// file) in a focus-trapped modal, reached from a quiet link in the
 // Licence screen's Provenance section.
 //
 // Why it lives here and not in screens/: it is a reusable component (a modal body

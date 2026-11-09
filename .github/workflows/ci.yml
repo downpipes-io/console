@@ -4,7 +4,7 @@ name: CI
 
 # WHY THERE IS NO "**.md" IN paths-ignore HERE, and why adding it back would be wrong.
 #
-# It was there once. It meant a push touching only markdown started NO CI RUN AT ALL, and
+# A push touching only markdown would start NO CI RUN AT ALL, and
 # this repository has a gate that reads markdown and can fail on it.
 #
 # Measured rather than argued. test/validate-security-headers.ts:51 reads SECURITY.md and pins it against
@@ -13,18 +13,17 @@ name: CI
 # exactly the shape `paths-ignore: ["**.md"]` skips, so the doc-vs-code pin could be broken by a push that
 # CI never saw.
 #
-# The same filter was on semgrep.yml, which is worse in kind: a credential in a markdown file is a real
-# shape, and `docs` had a live-format AWS key sit in README.md through six green checks
-# because its scanners were path-filtered away from it.
+# The same filter on semgrep.yml would be worse in kind: a credential in a markdown file is a real
+# shape, and a scanner that is path-filtered away from it never sees it.
 #
-# engine and downpipe already carry the fixed form. If markdown-only pushes ever need to skip a slow job,
+# If markdown-only pushes ever need to skip a slow job,
 # skip that JOB by condition, not the whole workflow by path, so every other job still runs.
 #
-# LICENSE* AND .GITIGNORE ARE NO LONGER IGNORED EITHER. The protect-main ruleset requires this
+# LICENSE* AND .GITIGNORE ARE NOT IGNORED EITHER. The protect-main ruleset requires this
 # workflow's CI Success check with no bypass actor, admins included. A push or pull request whose
 # only changed files match a paths-ignore entry starts no run, so the required check never reports,
 # and GitHub refuses to merge a check that never ran. A pull request touching only LICENSE or
-# .gitignore was therefore unmergeable by anyone. The filter is gone so every push and pull request
+# .gitignore is therefore unmergeable by anyone. There is no filter, so every push and pull request
 # against main runs this workflow; the cost is a CI run on a licence or ignore-file change, accepted.
 on:
   push:
@@ -32,12 +31,9 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-  # THE TWO COVERAGE JOBS RUN ON THIS SCHEDULE AND ON DISPATCH, NOT ON EVERY PUSH. Decided from
-  # the org billing ledger: this workflow billed 4,560 minutes in the first ten days of September, 1,457
-  # of them in `coverage` and `coverage-screens`, which re-run the validators `validate` already ran,
-  # under c8, on every push and every pull request synchronise. They now grade main once a day (16:00
-  # UTC is 02:00 in Sydney) and on `gh workflow run CI`; a regression below the c8 floors opens the
-  # red-main issue the next morning instead of blocking the push. `validate` still runs on every push
+  # THE TWO COVERAGE JOBS RUN ON THIS SCHEDULE AND ON DISPATCH, NOT ON EVERY PUSH.
+  # `coverage` and `coverage-screens` re-run the validators `validate` already runs, under c8, so they
+  # grade main once a day (16:00 UTC is 02:00 in Sydney) and on `gh workflow run CI`. `validate` still runs on every push
   # and pull request.
   schedule:
     - cron: "0 16 * * *"
@@ -78,17 +74,9 @@ jobs:
     needs: [lint, typecheck, push-dedupe]
     if: needs.push-dedupe.outputs.duplicate != 'true'
     runs-on: ubuntu-24.04
-    # 25, raised from 10, pre-emptively rather than after a failure. This job has never been
-    # cancelled, but it runs at about 8m30s against the old 10, which is 85 per cent of its ceiling, and it
-    # sits in the CI Success needs list below. It was 3m24s ten runs ago and has been stable at 8m30s since,
-    # so the headroom is already spent rather than shrinking.
-    #
-    # That is exactly where the engine's equivalent job was before it went over: it squeaked through at 8m51s
-    # once and was then CANCELLED at its ceiling on six of the next seven runs on main. A cancelled job reads
-    # as "nothing was checked" rather than as a failure, so a gate dies that way without anyone deciding to
-    # turn it off, and the occasional pass makes it look intermittent. A ceiling audit across this project's
-    # five ci.yml files found engine's two and this one; every other job was at 12 per cent of
-    # its ceiling or less.
+    # 25 minutes: about three times the 8m30s this job runs at, and it sits in the CI Success needs list
+    # below. A cancelled job reads as "nothing was checked" rather than as a failure, so a gate dies that
+    # way without anyone deciding to turn it off, and the occasional pass makes it look intermittent.
     timeout-minutes: 25
     steps:
       - name: Harden Runner
@@ -148,9 +136,8 @@ jobs:
         run: npm run coverage
 
   coverage-screens:
-    # src/screens/** is 255 measured files and about 65 per cent of the console, and it once
-    # had NO coverage floor at all: it was excluded from the gate outright, which is why so many
-    # screen-layer findings were invisible. The product-facing layer was the one region nothing measured.
+    # src/screens/** is the product-facing layer of the console, and it is
+    # measured at its own floors.
     #
     # It is a SEPARATE job with its own floors rather than a lower threshold on the job above. Folding it
     # into one aggregate would put the combined figure near 82 per cent, which would LOWER the bar for the
@@ -224,9 +211,8 @@ jobs:
       # because "I could not look" reported as "I looked and it was fine" is the whole failure this job
       # exists to avoid.
       #
-      # THE EXIT CODE HAD TO BE MADE TO DEPEND ON THE THING IT GRADES, which the bare line did not. Two
-      # ways it could reach 0 without having graded the production tree were measured rather than
-      # imagined:
+      # THE EXIT CODE DEPENDS ON THE THING IT GRADES. Two
+      # ways it could reach 0 without having graded the production tree are closed here:
       #
       #   A lockfile declaring no production dependencies prints "found 0 vulnerabilities" and exits 0
       #   WITH THE REGISTRY POINTED AT A DEAD PORT. Nothing was asked and nothing was answered, and the
@@ -246,10 +232,10 @@ jobs:
       # The remaining path to 0 is an audit that ran, was answered by an endpoint proved live in the
       # same breath, over a tree proved non-empty, and reported nothing at high or above.
       #
-      # WHAT THIS STEP BRANCHES ON, and the mistake worth not repeating. The engine pass's first rewrite
-      # asked "does the output say vulnerabilities". npm writes "1 moderate severity vulnerability" in
-      # the SINGULAR, so a tree carrying exactly one advisory below --audit-level exits 0 with a report
-      # on screen and the step called it "no audit report" and went red. So the branch is on WHETHER NPM
+      # WHAT THIS STEP BRANCHES ON, . It does not ask "does the output say vulnerabilities":
+      # npm writes "1 moderate severity vulnerability" in the SINGULAR, so a tree carrying exactly one
+      # advisory below --audit-level exits 0 with a report on screen, and a match on the plural would call
+      # it "no audit report" and go red. So the branch is on WHETHER NPM
       # PRODUCED A REPORT AT ALL, matched on the stem, and the exit code is trusted only once a report
       # exists to give it meaning. The transport words then classify only the no-report case, where a
       # package name cannot be mistaken for a network error because there is no package list to mistake.
@@ -331,22 +317,15 @@ jobs:
           done
           echo "REFUSED: npm audit could not reach the advisory endpoint on any of 3 attempts, so this step established nothing about the production tree."
           exit 1
-      # BOTH trees, graded separately, against .github/dependency-advisories.json. At first the
-      # step above was this repository's ONLY dependency channel, and `--omit=dev` drops the build tree,
-      # so the job was green while the build tree carried 17 advisories, 11 of them high, with no route
-      # by which any of them could be reported. Ten were fixed the same day inside ranges the tree
-      # already asked for. The gate reads its own header for the rest of the argument, including why the
-      # production tree has no acknowledgement path and the build tree does.
+      # BOTH trees, graded separately, against .github/dependency-advisories.json. `--omit=dev` on the step above drops the build tree, so this gate is what grades it. The gate
+      # reads its own header for the rest of the argument, including why the production tree has no
+      # acknowledgement path and the build tree does.
       #
-      # `!cancelled()` RATHER THAN THE DEFAULT, AND THIS FILE ALREADY ARGUED FOR IT 400 LINES DOWN. The
-      # header at the harness-pin step below records the finding verbatim: "a red signal in front of a
-      # check is indistinguishable from a check that passes", written after a stale residue entry sat
-      # undetected while the step ahead of it was red. The same shape sat here
-      # unfixed. A step's default condition is success(), so when the step above exited 1 on a transport
-      # fault this gate was SKIPPED, and the run that reported a security failure had graded neither
-      # tree. This is not a softening: the step's own exit code
-      # still decides the job, and the two steps now fail independently rather than the first one being
-      # able to suppress the second.
+      # `!cancelled()` RATHER THAN THE DEFAULT. A step's default condition is success(), so when the step
+      # above exits 1 on a transport fault this gate would be SKIPPED, and a run that reported a security
+      # failure would have graded neither tree. This is not a softening: the step's own exit code still
+      # decides the job, and the two steps fail independently rather than the first one being able to
+      # suppress the second.
       #
       # The retry here reads the gate's own three-outcome contract rather than a code it does not
       # publish: exit 2 is REFUSED, could not check, which is the transport case and worth another
@@ -424,8 +403,8 @@ jobs:
           /tmp/gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1
 
   # Code-quality job (guardrails B8-1): madge (circular deps) + knip (dead code). GATING: madge is
-  # at 0 cycles and the knip baseline is triaged to zero (the dead async-region.ts module is removed;
-  # the over-broad-export and co-located-type conventions are accepted via the knip.json
+  # at 0 cycles and the knip baseline is at zero (the
+  # over-broad-export and co-located-type conventions are accepted via the knip.json
   # ignoreExportsUsedInFile setting; built-but-unwired and test-only exports are tagged @knipignore).
   # In the ci-success needs list below, so a new circular dependency or a new unused export fails CI.
   quality:
@@ -449,12 +428,11 @@ jobs:
   push-dedupe:
     # WHY THIS EXISTS. Every change here lands as a pull request and then as a squash merge to main, and the
     # ruleset's strict status-check policy means the branch was up to date with main when it merged, so the
-    # merge commit's TREE is byte-identical to the pull request head's tree. Measured from the org
-    # billing ledger: the merge run re-graded that identical tree for the full cost of `validate` and
-    # `secret-scan` on every merge (34 pull-request runs in ten days). The gitleaks skip is sound because the
+    # merge commit's TREE is byte-identical to the pull request head's tree. The merge run would re-grade that identical tree for the full
+    # cost of `validate` and `secret-scan`. The gitleaks skip is sound because the
     # pull-request run scanned every commit of the branch, a superset of the one squash commit that lands. This job answers one question on a push to main: has
     # a successful pull-request run of THIS workflow already graded this exact tree, with the gated jobs
-    # themselves reported success (not skipped, which is what a Dependabot pull request does to `validate`)?
+    # themselves reported success?
     # If so the gated jobs below skip and ci-success records the skip as documented. Anything short of that
     # answer, including an API error, resolves to `false` and everything runs: this job can only ever save
     # minutes, never lose a gate. A direct push to main has no pull-request run, so it always grades in full.
@@ -503,11 +481,10 @@ jobs:
           done <<< "$runs"
           echo "no successful pull-request run holds tree $TREE with every gated job green; grading in full"
 
-  # The console Worker's own suite (test/vitest/worker.test.ts, 14 tests). It once ran in NO CI job,
-  # which mattered because worker.ts is where the SPA fallback lives: the 404-or-307
-  # rewrite that a deep link depends on, and whose own comment records that passing the redirect
-  # through once already reset the router to Overview on every deep-link refresh. That is the exact
-  # class of regression this suite exists to catch, and nothing was running it.
+  # The console Worker's own suite (test/vitest/worker.test.ts, 14 tests). worker.ts is where the SPA fallback lives: the
+  # 404-or-307 rewrite that a deep link depends on, and whose own comment records that passing the
+  # redirect through resets the router to Overview on every deep-link refresh. That is the exact
+  # class of regression this suite exists to catch.
   vitest:
     name: Worker suite (vitest)
     runs-on: ubuntu-24.04
@@ -534,8 +511,7 @@ jobs:
       - name: Check required jobs
         # Generic by construction: reads the job's own `needs:` context at run time (toJSON(needs)),
         # so it cannot drift out of sync with that list the way a hand-written require_success call
-        # per job name can. One shared aggregation step replaced a bespoke,
-        # per-repository aggregation script.
+        # per job name can.
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |

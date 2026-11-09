@@ -19,8 +19,7 @@
 // while leaving the per-run master live in the tab for the whole attended session. A gate that a comment
 // can satisfy is not a gate. Comments and string literals are not nodes in a TypeScript AST, so parsing
 // answers that and the mirror-image question (a commented-out `openCapsule(` call inventing a phantom
-// site) at once. typescript is already a console devDependency and scripts/field-census.mjs and
-// scripts/hook-lib.mjs both take this route, so this is the house pattern rather than a new one.
+// site) at once. typescript is already a console devDependency, so this adds no new dependency.
 //
 // WHAT IT CANNOT COVER, stated rather than left implied. The base64 the engine is sent is a JavaScript
 // string, and strings are immutable, so that copy cannot be wiped by anything. A gate that implied

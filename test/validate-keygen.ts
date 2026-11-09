@@ -138,7 +138,7 @@ async function main(): Promise<void> {
   // So the resolution follows test/downpipe-root.ts's own two-tier contract, which already existed for
   // exactly this: requireDownpipeRoot returns null on a reader-less checkout and THROWS under
   // REQUIRE_DOWNPIPE=1. The cross-repo assertions below are now skipped loudly when there is no reader,
-  // and the Cross-repo gates job in .github/workflows/ci.yml checks the reader out and runs this file
+  // and a run that checks the reader out runs this file
   // again with REQUIRE_DOWNPIPE=1, where the skip is impossible and a missing sibling fails the job. The
   // check did not get weaker; it moved to the one job that can actually perform it, and stayed mandatory
   // there. Everything above this line is console-against-console and still runs everywhere.

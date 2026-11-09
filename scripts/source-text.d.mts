@@ -1,5 +1,4 @@
-// Types for source-text.mjs, which is plain JavaScript. Same arrangement as outside-write-decl.d.mts and
-// workspace-root.d.mts beside it.
+// Types for source-text.mjs, which is plain JavaScript. Same arrangement as workspace-root.d.mts beside it.
 //
 // It exists because test/validate-sealed-export-unseal.ts imports blankComments, and tsconfig.test.json
 // type-checks test/ under the same strictness src gets, so an untyped .mjs import is an error there rather

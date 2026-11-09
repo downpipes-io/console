@@ -117,8 +117,8 @@ if (engineRoot === undefined) {
 }
 
 // A resolved engine that is merely BEHIND its own origin/main reports every comparison against code that
-// has since moved, as though it were current -- the same failure shape verify-citations.mjs can hit
-// against a stale engine checkout. No fetch, so an engine whose origin/main ref is unknown is not judged
+// has since moved, as though it were current, which is the failure a stale
+// engine checkout causes. No fetch, so an engine whose origin/main ref is unknown is not judged
 // either way; only a KNOWN positive distance refuses. AUDIT_MIRROR_ALLOW_STALE=1 proceeds anyway.
 if (process.env.AUDIT_MIRROR_ALLOW_STALE !== "1") {
   /** @type {number | null} */

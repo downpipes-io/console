@@ -16,7 +16,7 @@
 //   2. PARITY: when the engine worktree is reachable, the engine's ROLE_CAPABILITIES and can() are
 //      imported and asserted EQUAL to the console's over every (role x capability) pair, so the two
 //      sides cannot drift. With REQUIRE_ENGINE=1 (which npm run validate:workspace now sets for the
-//      WHOLE chain, and the CI cross-repo job runs) a missing engine is a hard FAILURE, not a skip.
+//      WHOLE chain) a missing engine is a hard FAILURE, not a skip.
 //      Without it, on a console-only clone with no engine to compare against, the block skips with a
 //      visible note so the suite stays runnable alone; the intrinsic block still pins the contract,
 //      and capability-drift-gate.mjs is the gate that never skips.
@@ -204,15 +204,15 @@ ok("a CTO/owner persona maps to owner", PERSONAS.some((p) => p.recommendedRole =
 // 6. PARITY: assert the console mirror equals the engine's ROLE_CAPABILITIES / can() byte-for-byte.
 // The engine worktree's identity.ts is pure logic (no crypto deps), so importing it is clean.
 //
-// WHEN IT SKIPS, AND WHY THAT USED TO BE A HOLE. With no engine reachable and REQUIRE_ENGINE unset this
-// block prints a note and returns, which is right for a console-only clone that has no engine to compare
-// against. It was NOT right in the cross-repo job, and that is exactly where it happened:
-// validate:workspace wrote `REQUIRE_ENGINE=1 node scripts/client-diag-parity-gate.mjs && ... && node
-// test/validate-identity.ts`, and a shell env prefix binds to ONE command. So the flag reached only the
-// first gate, which does not read it, and never reached any of the five files that do. The whole
-// fail-closed contract was inert from the day it was written. The chain now exports the flag for every
-// command in it, and scripts/capability-drift-gate.mjs holds the same comparison with no skip branch at
-// all, so the guarantee does not rest on one env var arriving.
+// WHEN IT SKIPS. With no engine reachable and REQUIRE_ENGINE unset this block prints a note
+// and returns, which suits a console-only clone
+// that has no engine to compare against.
+// With REQUIRE_ENGINE=1 a missing engine is a refusal (test/engine-path.ts), not a skip.
+// `npm run validate:workspace` sets REQUIRE_ENGINE=1 once, on the whole gate chain
+// (scripts/run-gate-chain.mjs), because a shell env prefix binds to ONE command and
+// would reach only the first command in a `&&` list.
+// scripts/capability-drift-gate.mjs holds the same comparison with no skip branch at all,
+// so the check does not rest on one env var arriving.
 // ============================================================================
 async function checkEngineParity(): Promise<void> {
   console.log("\n-- engine parity (console mirror == engine ROLE_CAPABILITIES) --");

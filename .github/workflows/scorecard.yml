@@ -20,13 +20,13 @@ jobs:
   analysis:
     name: Scorecard analysis
     # OSSF Scorecard scores PUBLIC supply chains. On a private repo its action cannot even check the
-    # code out ("Repository not found"), because the container's token does not reach it, and it had
-    # failed every single run since it was added. A workflow that is permanently red is worse than no
+    # code out ("Repository not found"), because the container's token does not reach it.
+    # A workflow that is permanently red is worse than no
     # workflow: it teaches the reader that red here means nothing, which is exactly what you do not want
     # them to learn about a security job.
     #
-    # So it SKIPS while the repo is private rather than failing, and starts running by itself if the repo
-    # is ever made public. No token, no secret and no settings change is needed either way. Giving it a
+    # So it SKIPS while the repo is private rather than failing, and runs on a public repo.
+    # No token, no secret and no settings change is needed either way. Giving it a
     # PAT with repo scope is the other route, and that is a deliberate act rather than a default.
     if: github.event.repository.private == false
     runs-on: ubuntu-24.04

@@ -55,22 +55,20 @@
 // time the console runs ahead of the engine on the very same pair.
 //
 // THE FOUR QUESTIONS.
-//  1. Does it run in CI? Yes, TODAY, not as future wiring: it is `npm run mirror-drift`, added to
-//     `validate:workspace:chain` (package.json) right beside its sibling `audit-mirror-drift-gate.mjs`, which
-//     `npm run validate:workspace` runs, which the "Cross-repo gates" job (.github/workflows/ci.yml, job id
-//     `workspace`) runs on every push via `working-directory: console`. That job ALREADY checks out
-//     `downpipes/engine` as a sibling at path `engine` beside `console` (that is precisely how
-//     audit-mirror-drift-gate.mjs reaches the engine today), which is exactly what this file's own CANDIDATES
-//     resolution below expects (`resolve(HERE, "../../engine")` = console/scripts/../../engine = the checked-
-//     out sibling). No new CI job or checkout step was needed; this rides the existing one.
+//  1. How is it run? As `npm run mirror-drift`, which `validate:workspace:chain` (package.json) lists right
+//     beside its sibling `audit-mirror-drift-gate.mjs`; `npm run validate:workspace` runs that chain. It
+//     needs the engine repository checked out beside this one, in a directory named `engine` or at the path
+//     in DOWNPIPES_ENGINE. That is what this file's own CANDIDATES resolution below expects
+//     (`resolve(HERE, "../../engine")` = console/scripts/../../engine = the sibling checkout), and it is how
+//     audit-mirror-drift-gate.mjs reaches the engine too.
 //  2. Does it FAIL when it cannot run? Yes: no engine checkout -> exit 2 (distinct from exit 1, so a caller
 //     that greps for "the gate failed" cannot conflate "could not check" with "found a defect", the same
-//     convention audit-mirror-drift-gate.mjs and verify-citations.mjs already use); an engine behind its own
+//     convention audit-mirror-drift-gate.mjs uses); an engine behind its own
 //     origin/main -> exit 2 unless MIRROR_DRIFT_ALLOW_STALE=1; an anchor that cannot be found on either side
 //     -> exit 1 naming exactly which pair and which side (a moved anchor IS a drift worth knowing about, not
 //     a reason to go quiet).
 //  3. Does it FAIL when there is nothing to check? Yes: PAIRS.length === 0 refuses to run at all (a `assert`
-//     at the top, same discipline `derive.mjs` already applies to an empty row set).
+//     at the top, so an empty pair list cannot pass as a clean result).
 //  4. How much of the corpus can it fail on? 27 of the ~30 pairs the sweep enumerated (stated above, asserted
 //     at the bottom of this file); 3 named and excluded for a concrete, non-speculative anchor-safety reason;
 //     AuditAction/AuditTarget/engine-state fields covered by the pre-existing sibling gate, not this one.

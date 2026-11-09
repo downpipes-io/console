@@ -25,7 +25,7 @@
 // faked-engine fetch shim owns /admin/* and answers it in the browser, so an /admin/* beacon would never
 // reach the Worker, and thus never reach Analytics Engine). This path falls through the shim to the real
 // fetch and so reaches the public-tour Worker, which forwards it to the AE dataset. The Worker route +
-// the AE dataset binding (wrangler.public-demo.toml) are the server half; this is the browser half.
+// the AE dataset binding (in the tour deploy's Worker configuration) are the server half; this is the browser half.
 export const TOUR_EVENT_PATH = "/tour/event";
 
 // TourEventName is the closed set of funnel events DESIGN names. Typing it shut means a caller cannot emit

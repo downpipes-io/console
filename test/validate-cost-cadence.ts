@@ -9,7 +9,7 @@
 // beside it, independent of the library. Run: node test/validate-cost-cadence.ts
 //
 // The engine constants the derivation mirrors (the 15-minute dispatch tick and the 10 per cent early
-// jitter) are checked against the engine's own source by test/validate-cost-cadence-engine-mirror.ts.
+// jitter) are copied from the engine's own source.
 
 import type { Downpipe, RunHistoryEntry } from "../src/api.ts";
 import {

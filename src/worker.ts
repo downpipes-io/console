@@ -46,7 +46,7 @@ interface Env {
   // so this adds reachability hiding on top of, never instead of, authentication.
   ENGINE?: EngineService;
   // TOUR_ANALYTICS, when bound, is the Workers Analytics Engine dataset for the public, no-login product
-  // tour's self-hosted funnel events. ONLY the tour deploy (wrangler.public-demo.toml) binds it; the genuine
+  // tour's self-hosted funnel events. ONLY the tour deploy binds it; the genuine
   // console and the engine-proxied console never do. The tour's browser half POSTs small, PII-free events to
   // the same-origin /tour/event route below, which records them through this binding. Optional: with no
   // binding (every non-tour deploy) /tour/event is a harmless 204 no-op, so the real console is unaffected.

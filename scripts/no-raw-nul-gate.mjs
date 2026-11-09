@@ -26,10 +26,10 @@
 // classified normally. The identical defect can be invisible in one file and perfectly visible in another,
 // depending on nothing but where the byte happens to sit.
 //
-// WHY THIS MATTERS HERE SPECIFICALLY. A raw NUL inside scripts/fs-write-observer.mjs would hide
+// WHY THIS MATTERS HERE SPECIFICALLY. A raw NUL inside the filesystem write observer would hide
 // TARGET_FIRST and TARGET_SECOND, the lists of filesystem entry points the write observer patches, from
 // any `git grep -I` scan of this repository -- including from ANOTHER repository's gate, which this repo
-// cannot fix from the other side. Those two lists decide what scripts/outside-write-gate.mjs --deep can
+// cannot fix from the other side. Those two lists decide what the deep outside-write check can
 // see at all, so a hidden identifier that decides whether a check checks is exactly the shape this gate
 // exists to make impossible.
 //

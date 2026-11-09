@@ -204,7 +204,7 @@ function main(): void {
     // own reader block: this file sits in `npm run validate`, that chain is joined by && and the CI
     // Validators job checks out console alone, so a hard FAIL here does not make the check strict, it
     // stops the chain and leaves every validator after it unrun. The CLI-surface assertions are
-    // mandatory in the Cross-repo gates job instead, which checks the reader out and sets
+    // mandatory in a run that checks the reader out and sets
     // REQUIRE_DOWNPIPE=1, under which requireDownpipeRoot throws and this branch cannot be reached.
     console.log(
       "  SKIPPED (no reader sibling): the panel's commands and flags were NOT checked against the reader.\n" +

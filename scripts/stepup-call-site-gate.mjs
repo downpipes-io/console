@@ -59,8 +59,7 @@
 // not equally costly and the dangerous one is the silent one.
 //
 // Nothing in the output above carries an engine sha, a digest or a direction, so a reader has nothing in a
-// red to audit and nothing in a green to doubt. scripts/field-catalogue-gate.mjs makes the same argument for
-// its own refusal.
+// red to audit and nothing in a green to doubt.
 //
 // The refusal bites LOCALLY. In CI the engine is checked out at its own default branch, so the lag is 0 and
 // this never fires. STEPUP_ALLOW_STALE_ENGINE=1 is the named hatch, and the tree line below prints even
@@ -85,7 +84,7 @@ const engineRoot = CANDIDATES.find((c) => existsSync(resolve(c, ENGINE_ROUTER)))
 
 if (engineRoot === undefined) {
   // A console-only checkout has no engine and must still run its own tests, so this SKIPS there and says
-  // so. REQUIRE_ENGINE=1, which is what npm run validate:workspace sets and what CI's Cross-repo job runs,
+  // so. REQUIRE_ENGINE=1, which is what npm run validate:workspace sets,
   // turns the same absence into a refusal: in the one place the engine is always present, a skip would read
   // as a pass over the check that matters.
   const why = `no engine found under ${CANDIDATES.join(", ")}`;

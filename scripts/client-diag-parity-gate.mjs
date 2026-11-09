@@ -48,8 +48,8 @@ if (engineRoot === undefined) {
 }
 
 // A resolved engine that is merely BEHIND its own origin/main compares against a vocabulary that has since
-// moved and reports it healthy -- the same failure shape verify-citations.mjs can hit against a stale
-// engine checkout. No fetch, so unknown freshness (no origin/main ref) is not judged either way.
+// moved and reports it healthy, which is the failure a stale
+// engine checkout causes. No fetch, so unknown freshness (no origin/main ref) is not judged either way.
 // CLIENT_DIAG_ALLOW_STALE=1 overrides.
 if (process.env.CLIENT_DIAG_ALLOW_STALE !== "1") {
   /** @type {number | null} */

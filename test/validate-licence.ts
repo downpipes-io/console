@@ -552,7 +552,7 @@ function thrown(body: string): string {
 // no console change could ever satisfy.
 //
 // So the engine-composed assertions are gated on the engine actually being there, and validate-licence.ts is
-// now in validate:workspace:chain, which runs under REQUIRE_ENGINE=1 in the Cross-repo gates job. There the
+// now in validate:workspace:chain, which runs under REQUIRE_ENGINE=1 in a checkout that has the engine. There the
 // skip branch above exits 1 rather than skipping, so this section is mandatory in the one job that has an
 // engine to compose from. Section 5b below needs no engine and still runs everywhere.
 if (routerSrc !== null && licenceSrc !== null) {
