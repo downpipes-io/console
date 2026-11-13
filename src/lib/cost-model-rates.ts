@@ -117,8 +117,8 @@ export interface PresetProvenance {
 }
 
 export const PRESET_PROVENANCE: Readonly<Record<"r2" | "s3-standard", PresetProvenance>> = {
-  r2: { source: "Cloudflare R2 published list pricing", checkedOn: "2026-08-06" },
-  "s3-standard": { source: "Amazon S3 Standard published list pricing, first-tier figures", checkedOn: "2026-08-06" },
+  r2: { source: "Cloudflare R2 published list pricing", checkedOn: "2026-11-13" },
+  "s3-standard": { source: "Amazon S3 Standard published list pricing, first-tier figures", checkedOn: "2026-11-13" },
 };
 
 // How long a checked-on date may stand before the gate calls it unwitnessed. Ninety days is chosen
